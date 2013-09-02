@@ -15,7 +15,7 @@
 /include/ "imx23.dtsi"
 
 / {
-	model = "i.MX23 Olinuxino Low Cost Board";
+	model = "Wiren Board rev. 2.8 (i.MX23)";
 	compatible = "olimex,imx23-olinuxino", "fsl,imx23";
 
 	memory {
@@ -76,7 +76,7 @@
 		           fsl,drive-strength = <1>;
 		           fsl,voltage = <1>;
 		           fsl,pull-up = <1>;
-		        }; 
+		        };
 
 				spi2_pins_nocs: spi2@0 {
 					reg = <0>;
@@ -229,7 +229,7 @@
 		user {
 			label = "green";
 			gpios = <&gpio2 1 1>;
-			linux,default-trigger = "default-on";		
+			linux,default-trigger = "default-on";
 		};
 	};
 
