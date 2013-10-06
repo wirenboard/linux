@@ -412,7 +412,7 @@ mxs_codec_adc_power_on(struct mxs_adc_priv *mxs_adc)
 	__raw_writel(BF(1, AUDIOIN_MICLINE_MIC_RESISTOR),
 		      mxs_adc->ain_base + HW_AUDIOIN_MICLINE_SET);
 	__raw_writel(BM_AUDIOIN_MICLINE_MIC_SELECT,
-		      mxs_adc->ain_base + HW_AUDIOIN_MICLINE_SET);
+		      mxs_adc->ain_base + HW_AUDIOIN_MICLINE_CLR);
 	__raw_writel(BF(1, AUDIOIN_MICLINE_MIC_GAIN),
 		      mxs_adc->ain_base + HW_AUDIOIN_MICLINE_SET);
 	__raw_writel(BF(7, AUDIOIN_MICLINE_MIC_BIAS),
