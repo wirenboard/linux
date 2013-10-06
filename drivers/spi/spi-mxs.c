@@ -622,3 +622,4 @@ MODULE_AUTHOR("Marek Vasut <marex@denx.de>");
 MODULE_DESCRIPTION("MXS SPI master driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:mxs-spi");
+/* 2 */
