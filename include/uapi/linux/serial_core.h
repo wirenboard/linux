@@ -258,4 +258,7 @@
 /* Cris v10 / v32 SoC */
 #define PORT_CRIS	112
 
+/* SC16IS7x2 SPI UART */
+#define PORT_SC16IS7X2	113
+
 #endif /* _UAPILINUX_SERIAL_CORE_H */
