@@ -16,7 +16,7 @@
 
 / {
 	model = "Wiren Board rev. 2.8 (i.MX23)";
-	compatible = "olimex,imx23-olinuxino", "fsl,imx23";
+	compatible = "contactless,imx23-wirenboard28", "olimex,imx23-olinuxino", "fsl,imx23";
 
 	memory {
 		reg = <0x40000000 0x04000000>;
@@ -126,6 +126,7 @@
 					reg = <2>;
 				};
 
+
 				sc16is7x2@0 {
 					compatible = "fsl,spi-sc16is7x2";
 					spi-max-frequency = <1000000>;
@@ -135,11 +136,16 @@
 
 					interrupt-parent = <&gpio0>;
 					interrupts = <5 0>;
-					uartclk = <115200>;
+					uartclk = <14745600>;
 				};
 
 
-
+/*				spidev@3 {
+					compatible = "spidev";
+					spi-max-frequency = <1000000>;
+					reg = <3>;
+				};
+*/
 				spidev@4 {
 					compatible = "spidev";
 					spi-max-frequency = <1000000>;
@@ -153,14 +159,19 @@
 				};
 
 
-				/* gpiom1: gpio@4 {
-					  compatible = "mcp,mcp23s08";
-					  gpio-controller;
-					  #gpio-cells = <2>;
-					  mcp,spi-present-mask = <0x01>;
-					  reg = <5>;
-					  spi-max-frequency = <100000>;
-				}; */
+/* mcp23s08 crashes kernel for unknown reason */
+/*
+			gpiom2: gpio@5 {
+						compatible = "microchip,mcp23s08";
+						gpio-controller;
+						#gpio-cells = <2>;
+						microchip,spi-present-mask = <0x01>;
+						reg = <5>;
+						spi-max-frequency = <100000>;
+						addr = <0>;
+						base = <120>;
+				};
+*/
 
 			};
 		};
