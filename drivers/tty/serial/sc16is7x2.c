@@ -55,6 +55,10 @@
 #define IOC_GPIO74	0x02    /* GPIO 7:4 unset: as IO, set: as modem pins */
 #define IOC_IOLATCH	0x01    /* Unset: input unlatched, set: input latched */
 
+#define EFCR_RTSINVER 0x20  /* Invert not-RTS signal in RS-485 mode */
+#define EFCR_RTSCON   0x10  /* Auto RS-485 mode: Enable the transmitter to control the RTS pin. */
+
+
 struct sc16is7x2_chip;
 
 /*
@@ -82,6 +86,8 @@ struct sc16is7x2_channel {
 	u8		lcr;		/* cache for LCR register */
 	u8		mcr;		/* cache for MCR register */
 	u8		efr;		/* cache for EFR register */
+	u8      efcr;       /* cache for EFCR register */
+
 #ifdef DEBUG
 	bool		handle_irq;
 #endif
@@ -731,6 +737,10 @@ static int sc16is7x2_startup(struct uart_port *port)
 	chan->mcr = 0;
 	chan->fcr = 0;
 	chan->ier = UART_IER_RLSI | UART_IER_RDI | UART_IER_THRI;
+
+
+	chan->efcr = EFCR_RTSCON | EFCR_RTSINVER; // Enable RS-485. FIXME: user generic interface
+
 	spin_unlock_irqrestore(&chan->uart.lock, flags);
 
 	sc16is7x2_write(ts, UART_FCR, ch, UART_FCR_ENABLE_FIFO |
@@ -740,6 +750,9 @@ static int sc16is7x2_startup(struct uart_port *port)
 	sc16is7x2_write(ts, UART_LCR, ch, chan->lcr);
 	sc16is7x2_write(ts, UART_MCR, ch, chan->mcr);
 	sc16is7x2_write(ts, UART_IER, ch, chan->ier);
+
+	sc16is7x2_write(ts, REG_EFCR, ch, chan->efcr);  // RS-485. FIXME: user generic interface
+
 
 	return 0;
 }
