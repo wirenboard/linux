@@ -60,7 +60,18 @@
 struct mxs_spi {
 	struct mxs_ssp		ssp;
 	struct completion	c;
+
+	unsigned		num_gpio_cs;
+	int				cs_gpios[0];
 };
+
+/* controller state */
+struct spi_mxs_cs {
+	bool gpio_claimed;
+	int gpio;
+};
+
+
 
 static int mxs_spi_setup_transfer(struct spi_device *dev,
 				struct spi_transfer *t)
@@ -95,6 +106,21 @@ static int mxs_spi_setup_transfer(struct spi_device *dev,
 static int mxs_spi_setup(struct spi_device *dev)
 {
 	int err = 0;
+	struct mxs_spi *spi = spi_master_get_devdata(dev->master);
+	struct spi_mxs_cs *cs = dev->controller_state;
+
+	//~ dev_err(&dev->dev, "%s[%i] start %d\n", __func__, __LINE__, dev->controller_state);
+
+	if (!cs) {
+		cs = kzalloc(sizeof *cs, GFP_KERNEL);
+		if (!cs)
+			return -ENOMEM;
+		dev->controller_state = cs;
+
+		cs->gpio_claimed = 0;
+		cs->gpio = -1;
+	}
+
 
 	if (!dev->bits_per_word)
 		dev->bits_per_word = 8;
@@ -106,9 +132,59 @@ static int mxs_spi_setup(struct spi_device *dev)
 	if (err) {
 		dev_err(&dev->dev,
 			"Failed to setup transfer, error = %d\n", err);
+		return err;
+ 	}
+
+
+
+	if (dev->chip_select >= (dev->master->num_chipselect - spi->num_gpio_cs)) {
+		cs->gpio = spi->cs_gpios[dev->chip_select - dev->master->num_chipselect + spi->num_gpio_cs];
+		if (!cs->gpio_claimed) {
+			dev_err(&dev->dev,
+				"gpio index %d, gpio_cs %d\n", dev->chip_select - dev->master->num_chipselect + spi->num_gpio_cs, cs->gpio);
+
+			err = gpio_request(cs->gpio, dev_name(&dev->dev));
+
+			if (err) {
+				dev_err(&dev->dev,
+					"Failed to request gpio %d, error = %d\n", cs->gpio, err);
+				return err;
+			}
+
+			err = gpio_direction_output(cs->gpio, 1);
+
+			if (err) {
+				dev_err(&dev->dev,
+					"Failed to set gpio %d as output, error = %d\n", cs->gpio, err);
+
+				gpio_free(cs->gpio);
+				return err;
+			}
+
+			cs->gpio_claimed = 1;
+		}
+
+	}
+	return err;
+}
+
+static void mxs_spi_cleanup(struct spi_device *dev)
+{
+	struct spi_mxs_cs *cs = dev->controller_state;
+
+	dev_err(&dev->dev, "%s[%i] start\n", __func__, __LINE__);
+
+	if (!cs) {
+		return;
 	}
 
-	return err;
+	if (cs->gpio >= 0) {
+		if (cs->gpio_claimed) {
+			gpio_free(cs->gpio);
+		}
+	}
+
+	kfree(cs);
 }
 
 static uint32_t mxs_spi_cs_to_reg(unsigned cs)
@@ -202,7 +278,7 @@ static irqreturn_t mxs_ssp_irq_handler(int irq, void *dev_id)
 
 static int mxs_spi_txrx_dma(struct mxs_spi *spi, int cs,
 			    unsigned char *buf, int len,
-			    int *first, int *last, int write)
+			    int *first, int *last, int write, int use_cs)
 {
 	struct mxs_ssp *ssp = &spi->ssp;
 	struct dma_async_tx_descriptor *desc = NULL;
@@ -222,6 +298,10 @@ static int mxs_spi_txrx_dma(struct mxs_spi *spi, int cs,
 	if (!len)
 		return -EINVAL;
 
+	//~ dev_err(ssp->dev, "mxs_spi_txrx_dma cs=%d, len=%d, write=%d, use_cs=%d \n", cs, len, write, use_cs);
+	//~ dev_err(ssp->dev, "mxs_spi_txrx_dma %x %x %x %x %x %x %x %x \n", buf[0],buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
+
+
 	dma_xfer = kzalloc(sizeof(*dma_xfer) * sgs, GFP_KERNEL);
 	if (!dma_xfer)
 		return -ENOMEM;
@@ -232,7 +312,7 @@ static int mxs_spi_txrx_dma(struct mxs_spi *spi, int cs,
 	ctrl0 &= ~BM_SSP_CTRL0_XFER_COUNT;
 	ctrl0 |= BM_SSP_CTRL0_DATA_XFER | mxs_spi_cs_to_reg(cs);
 
-	if (*first)
+	if (*first && use_cs)
 		ctrl0 |= BM_SSP_CTRL0_LOCK_CS;
 	if (!write)
 		ctrl0 |= BM_SSP_CTRL0_READ;
@@ -334,14 +414,18 @@ err_mapped:
 
 static int mxs_spi_txrx_pio(struct mxs_spi *spi, int cs,
 			    unsigned char *buf, int len,
-			    int *first, int *last, int write)
+			    int *first, int *last, int write, int use_cs)
 {
 	struct mxs_ssp *ssp = &spi->ssp;
+
+	//~ dev_err(ssp->dev, "mxs_spi_txrx_pio cs=%d, len=%d, write=%d, use_cs=%d \n", cs, len, write, use_cs);
 
 	if (*first)
 		mxs_spi_enable(spi);
 
-	mxs_spi_set_cs(spi, cs);
+	if (use_cs)
+		mxs_spi_set_cs(spi, cs);
+
 
 	while (len--) {
 		if (*last && len == 0)
@@ -404,10 +488,18 @@ static int mxs_spi_transfer_one(struct spi_master *master,
 	struct spi_transfer *t, *tmp_t;
 	int status = 0;
 	int cs;
+	int cs_gpio = ((struct spi_mxs_cs*) m->spi->controller_state)->gpio;
 
 	first = last = 0;
 
 	cs = m->spi->chip_select;
+
+
+	if (cs_gpio > -1) {
+		gpio_set_value(cs_gpio, 0);
+	}
+
+
 
 	list_for_each_entry_safe(t, tmp_t, &m->transfers, transfer_list) {
 
@@ -435,7 +527,8 @@ static int mxs_spi_transfer_one(struct spi_master *master,
 		 * DMA only: 2.164808 seconds, 473.0KB/s
 		 * Combined: 1.676276 seconds, 610.9KB/s
 		 */
-		if (t->len < 32) {
+		//~ if (t->len < 32) {
+		if (1) {
 			writel(BM_SSP_CTRL1_DMA_ENABLE,
 				ssp->base + HW_SSP_CTRL1(ssp) +
 				STMP_OFFSET_REG_CLR);
@@ -443,11 +536,11 @@ static int mxs_spi_transfer_one(struct spi_master *master,
 			if (t->tx_buf)
 				status = mxs_spi_txrx_pio(spi, cs,
 						(void *)t->tx_buf,
-						t->len, &first, &last, 1);
+						t->len, &first, &last, 1, (cs_gpio < 0));
 			if (t->rx_buf)
 				status = mxs_spi_txrx_pio(spi, cs,
 						t->rx_buf, t->len,
-						&first, &last, 0);
+						&first, &last, 0, (cs_gpio < 0));
 		} else {
 			writel(BM_SSP_CTRL1_DMA_ENABLE,
 				ssp->base + HW_SSP_CTRL1(ssp) +
@@ -456,11 +549,11 @@ static int mxs_spi_transfer_one(struct spi_master *master,
 			if (t->tx_buf)
 				status = mxs_spi_txrx_dma(spi, cs,
 						(void *)t->tx_buf, t->len,
-						&first, &last, 1);
+						&first, &last, 1, (cs_gpio < 0));
 			if (t->rx_buf)
 				status = mxs_spi_txrx_dma(spi, cs,
 						t->rx_buf, t->len,
-						&first, &last, 0);
+						&first, &last, 0, (cs_gpio < 0));
 		}
 
 		if (status) {
@@ -471,6 +564,11 @@ static int mxs_spi_transfer_one(struct spi_master *master,
 		m->actual_length += t->len;
 		first = last = 0;
 	}
+
+	if (cs_gpio >= 0) {
+		gpio_set_value(cs_gpio, 1);
+	}
+
 
 	m->status = status;
 	spi_finalize_current_message(master);
@@ -499,6 +597,8 @@ static int mxs_spi_probe(struct platform_device *pdev)
 	int devid, clk_freq;
 	int ret = 0, irq_err;
 
+	int num_gpio_cs;
+
 	/*
 	 * Default clock speed for the SPI core. 160MHz seems to
 	 * work reasonably well with most SPI flashes, so use this
@@ -525,19 +625,40 @@ static int mxs_spi_probe(struct platform_device *pdev)
 	if (ret)
 		clk_freq = clk_freq_default;
 
-	master = spi_alloc_master(&pdev->dev, sizeof(*spi));
+	if (np) {
+		num_gpio_cs = of_gpio_named_count(np, "cs-gpios");
+		dev_info(&pdev->dev, "cs-gpios count: %d\n", num_gpio_cs);
+		if (num_gpio_cs < 0) {
+			num_gpio_cs = 0;
+		}
+	} else {
+		num_gpio_cs = 0;
+	}
+
+
+	master = spi_alloc_master(&pdev->dev, sizeof(*spi) + (sizeof(int) * num_gpio_cs));
 	if (!master)
 		return -ENOMEM;
 
 	master->transfer_one_message = mxs_spi_transfer_one;
 	master->setup = mxs_spi_setup;
+	master->cleanup = mxs_spi_cleanup;
 	master->bits_per_word_mask = SPI_BPW_MASK(8);
 	master->mode_bits = SPI_CPOL | SPI_CPHA;
-	master->num_chipselect = 3;
+	master->num_chipselect = 3 + num_gpio_cs;
 	master->dev.of_node = np;
 	master->flags = SPI_MASTER_HALF_DUPLEX;
 
 	spi = spi_master_get_devdata(master);
+
+	spi->num_gpio_cs = num_gpio_cs;
+	if (np) {
+		int i;
+		for (i = 0; i < spi->num_gpio_cs; i++)
+			spi->cs_gpios[i] =
+				of_get_named_gpio(np, "cs-gpios", i);
+	}
+
 	ssp = &spi->ssp;
 	ssp->dev = &pdev->dev;
 	ssp->clk = clk;
@@ -576,6 +697,7 @@ static int mxs_spi_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "Cannot register SPI master, %d\n", ret);
 		goto out_disable_clk;
 	}
+
 
 	return 0;
 
