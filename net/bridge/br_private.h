@@ -126,7 +126,6 @@ struct net_bridge_mdb_entry
 	struct timer_list		timer;
 	struct br_ip			addr;
 	bool				mglist;
-	bool				timer_armed;
 };
 
 struct net_bridge_mdb_htable
@@ -452,7 +451,8 @@ extern int br_ioctl_deviceless_stub(struct net *net, unsigned int cmd, void __us
 extern unsigned int br_mdb_rehash_seq;
 extern int br_multicast_rcv(struct net_bridge *br,
 			    struct net_bridge_port *port,
-			    struct sk_buff *skb);
+			    struct sk_buff *skb,
+			    u16 vid);
 extern struct net_bridge_mdb_entry *br_mdb_get(struct net_bridge *br,
 					       struct sk_buff *skb, u16 vid);
 extern void br_multicast_add_port(struct net_bridge_port *port);
@@ -523,7 +523,8 @@ static inline bool br_multicast_querier_exists(struct net_bridge *br,
 #else
 static inline int br_multicast_rcv(struct net_bridge *br,
 				   struct net_bridge_port *port,
-				   struct sk_buff *skb)
+				   struct sk_buff *skb,
+				   u16 vid)
 {
 	return 0;
 }
@@ -643,9 +644,7 @@ static inline u16 br_get_pvid(const struct net_port_vlans *v)
 	 * vid wasn't set
 	 */
 	smp_rmb();
-	return (v->pvid & VLAN_TAG_PRESENT) ?
-			(v->pvid & ~VLAN_TAG_PRESENT) :
-			VLAN_N_VID;
+	return v->pvid ?: VLAN_N_VID;
 }
 
 #else

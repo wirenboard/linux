@@ -22,6 +22,32 @@
 #define PTR_SUB(x, y) (((char *) (x)) - ((unsigned long) (y)))
 #define PTR_DIFF(x, y) ((unsigned long)(((char *) (x)) - ((unsigned long) (y))))
 
+struct dump_save_areas dump_save_areas;
+
+/*
+ * Allocate and add a save area for a CPU
+ */
+struct save_area *dump_save_area_create(int cpu)
+{
+	struct save_area **save_areas, *save_area;
+
+	save_area = kmalloc(sizeof(*save_area), GFP_KERNEL);
+	if (!save_area)
+		return NULL;
+	if (cpu + 1 > dump_save_areas.count) {
+		dump_save_areas.count = cpu + 1;
+		save_areas = krealloc(dump_save_areas.areas,
+				      dump_save_areas.count * sizeof(void *),
+				      GFP_KERNEL | __GFP_ZERO);
+		if (!save_areas) {
+			kfree(save_area);
+			return NULL;
+		}
+		dump_save_areas.areas = save_areas;
+	}
+	dump_save_areas.areas[cpu] = save_area;
+	return save_area;
+}
 
 /*
  * Return physical address for virtual address
@@ -40,28 +66,25 @@ static inline void *load_real_addr(void *addr)
 }
 
 /*
- * Copy up to one page to vmalloc or real memory
+ * Copy real to virtual or real memory
  */
-static ssize_t copy_page_real(void *buf, void *src, size_t csize)
+static int copy_from_realmem(void *dest, void *src, size_t count)
 {
-	size_t size;
+	unsigned long size;
 
-	if (is_vmalloc_addr(buf)) {
-		BUG_ON(csize >= PAGE_SIZE);
-		/* If buf is not page aligned, copy first part */
-		size = min(roundup(__pa(buf), PAGE_SIZE) - __pa(buf), csize);
-		if (size) {
-			if (memcpy_real(load_real_addr(buf), src, size))
-				return -EFAULT;
-			buf += size;
-			src += size;
-		}
-		/* Copy second part */
-		size = csize - size;
-		return (size) ? memcpy_real(load_real_addr(buf), src, size) : 0;
-	} else {
-		return memcpy_real(buf, src, csize);
-	}
+	if (!count)
+		return 0;
+	if (!is_vmalloc_or_module_addr(dest))
+		return memcpy_real(dest, src, count);
+	do {
+		size = min(count, PAGE_SIZE - (__pa(dest) & ~PAGE_MASK));
+		if (memcpy_real(load_real_addr(dest), src, size))
+			return -EFAULT;
+		count -= size;
+		dest += size;
+		src += size;
+	} while (count);
+	return 0;
 }
 
 /*
@@ -114,7 +137,7 @@ static ssize_t copy_oldmem_page_kdump(char *buf, size_t csize,
 		rc = copy_to_user_real((void __force __user *) buf,
 				       (void *) src, csize);
 	else
-		rc = copy_page_real(buf, (void *) src, csize);
+		rc = copy_from_realmem(buf, (void *) src, csize);
 	return (rc == 0) ? rc : csize;
 }
 
@@ -210,7 +233,7 @@ int copy_from_oldmem(void *dest, void *src, size_t count)
 	if (OLDMEM_BASE) {
 		if ((unsigned long) src < OLDMEM_SIZE) {
 			copied = min(count, OLDMEM_SIZE - (unsigned long) src);
-			rc = memcpy_real(dest, src + OLDMEM_BASE, copied);
+			rc = copy_from_realmem(dest, src + OLDMEM_BASE, copied);
 			if (rc)
 				return rc;
 		}
@@ -223,7 +246,7 @@ int copy_from_oldmem(void *dest, void *src, size_t count)
 				return rc;
 		}
 	}
-	return memcpy_real(dest + copied, src + copied, count - copied);
+	return copy_from_realmem(dest + copied, src + copied, count - copied);
 }
 
 /*
@@ -453,8 +476,8 @@ static int get_cpu_cnt(void)
 {
 	int i, cpus = 0;
 
-	for (i = 0; zfcpdump_save_areas[i]; i++) {
-		if (zfcpdump_save_areas[i]->pref_reg == 0)
+	for (i = 0; i < dump_save_areas.count; i++) {
+		if (dump_save_areas.areas[i]->pref_reg == 0)
 			continue;
 		cpus++;
 	}
@@ -525,8 +548,8 @@ static void *notes_init(Elf64_Phdr *phdr, void *ptr, u64 notes_offset)
 
 	ptr = nt_prpsinfo(ptr);
 
-	for (i = 0; zfcpdump_save_areas[i]; i++) {
-		sa = zfcpdump_save_areas[i];
+	for (i = 0; i < dump_save_areas.count; i++) {
+		sa = dump_save_areas.areas[i];
 		if (sa->pref_reg == 0)
 			continue;
 		ptr = fill_cpu_elf_notes(ptr, sa);

@@ -1131,7 +1131,10 @@ qlcnic_initialize_nic(struct qlcnic_adapter *adapter)
 		if (err == -EIO)
 			return err;
 		adapter->ahw->extra_capability[0] = temp;
+	} else {
+		adapter->ahw->extra_capability[0] = 0;
 	}
+
 	adapter->ahw->max_mac_filters = nic_info.max_mac_filters;
 	adapter->ahw->max_mtu = nic_info.max_mtu;
 
@@ -2159,8 +2162,7 @@ void qlcnic_set_drv_version(struct qlcnic_adapter *adapter)
 	else if (qlcnic_83xx_check(adapter))
 		fw_cmd = QLCNIC_CMD_83XX_SET_DRV_VER;
 
-	if ((ahw->capabilities & QLCNIC_FW_CAPABILITY_MORE_CAPS) &&
-	    (ahw->extra_capability[0] & QLCNIC_FW_CAPABILITY_SET_DRV_VER))
+	if (ahw->extra_capability[0] & QLCNIC_FW_CAPABILITY_SET_DRV_VER)
 		qlcnic_fw_cmd_set_drv_version(adapter, fw_cmd);
 }
 
@@ -2257,7 +2259,7 @@ qlcnic_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	err = qlcnic_alloc_adapter_resources(adapter);
 	if (err)
-		goto err_out_free_netdev;
+		goto err_out_free_wq;
 
 	adapter->dev_rst_time = jiffies;
 	adapter->ahw->revision_id = pdev->revision;
@@ -2395,6 +2397,9 @@ err_out_disable_msi:
 
 err_out_free_hw:
 	qlcnic_free_adapter_resources(adapter);
+
+err_out_free_wq:
+	destroy_workqueue(adapter->qlcnic_wq);
 
 err_out_free_netdev:
 	free_netdev(netdev);
@@ -3648,11 +3653,6 @@ int qlcnic_validate_max_tx_rings(struct qlcnic_adapter *adapter, u32 txq)
 	u8 max_hw = QLCNIC_MAX_TX_RINGS;
 	u32 max_allowed;
 
-	if (!qlcnic_82xx_check(adapter)) {
-		netdev_err(netdev, "No Multi TX-Q support\n");
-		return -EINVAL;
-	}
-
 	if (!qlcnic_use_msi_x && !qlcnic_use_msi) {
 		netdev_err(netdev, "No Multi TX-Q support in INT-x mode\n");
 		return -EINVAL;
@@ -3692,8 +3692,7 @@ int qlcnic_validate_max_rss(struct qlcnic_adapter *adapter,
 	u8 max_hw = adapter->ahw->max_rx_ques;
 	u32 max_allowed;
 
-	if (qlcnic_82xx_check(adapter) && !qlcnic_use_msi_x &&
-	    !qlcnic_use_msi) {
+	if (!qlcnic_use_msi_x && !qlcnic_use_msi) {
 		netdev_err(netdev, "No RSS support in INT-x mode\n");
 		return -EINVAL;
 	}
