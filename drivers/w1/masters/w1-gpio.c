@@ -58,8 +58,6 @@ static void w1_gpio_write_bit_val(void *data, u8 bit)
 	struct w1_gpio_platform_data *pdata = data;
 
 	gpio_set_value(pdata->pin, bit);
-
-	printk(KERN_ERR, "w1_gpio_write_bit_val: %d\n" , bit);
 }
 
 static u8 w1_gpio_read_bit(void *data)
