@@ -91,6 +91,7 @@
 				};
 
 
+
 			};
 
 			ssp1: ssp@80034000 {
@@ -103,6 +104,7 @@
 				cs-gpios = <&gpio0 17 0
 							&gpio2 28 0
 							&gpio1 20 0
+							&gpio2 27 0 /* 91 	25 @ CON2 	UEXT2 CS/GPIO */
 							>;
 
 
@@ -157,6 +159,26 @@
 					spi-max-frequency = <1000000>;
 					reg = <5>;
 				};
+
+
+				/* UEXT2 SPI */
+			/*	spidev@6 {
+					compatible = "spidev";
+					spi-max-frequency = <100000>;
+					reg = <6>;
+				};*/
+
+
+/*
+				6lowpan@0 {
+					compatible = "microchip,mrf24j40";
+					spi-max-frequency = <100000>;
+					reg = <6>;
+					interrupt-parent = <&gpio1>;
+					interrupts = <21 0>;
+				};
+*/
+
 
 
 /* mcp23s08 crashes kernel for unknown reason */
@@ -221,6 +243,21 @@
 				dmas = <&dma_apbx 0>, <&dma_apbx 1>;
 				dma-names = "rx", "tx";
 			};
+
+
+			/* Uncomment to use PWM instead of gpio-60  */
+			/*
+			pwm: pwm@80064000 {
+		            pinctrl-names = "default";
+		            pinctrl-0 = <&pwm2_pins_a>;
+		            status = "okay";
+		    };
+		    */
+
+
+
+
+
 		};
 	};
 
@@ -249,4 +286,33 @@
 		audio-codec = <&codec>;
 		cpu-dai = <&platform_dai>;
 	};
+
+
+
+
+	/* Uncomment to enable 1-wire network on GPIO2 (terminal block 9) */
+	/*
+	onewire@0 {
+		compatible = "w1-gpio";
+		gpios = <&gpio0 2 0>;
+	};
+	*/
+
+	/* Uncomment to enable 1-wire network on GPIO3 (terminal block 10) */
+	/*
+	onewire@1 {
+		compatible = "w1-gpio";
+		gpios = <&gpio0 3 0>;
+	};
+	*/
+
+	/* Uncomment to enable 1-wire network on GPIO4 (terminal block 11) */
+	/*
+	onewire@2 {
+		compatible = "w1-gpio";
+		gpios = <&gpio0 4 0>;
+	};
+	*/
+
+
 };
