@@ -74,6 +74,7 @@
 #define BOOKE_INTERRUPT_GUEST_DBELL_CRIT 39
 #define BOOKE_INTERRUPT_HV_SYSCALL 40
 #define BOOKE_INTERRUPT_HV_PRIV 41
+#define BOOKE_INTERRUPT_LRAT_ERROR 42
 
 /* book3s */
 
@@ -123,6 +124,8 @@
 #define BOOK3S_HFLAG_SLB			0x2
 #define BOOK3S_HFLAG_PAIRED_SINGLE		0x4
 #define BOOK3S_HFLAG_NATIVE_PS			0x8
+#define BOOK3S_HFLAG_MULTI_PGSIZE		0x10
+#define BOOK3S_HFLAG_NEW_TLBIE			0x20
 
 #define RESUME_FLAG_NV          (1<<0)  /* Reload guest nonvolatile state? */
 #define RESUME_FLAG_HOST        (1<<1)  /* Resume host? */
@@ -136,6 +139,8 @@
 #define KVM_GUEST_MODE_NONE	0
 #define KVM_GUEST_MODE_GUEST	1
 #define KVM_GUEST_MODE_SKIP	2
+#define KVM_GUEST_MODE_GUEST_HV	3
+#define KVM_GUEST_MODE_HOST_HV	4
 
 #define KVM_INST_FETCH_FAILED	-1
 

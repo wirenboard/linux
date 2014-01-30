@@ -541,6 +541,7 @@ static struct ib_ucontext *mlx5_ib_alloc_ucontext(struct ib_device *ibdev,
 	struct mlx5_ib_ucontext *context;
 	struct mlx5_uuar_info *uuari;
 	struct mlx5_uar *uars;
+	int gross_uuars;
 	int num_uars;
 	int uuarn;
 	int err;
@@ -559,11 +560,13 @@ static struct ib_ucontext *mlx5_ib_alloc_ucontext(struct ib_device *ibdev,
 	if (req.total_num_uuars == 0)
 		return ERR_PTR(-EINVAL);
 
-	req.total_num_uuars = ALIGN(req.total_num_uuars, MLX5_BF_REGS_PER_PAGE);
+	req.total_num_uuars = ALIGN(req.total_num_uuars,
+				    MLX5_NON_FP_BF_REGS_PER_PAGE);
 	if (req.num_low_latency_uuars > req.total_num_uuars - 1)
 		return ERR_PTR(-EINVAL);
 
-	num_uars = req.total_num_uuars / MLX5_BF_REGS_PER_PAGE;
+	num_uars = req.total_num_uuars / MLX5_NON_FP_BF_REGS_PER_PAGE;
+	gross_uuars = num_uars * MLX5_BF_REGS_PER_PAGE;
 	resp.qp_tab_size      = 1 << dev->mdev.caps.log_max_qp;
 	resp.bf_reg_size      = dev->mdev.caps.bf_reg_size;
 	resp.cache_line_size  = L1_CACHE_BYTES;
@@ -585,7 +588,7 @@ static struct ib_ucontext *mlx5_ib_alloc_ucontext(struct ib_device *ibdev,
 		goto out_ctx;
 	}
 
-	uuari->bitmap = kcalloc(BITS_TO_LONGS(req.total_num_uuars),
+	uuari->bitmap = kcalloc(BITS_TO_LONGS(gross_uuars),
 				sizeof(*uuari->bitmap),
 				GFP_KERNEL);
 	if (!uuari->bitmap) {
@@ -595,13 +598,13 @@ static struct ib_ucontext *mlx5_ib_alloc_ucontext(struct ib_device *ibdev,
 	/*
 	 * clear all fast path uuars
 	 */
-	for (i = 0; i < req.total_num_uuars; i++) {
+	for (i = 0; i < gross_uuars; i++) {
 		uuarn = i & 3;
 		if (uuarn == 2 || uuarn == 3)
 			set_bit(i, uuari->bitmap);
 	}
 
-	uuari->count = kcalloc(req.total_num_uuars, sizeof(*uuari->count), GFP_KERNEL);
+	uuari->count = kcalloc(gross_uuars, sizeof(*uuari->count), GFP_KERNEL);
 	if (!uuari->count) {
 		err = -ENOMEM;
 		goto out_bitmap;
@@ -745,7 +748,8 @@ static int alloc_pa_mkey(struct mlx5_ib_dev *dev, u32 *key, u32 pdn)
 	seg->qpn_mkey7_0 = cpu_to_be32(0xffffff << 8);
 	seg->start_addr = 0;
 
-	err = mlx5_core_create_mkey(&dev->mdev, &mr, in, sizeof(*in));
+	err = mlx5_core_create_mkey(&dev->mdev, &mr, in, sizeof(*in),
+				    NULL, NULL, NULL);
 	if (err) {
 		mlx5_ib_warn(dev, "failed to create mkey, %d\n", err);
 		goto err_in;

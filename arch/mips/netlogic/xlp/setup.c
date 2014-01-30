@@ -92,13 +92,12 @@ static void __init xlp_init_mem_from_bars(void)
 
 void __init plat_mem_setup(void)
 {
-	panic_timeout	= 5;
 	_machine_restart = (void (*)(char *))nlm_linux_exit;
 	_machine_halt	= nlm_linux_exit;
 	pm_power_off	= nlm_linux_exit;
 
 	/* memory and bootargs from DT */
-	early_init_devtree(initial_boot_params);
+	xlp_early_init_devtree();
 
 	if (boot_mem_map.nr_map == 0) {
 		pr_info("Using DRAM BARs for memory map.\n");

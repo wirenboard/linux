@@ -57,6 +57,8 @@
 #include <linux/bitops.h>
 #include <linux/sysrq.h>
 #include <linux/mutex.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 #include <asm/sections.h>
 #include <asm/io.h>
 #include <asm/irq.h>
@@ -2049,6 +2051,9 @@ static int __init pmz_console_init(void)
 {
 	/* Probe ports */
 	pmz_probe();
+
+	if (pmz_ports_count == 0)
+		return -ENODEV;
 
 	/* TODO: Autoprobe console based on OF */
 	/* pmz_console.index = i; */

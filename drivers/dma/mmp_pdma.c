@@ -798,8 +798,7 @@ static void dma_do_tasklet(unsigned long data)
 		 * move the descriptors to a temporary list so we can drop
 		 * the lock during the entire cleanup operation
 		 */
-		list_del(&desc->node);
-		list_add(&desc->node, &chain_cleanup);
+		list_move(&desc->node, &chain_cleanup);
 
 		/*
 		 * Look for the first list entry which has the ENDIRQEN flag
@@ -863,7 +862,7 @@ static int mmp_pdma_chan_init(struct mmp_pdma_device *pdev,
 
 	if (irq) {
 		ret = devm_request_irq(pdev->dev, irq,
-			mmp_pdma_chan_handler, IRQF_DISABLED, "pdma", phy);
+			mmp_pdma_chan_handler, 0, "pdma", phy);
 		if (ret) {
 			dev_err(pdev->dev, "channel request irq fail!\n");
 			return ret;
@@ -894,33 +893,17 @@ static struct dma_chan *mmp_pdma_dma_xlate(struct of_phandle_args *dma_spec,
 					   struct of_dma *ofdma)
 {
 	struct mmp_pdma_device *d = ofdma->of_dma_data;
-	struct dma_chan *chan, *candidate;
+	struct dma_chan *chan;
+	struct mmp_pdma_chan *c;
 
-retry:
-	candidate = NULL;
-
-	/* walk the list of channels registered with the current instance and
-	 * find one that is currently unused */
-	list_for_each_entry(chan, &d->device.channels, device_node)
-		if (chan->client_count == 0) {
-			candidate = chan;
-			break;
-		}
-
-	if (!candidate)
+	chan = dma_get_any_slave_channel(&d->device);
+	if (!chan)
 		return NULL;
 
-	/* dma_get_slave_channel will return NULL if we lost a race between
-	 * the lookup and the reservation */
-	chan = dma_get_slave_channel(candidate);
+	c = to_mmp_pdma_chan(chan);
+	c->drcmr = dma_spec->args[0];
 
-	if (chan) {
-		struct mmp_pdma_chan *c = to_mmp_pdma_chan(chan);
-		c->drcmr = dma_spec->args[0];
-		return chan;
-	}
-
-	goto retry;
+	return chan;
 }
 
 static int mmp_pdma_probe(struct platform_device *op)
@@ -970,7 +953,7 @@ static int mmp_pdma_probe(struct platform_device *op)
 		/* all chan share one irq, demux inside */
 		irq = platform_get_irq(op, 0);
 		ret = devm_request_irq(pdev->dev, irq,
-			mmp_pdma_int_handler, IRQF_DISABLED, "pdma", pdev);
+			mmp_pdma_int_handler, 0, "pdma", pdev);
 		if (ret)
 			return ret;
 	}
@@ -1018,6 +1001,7 @@ static int mmp_pdma_probe(struct platform_device *op)
 		}
 	}
 
+	platform_set_drvdata(op, pdev);
 	dev_info(pdev->device.dev, "initialized %d channels\n", dma_channels);
 	return 0;
 }

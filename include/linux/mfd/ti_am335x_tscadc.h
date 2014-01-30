@@ -134,13 +134,18 @@
 #define FIFO1_THRESHOLD		19
 
 /*
-* ADC runs at 3MHz, and it takes
-* 15 cycles to latch one data output.
-* Hence the idle time for ADC to
-* process one sample data would be
-* around 5 micro seconds.
-*/
-#define IDLE_TIMEOUT 5 /* microsec */
+ * time in us for processing a single channel, calculated as follows:
+ *
+ * num cycles = open delay + (sample delay + conv time) * averaging
+ *
+ * num cycles: 152 + (1 + 13) * 16 = 376
+ *
+ * clock frequency: 26MHz / 8 = 3.25MHz
+ * clock period: 1 / 3.25MHz = 308ns
+ *
+ * processing time: 376 * 308ns = 116us
+ */
+#define IDLE_TIMEOUT 116 /* microsec */
 
 #define TSCADC_CELLS		2
 
@@ -154,7 +159,11 @@ struct ti_tscadc_dev {
 	int adc_cell;	/* -1 if not used */
 	struct mfd_cell cells[TSCADC_CELLS];
 	u32 reg_se_cache;
+	bool adc_waiting;
+	bool adc_in_use;
+	wait_queue_head_t reg_se_wait;
 	spinlock_t reg_lock;
+	unsigned int clk_div;
 
 	/* tsc device */
 	struct titsc *tsc;
@@ -170,8 +179,9 @@ static inline struct ti_tscadc_dev *ti_tscadc_dev_get(struct platform_device *p)
 	return *tscadc_dev;
 }
 
-void am335x_tsc_se_update(struct ti_tscadc_dev *tsadc);
-void am335x_tsc_se_set(struct ti_tscadc_dev *tsadc, u32 val);
+void am335x_tsc_se_set_cache(struct ti_tscadc_dev *tsadc, u32 val);
+void am335x_tsc_se_set_once(struct ti_tscadc_dev *tsadc, u32 val);
 void am335x_tsc_se_clr(struct ti_tscadc_dev *tsadc, u32 val);
+void am335x_tsc_se_adc_done(struct ti_tscadc_dev *tsadc);
 
 #endif

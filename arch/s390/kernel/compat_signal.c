@@ -49,7 +49,7 @@ typedef struct
 	__u32 gprs_high[NUM_GPRS];
 } rt_sigframe32;
 
-int copy_siginfo_to_user32(compat_siginfo_t __user *to, siginfo_t *from)
+int copy_siginfo_to_user32(compat_siginfo_t __user *to, const siginfo_t *from)
 {
 	int err;
 
@@ -194,7 +194,7 @@ static int restore_sigregs32(struct pt_regs *regs,_sigregs32 __user *sregs)
 		return -EINVAL;
 
 	/* Use regs->psw.mask instead of PSW_USER_BITS to preserve PER bit. */
-	regs->psw.mask = (regs->psw.mask & ~PSW_MASK_USER) |
+	regs->psw.mask = (regs->psw.mask & ~(PSW_MASK_USER | PSW_MASK_RI)) |
 		(__u64)(user_sregs.regs.psw.mask & PSW32_MASK_USER) << 32 |
 		(__u64)(user_sregs.regs.psw.mask & PSW32_MASK_RI) << 32 |
 		(__u64)(user_sregs.regs.psw.addr & PSW32_ADDR_AMODE);
@@ -412,8 +412,9 @@ static int setup_rt_frame32(int sig, struct k_sigaction *ka, siginfo_t *info,
 		regs->gprs[14] = (__u64 __force) ka->sa.sa_restorer | PSW32_ADDR_AMODE;
 	} else {
 		regs->gprs[14] = (__u64 __force) frame->retcode | PSW32_ADDR_AMODE;
-		err |= __put_user(S390_SYSCALL_OPCODE | __NR_rt_sigreturn,
-				  (u16 __force __user *)(frame->retcode));
+		if (__put_user(S390_SYSCALL_OPCODE | __NR_rt_sigreturn,
+			       (u16 __force __user *)(frame->retcode)))
+			goto give_sigsegv;
 	}
 
 	/* Set up backchain. */

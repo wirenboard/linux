@@ -23,6 +23,7 @@
 #include <linux/irq.h>
 #include <linux/seq_file.h>
 #include <linux/of.h>
+#include <linux/of_fdt.h>
 #include <linux/interrupt.h>
 #include <linux/bug.h>
 
@@ -144,8 +145,10 @@ static void pnv_shutdown(void)
 	/* Let the PCI code clear up IODA tables */
 	pnv_pci_shutdown();
 
-	/* And unregister all OPAL interrupts so they don't fire
-	 * up while we kexec
+	/*
+	 * Stop OPAL activity: Unregister all OPAL interrupts so they
+	 * don't fire up while we kexec and make sure all potentially
+	 * DMA'ing ops are complete (such as dump retrieval).
 	 */
 	opal_shutdown();
 }

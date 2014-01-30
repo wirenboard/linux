@@ -70,7 +70,6 @@
 #include <linux/unistd.h>
 #include <linux/slab.h>
 #include <linux/interrupt.h>
-#include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
@@ -78,6 +77,8 @@
 #include <linux/if_vlan.h>
 #include <linux/spinlock.h>
 #include <linux/mm.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 #include <linux/of_mdio.h>
 #include <linux/of_platform.h>
 #include <linux/ip.h>
@@ -793,8 +794,7 @@ err_grp_init:
 	return err;
 }
 
-static int gfar_hwtstamp_ioctl(struct net_device *netdev,
-			       struct ifreq *ifr, int cmd)
+static int gfar_hwtstamp_set(struct net_device *netdev, struct ifreq *ifr)
 {
 	struct hwtstamp_config config;
 	struct gfar_private *priv = netdev_priv(netdev);
@@ -843,7 +843,20 @@ static int gfar_hwtstamp_ioctl(struct net_device *netdev,
 		-EFAULT : 0;
 }
 
-/* Ioctl MII Interface */
+static int gfar_hwtstamp_get(struct net_device *netdev, struct ifreq *ifr)
+{
+	struct hwtstamp_config config;
+	struct gfar_private *priv = netdev_priv(netdev);
+
+	config.flags = 0;
+	config.tx_type = priv->hwts_tx_en ? HWTSTAMP_TX_ON : HWTSTAMP_TX_OFF;
+	config.rx_filter = (priv->hwts_rx_en ?
+			    HWTSTAMP_FILTER_ALL : HWTSTAMP_FILTER_NONE);
+
+	return copy_to_user(ifr->ifr_data, &config, sizeof(config)) ?
+		-EFAULT : 0;
+}
+
 static int gfar_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 {
 	struct gfar_private *priv = netdev_priv(dev);
@@ -852,7 +865,9 @@ static int gfar_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		return -EINVAL;
 
 	if (cmd == SIOCSHWTSTAMP)
-		return gfar_hwtstamp_ioctl(dev, rq, cmd);
+		return gfar_hwtstamp_set(dev, rq);
+	if (cmd == SIOCGHWTSTAMP)
+		return gfar_hwtstamp_get(dev, rq);
 
 	if (!priv->phydev)
 		return -ENODEV;
@@ -2918,7 +2933,7 @@ static int gfar_poll(struct napi_struct *napi, int budget)
 	struct gfar_priv_rx_q *rx_queue = NULL;
 	int work_done = 0, work_done_per_q = 0;
 	int i, budget_per_q = 0;
-	int has_tx_work;
+	int has_tx_work = 0;
 	unsigned long rstat_rxf;
 	int num_act_queues;
 
@@ -2933,62 +2948,51 @@ static int gfar_poll(struct napi_struct *napi, int budget)
 	if (num_act_queues)
 		budget_per_q = budget/num_act_queues;
 
-	while (1) {
-		has_tx_work = 0;
-		for_each_set_bit(i, &gfargrp->tx_bit_map, priv->num_tx_queues) {
-			tx_queue = priv->tx_queue[i];
-			/* run Tx cleanup to completion */
-			if (tx_queue->tx_skbuff[tx_queue->skb_dirtytx]) {
-				gfar_clean_tx_ring(tx_queue);
-				has_tx_work = 1;
-			}
+	for_each_set_bit(i, &gfargrp->tx_bit_map, priv->num_tx_queues) {
+		tx_queue = priv->tx_queue[i];
+		/* run Tx cleanup to completion */
+		if (tx_queue->tx_skbuff[tx_queue->skb_dirtytx]) {
+			gfar_clean_tx_ring(tx_queue);
+			has_tx_work = 1;
 		}
+	}
 
-		for_each_set_bit(i, &gfargrp->rx_bit_map, priv->num_rx_queues) {
-			/* skip queue if not active */
-			if (!(rstat_rxf & (RSTAT_CLEAR_RXF0 >> i)))
-				continue;
+	for_each_set_bit(i, &gfargrp->rx_bit_map, priv->num_rx_queues) {
+		/* skip queue if not active */
+		if (!(rstat_rxf & (RSTAT_CLEAR_RXF0 >> i)))
+			continue;
 
-			rx_queue = priv->rx_queue[i];
-			work_done_per_q =
-				gfar_clean_rx_ring(rx_queue, budget_per_q);
-			work_done += work_done_per_q;
+		rx_queue = priv->rx_queue[i];
+		work_done_per_q =
+			gfar_clean_rx_ring(rx_queue, budget_per_q);
+		work_done += work_done_per_q;
 
-			/* finished processing this queue */
-			if (work_done_per_q < budget_per_q) {
-				/* clear active queue hw indication */
-				gfar_write(&regs->rstat,
-					   RSTAT_CLEAR_RXF0 >> i);
-				rstat_rxf &= ~(RSTAT_CLEAR_RXF0 >> i);
-				num_act_queues--;
+		/* finished processing this queue */
+		if (work_done_per_q < budget_per_q) {
+			/* clear active queue hw indication */
+			gfar_write(&regs->rstat,
+				   RSTAT_CLEAR_RXF0 >> i);
+			num_act_queues--;
 
-				if (!num_act_queues)
-					break;
-				/* recompute budget per Rx queue */
-				budget_per_q =
-					(budget - work_done) / num_act_queues;
-			}
+			if (!num_act_queues)
+				break;
 		}
+	}
 
-		if (work_done >= budget)
-			break;
+	if (!num_act_queues && !has_tx_work) {
 
-		if (!num_act_queues && !has_tx_work) {
+		napi_complete(napi);
 
-			napi_complete(napi);
+		/* Clear the halt bit in RSTAT */
+		gfar_write(&regs->rstat, gfargrp->rstat);
 
-			/* Clear the halt bit in RSTAT */
-			gfar_write(&regs->rstat, gfargrp->rstat);
+		gfar_write(&regs->imask, IMASK_DEFAULT);
 
-			gfar_write(&regs->imask, IMASK_DEFAULT);
-
-			/* If we are coalescing interrupts, update the timer
-			 * Otherwise, clear it
-			 */
-			gfar_configure_coalescing(priv, gfargrp->rx_bit_map,
-						  gfargrp->tx_bit_map);
-			break;
-		}
+		/* If we are coalescing interrupts, update the timer
+		 * Otherwise, clear it
+		 */
+		gfar_configure_coalescing(priv, gfargrp->rx_bit_map,
+					  gfargrp->tx_bit_map);
 	}
 
 	return work_done;

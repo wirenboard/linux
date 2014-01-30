@@ -40,8 +40,6 @@
 #include <asm/mmu_context.h>
 #include <asm/epapr_hcalls.h>
 
-#include "setup.h"
-
 #define DBG(fmt...)
 
 extern void bootx_init(unsigned long r4, unsigned long phys);
@@ -297,9 +295,6 @@ void __init setup_arch(char **cmdline_p)
 	ucache_bsize = 0;
 	if (cpu_has_feature(CPU_FTR_UNIFIED_ID_CACHE))
 		ucache_bsize = icache_bsize = dcache_bsize;
-
-	/* reboot on panic */
-	panic_timeout = 180;
 
 	if (ppc_md.panic)
 		setup_panic();

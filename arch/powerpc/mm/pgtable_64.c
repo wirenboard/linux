@@ -33,7 +33,6 @@
 #include <linux/swap.h>
 #include <linux/stddef.h>
 #include <linux/vmalloc.h>
-#include <linux/init.h>
 #include <linux/bootmem.h>
 #include <linux/memblock.h>
 #include <linux/slab.h>
@@ -153,6 +152,18 @@ int map_kernel_page(unsigned long ea, unsigned long pa, int flags)
 		}
 #endif /* !CONFIG_PPC_MMU_NOHASH */
 	}
+
+#ifdef CONFIG_PPC_BOOK3E_64
+	/*
+	 * With hardware tablewalk, a sync is needed to ensure that
+	 * subsequent accesses see the PTE we just wrote.  Unlike userspace
+	 * mappings, we can't tolerate spurious faults, so make sure
+	 * the new PTE will be seen the first time.
+	 */
+	mb();
+#else
+	smp_wmb();
+#endif
 	return 0;
 }
 
@@ -378,6 +389,10 @@ static pte_t *__alloc_for_cache(struct mm_struct *mm, int kernel)
 				       __GFP_REPEAT | __GFP_ZERO);
 	if (!page)
 		return NULL;
+	if (!kernel && !pgtable_page_ctor(page)) {
+		__free_page(page);
+		return NULL;
+	}
 
 	ret = page_address(page);
 	spin_lock(&mm->page_table_lock);
@@ -391,9 +406,6 @@ static pte_t *__alloc_for_cache(struct mm_struct *mm, int kernel)
 		mm->context.pte_frag = ret + PTE_FRAG_SIZE;
 	}
 	spin_unlock(&mm->page_table_lock);
-
-	if (!kernel)
-		pgtable_page_ctor(page);
 
 	return (pte_t *)ret;
 }
@@ -686,7 +698,7 @@ void set_pmd_at(struct mm_struct *mm, unsigned long addr,
 		pmd_t *pmdp, pmd_t pmd)
 {
 #ifdef CONFIG_DEBUG_VM
-	WARN_ON(!pmd_none(*pmdp));
+	WARN_ON(pmd_val(*pmdp) & _PAGE_PRESENT);
 	assert_spin_locked(&mm->page_table_lock);
 	WARN_ON(!pmd_trans_huge(pmd));
 #endif

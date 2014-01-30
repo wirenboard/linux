@@ -38,7 +38,7 @@ static void mic_reset(struct mic_device *mdev)
 
 #define MIC_RESET_TO (45)
 
-	INIT_COMPLETION(mdev->reset_wait);
+	reinit_completion(&mdev->reset_wait);
 	mdev->ops->reset_fw_ready(mdev);
 	mdev->ops->reset(mdev);
 
@@ -62,7 +62,7 @@ void mic_bootparam_init(struct mic_device *mdev)
 {
 	struct mic_bootparam *bootparam = mdev->dp;
 
-	bootparam->magic = MIC_MAGIC;
+	bootparam->magic = cpu_to_le32(MIC_MAGIC);
 	bootparam->c2h_shutdown_db = mdev->shutdown_db;
 	bootparam->h2c_shutdown_db = -1;
 	bootparam->h2c_config_db = -1;

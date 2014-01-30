@@ -5,7 +5,7 @@
  *
  * GPL LICENSE SUMMARY
  *
- * Copyright(c) 2012 - 2013 Intel Corporation. All rights reserved.
+ * Copyright(c) 2012 - 2014 Intel Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
@@ -30,7 +30,7 @@
  *
  * BSD LICENSE
  *
- * Copyright(c) 2012 - 2013 Intel Corporation. All rights reserved.
+ * Copyright(c) 2012 - 2014 Intel Corporation. All rights reserved.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -253,8 +253,7 @@ static void iwl_mvm_set_tx_cmd_crypto(struct iwl_mvm *mvm,
 		memcpy(&tx_cmd->key[3], keyconf->key, keyconf->keylen);
 		break;
 	default:
-		IWL_ERR(mvm, "Unknown encode cipher %x\n", keyconf->cipher);
-		break;
+		tx_cmd->sec_ctl |= TX_CMD_SEC_EXT;
 	}
 }
 
@@ -276,6 +275,7 @@ iwl_mvm_set_tx_params(struct iwl_mvm *mvm, struct sk_buff *skb,
 		return NULL;
 
 	memset(dev_cmd, 0, sizeof(*dev_cmd));
+	dev_cmd->hdr.cmd = TX_CMD;
 	tx_cmd = (struct iwl_tx_cmd *)dev_cmd->payload;
 
 	if (info->control.hw_key)
@@ -361,7 +361,7 @@ int iwl_mvm_tx_skb(struct iwl_mvm *mvm, struct sk_buff *skb,
 	u8 txq_id = info->hw_queue;
 	bool is_data_qos = false, is_ampdu = false;
 
-	mvmsta = (void *)sta->drv_priv;
+	mvmsta = iwl_mvm_sta_from_mac80211(sta);
 	fc = hdr->frame_control;
 
 	if (WARN_ON_ONCE(!mvmsta))
@@ -390,7 +390,6 @@ int iwl_mvm_tx_skb(struct iwl_mvm *mvm, struct sk_buff *skb,
 		seq_number &= IEEE80211_SCTL_SEQ;
 		hdr->seq_ctrl &= cpu_to_le16(IEEE80211_SCTL_FRAG);
 		hdr->seq_ctrl |= cpu_to_le16(seq_number);
-		seq_number += 0x10;
 		is_data_qos = true;
 		is_ampdu = info->flags & IEEE80211_TX_CTL_AMPDU;
 	}
@@ -407,17 +406,17 @@ int iwl_mvm_tx_skb(struct iwl_mvm *mvm, struct sk_buff *skb,
 	}
 
 	IWL_DEBUG_TX(mvm, "TX to [%d|%d] Q:%d - seq: 0x%x\n", mvmsta->sta_id,
-		     tid, txq_id, seq_number);
+		     tid, txq_id, IEEE80211_SEQ_TO_SN(seq_number));
 
 	if (iwl_trans_tx(mvm->trans, skb, dev_cmd, txq_id))
 		goto drop_unlock_sta;
 
 	if (is_data_qos && !ieee80211_has_morefrags(fc))
-		mvmsta->tid_data[tid].seq_number = seq_number;
+		mvmsta->tid_data[tid].seq_number = seq_number + 0x10;
 
 	spin_unlock(&mvmsta->lock);
 
-	if (txq_id < IWL_MVM_FIRST_AGG_QUEUE)
+	if (txq_id < mvm->first_agg_queue)
 		atomic_inc(&mvm->pending_frames[mvmsta->sta_id]);
 
 	return 0;
@@ -432,7 +431,7 @@ drop:
 static void iwl_mvm_check_ratid_empty(struct iwl_mvm *mvm,
 				      struct ieee80211_sta *sta, u8 tid)
 {
-	struct iwl_mvm_sta *mvmsta = (void *)sta->drv_priv;
+	struct iwl_mvm_sta *mvmsta = iwl_mvm_sta_from_mac80211(sta);
 	struct iwl_mvm_tid_data *tid_data = &mvmsta->tid_data[tid];
 	struct ieee80211_vif *vif = mvmsta->vif;
 
@@ -511,16 +510,10 @@ const char *iwl_mvm_get_tx_fail_reason(u32 status)
 }
 #endif /* CONFIG_IWLWIFI_DEBUG */
 
-/**
- * translate ucode response to mac80211 tx status control values
- */
-static void iwl_mvm_hwrate_to_tx_control(u32 rate_n_flags,
-					 struct ieee80211_tx_info *info)
+void iwl_mvm_hwrate_to_tx_rate(u32 rate_n_flags,
+			       enum ieee80211_band band,
+			       struct ieee80211_tx_rate *r)
 {
-	struct ieee80211_tx_rate *r = &info->status.rates[0];
-
-	info->status.antenna =
-		((rate_n_flags & RATE_MCS_ANT_ABC_MSK) >> RATE_MCS_ANT_POS);
 	if (rate_n_flags & RATE_HT_MCS_GF_MSK)
 		r->flags |= IEEE80211_TX_RC_GREEN_FIELD;
 	switch (rate_n_flags & RATE_MCS_CHAN_WIDTH_MSK) {
@@ -549,8 +542,21 @@ static void iwl_mvm_hwrate_to_tx_control(u32 rate_n_flags,
 		r->flags |= IEEE80211_TX_RC_VHT_MCS;
 	} else {
 		r->idx = iwl_mvm_legacy_rate_to_mac80211_idx(rate_n_flags,
-							     info->band);
+							     band);
 	}
+}
+
+/**
+ * translate ucode response to mac80211 tx status control values
+ */
+static void iwl_mvm_hwrate_to_tx_status(u32 rate_n_flags,
+					struct ieee80211_tx_info *info)
+{
+	struct ieee80211_tx_rate *r = &info->status.rates[0];
+
+	info->status.antenna =
+		((rate_n_flags & RATE_MCS_ANT_ABC_MSK) >> RATE_MCS_ANT_POS);
+	iwl_mvm_hwrate_to_tx_rate(rate_n_flags, info->band, r);
 }
 
 static void iwl_mvm_rx_tx_cmd_single(struct iwl_mvm *mvm,
@@ -602,11 +608,11 @@ static void iwl_mvm_rx_tx_cmd_single(struct iwl_mvm *mvm,
 		}
 
 		info->status.rates[0].count = tx_resp->failure_frame + 1;
-		iwl_mvm_hwrate_to_tx_control(le32_to_cpu(tx_resp->initial_rate),
-					     info);
+		iwl_mvm_hwrate_to_tx_status(le32_to_cpu(tx_resp->initial_rate),
+					    info);
 
 		/* Single frame failure in an AMPDU queue => send BAR */
-		if (txq_id >= IWL_MVM_FIRST_AGG_QUEUE &&
+		if (txq_id >= mvm->first_agg_queue &&
 		    !(info->flags & IEEE80211_TX_STAT_ACK))
 			info->flags |= IEEE80211_TX_STAT_AMPDU_NO_BACK;
 
@@ -619,7 +625,7 @@ static void iwl_mvm_rx_tx_cmd_single(struct iwl_mvm *mvm,
 		ieee80211_tx_status_ni(mvm->hw, skb);
 	}
 
-	if (txq_id >= IWL_MVM_FIRST_AGG_QUEUE) {
+	if (txq_id >= mvm->first_agg_queue) {
 		/* If this is an aggregation queue, we use the ssn since:
 		 * ssn = wifi seq_num % 256.
 		 * The seq_ctl is the sequence control of the packet to which
@@ -655,7 +661,7 @@ static void iwl_mvm_rx_tx_cmd_single(struct iwl_mvm *mvm,
 	sta = rcu_dereference(mvm->fw_id_to_mac_id[sta_id]);
 
 	if (!IS_ERR_OR_NULL(sta)) {
-		mvmsta = (void *)sta->drv_priv;
+		mvmsta = iwl_mvm_sta_from_mac80211(sta);
 
 		if (tid != IWL_TID_NON_QOS) {
 			struct iwl_mvm_tid_data *tid_data =
@@ -668,10 +674,6 @@ static void iwl_mvm_rx_tx_cmd_single(struct iwl_mvm *mvm,
 			iwl_mvm_check_ratid_empty(mvm, sta, tid);
 			spin_unlock_bh(&mvmsta->lock);
 		}
-
-#ifdef CONFIG_PM_SLEEP
-		mvmsta->last_seq_ctl = seq_ctl;
-#endif
 	} else {
 		sta = NULL;
 		mvmsta = NULL;
@@ -681,7 +683,7 @@ static void iwl_mvm_rx_tx_cmd_single(struct iwl_mvm *mvm,
 	 * If the txq is not an AMPDU queue, there is no chance we freed
 	 * several skbs. Check that out...
 	 */
-	if (txq_id < IWL_MVM_FIRST_AGG_QUEUE && !WARN_ON(skb_freed > 1) &&
+	if (txq_id < mvm->first_agg_queue && !WARN_ON(skb_freed > 1) &&
 	    atomic_sub_and_test(skb_freed, &mvm->pending_frames[sta_id])) {
 		if (mvmsta) {
 			/*
@@ -701,7 +703,7 @@ static void iwl_mvm_rx_tx_cmd_single(struct iwl_mvm *mvm,
 			 */
 			spin_lock_bh(&mvmsta->lock);
 			sta = rcu_dereference(mvm->fw_id_to_mac_id[sta_id]);
-			if (IS_ERR_OR_NULL(sta)) {
+			if (!sta || PTR_ERR(sta) == -EBUSY) {
 				/*
 				 * Station disappeared in the meantime:
 				 * so we are draining.
@@ -710,7 +712,7 @@ static void iwl_mvm_rx_tx_cmd_single(struct iwl_mvm *mvm,
 				schedule_work(&mvm->sta_drained_wk);
 			}
 			spin_unlock_bh(&mvmsta->lock);
-		} else if (!mvmsta) {
+		} else if (!mvmsta && PTR_ERR(sta) == -EBUSY) {
 			/* Tx response without STA, so we are draining */
 			set_bit(sta_id, mvm->sta_drained);
 			schedule_work(&mvm->sta_drained_wk);
@@ -777,7 +779,7 @@ static void iwl_mvm_rx_tx_cmd_agg(struct iwl_mvm *mvm,
 	u16 sequence = le16_to_cpu(pkt->hdr.sequence);
 	struct ieee80211_sta *sta;
 
-	if (WARN_ON_ONCE(SEQ_TO_QUEUE(sequence) < IWL_MVM_FIRST_AGG_QUEUE))
+	if (WARN_ON_ONCE(SEQ_TO_QUEUE(sequence) < mvm->first_agg_queue))
 		return;
 
 	if (WARN_ON_ONCE(tid == IWL_TID_NON_QOS))
@@ -790,7 +792,7 @@ static void iwl_mvm_rx_tx_cmd_agg(struct iwl_mvm *mvm,
 	sta = rcu_dereference(mvm->fw_id_to_mac_id[sta_id]);
 
 	if (!WARN_ON_ONCE(IS_ERR_OR_NULL(sta))) {
-		struct iwl_mvm_sta *mvmsta = (void *)sta->drv_priv;
+		struct iwl_mvm_sta *mvmsta = iwl_mvm_sta_from_mac80211(sta);
 		mvmsta->tid_data[tid].rate_n_flags =
 			le32_to_cpu(tx_resp->initial_rate);
 	}
@@ -846,7 +848,7 @@ int iwl_mvm_rx_ba_notif(struct iwl_mvm *mvm, struct iwl_rx_cmd_buffer *rxb,
 		return 0;
 	}
 
-	mvmsta = (void *)sta->drv_priv;
+	mvmsta = iwl_mvm_sta_from_mac80211(sta);
 	tid_data = &mvmsta->tid_data[tid];
 
 	if (WARN_ONCE(tid_data->txq_id != scd_flow, "Q %d, tid %d, flow %d",
@@ -904,8 +906,8 @@ int iwl_mvm_rx_ba_notif(struct iwl_mvm *mvm, struct iwl_rx_cmd_buffer *rxb,
 			info->flags |= IEEE80211_TX_STAT_AMPDU;
 			info->status.ampdu_ack_len = ba_notif->txed_2_done;
 			info->status.ampdu_len = ba_notif->txed;
-			iwl_mvm_hwrate_to_tx_control(tid_data->rate_n_flags,
-						     info);
+			iwl_mvm_hwrate_to_tx_status(tid_data->rate_n_flags,
+						    info);
 		}
 	}
 

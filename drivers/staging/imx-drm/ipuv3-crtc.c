@@ -218,7 +218,8 @@ static irqreturn_t ipu_irq_handler(int irq, void *dev_id)
 
 	if (ipu_crtc->newfb) {
 		ipu_crtc->newfb = NULL;
-		ipu_plane_set_base(ipu_crtc->plane[0], ipu_crtc->base.fb, 0, 0);
+		ipu_plane_set_base(ipu_crtc->plane[0], ipu_crtc->base.fb,
+				ipu_crtc->plane[0]->x, ipu_crtc->plane[0]->y);
 		ipu_crtc_handle_pageflip(ipu_crtc);
 	}
 
@@ -407,7 +408,9 @@ static int ipu_drm_probe(struct platform_device *pdev)
 	if (!pdata)
 		return -EINVAL;
 
-	pdev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
+	ret = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
+	if (ret)
+		return ret;
 
 	ipu_crtc = devm_kzalloc(&pdev->dev, sizeof(*ipu_crtc), GFP_KERNEL);
 	if (!ipu_crtc)

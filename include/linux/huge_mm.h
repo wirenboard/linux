@@ -54,7 +54,8 @@ enum page_check_address_pmd_flag {
 extern pmd_t *page_check_address_pmd(struct page *page,
 				     struct mm_struct *mm,
 				     unsigned long address,
-				     enum page_check_address_pmd_flag flag);
+				     enum page_check_address_pmd_flag flag,
+				     spinlock_t **ptl);
 
 #define HPAGE_PMD_ORDER (HPAGE_PMD_SHIFT-PAGE_SHIFT)
 #define HPAGE_PMD_NR (1<<HPAGE_PMD_ORDER)
@@ -129,15 +130,15 @@ extern void __vma_adjust_trans_huge(struct vm_area_struct *vma,
 				    unsigned long start,
 				    unsigned long end,
 				    long adjust_next);
-extern int __pmd_trans_huge_lock(pmd_t *pmd,
-				 struct vm_area_struct *vma);
+extern int __pmd_trans_huge_lock(pmd_t *pmd, struct vm_area_struct *vma,
+		spinlock_t **ptl);
 /* mmap_sem must be held on entry */
-static inline int pmd_trans_huge_lock(pmd_t *pmd,
-				      struct vm_area_struct *vma)
+static inline int pmd_trans_huge_lock(pmd_t *pmd, struct vm_area_struct *vma,
+		spinlock_t **ptl)
 {
 	VM_BUG_ON(!rwsem_is_locked(&vma->vm_mm->mmap_sem));
 	if (pmd_trans_huge(*pmd))
-		return __pmd_trans_huge_lock(pmd, vma);
+		return __pmd_trans_huge_lock(pmd, vma, ptl);
 	else
 		return 0;
 }
@@ -156,6 +157,26 @@ static inline int hpage_nr_pages(struct page *page)
 		return HPAGE_PMD_NR;
 	return 1;
 }
+/*
+ * compound_trans_head() should be used instead of compound_head(),
+ * whenever the "page" passed as parameter could be the tail of a
+ * transparent hugepage that could be undergoing a
+ * __split_huge_page_refcount(). The page structure layout often
+ * changes across releases and it makes extensive use of unions. So if
+ * the page structure layout will change in a way that
+ * page->first_page gets clobbered by __split_huge_page_refcount, the
+ * implementation making use of smp_rmb() will be required.
+ *
+ * Currently we define compound_trans_head as compound_head, because
+ * page->private is in the same union with page->first_page, and
+ * page->private isn't clobbered. However this also means we're
+ * currently leaving dirt into the page->private field of anonymous
+ * pages resulting from a THP split, instead of setting page->private
+ * to zero like for every other page that has PG_private not set. But
+ * anonymous pages don't use page->private so this is not a problem.
+ */
+#if 0
+/* This will be needed if page->private will be clobbered in split_huge_page */
 static inline struct page *compound_trans_head(struct page *page)
 {
 	if (PageTail(page)) {
@@ -173,6 +194,9 @@ static inline struct page *compound_trans_head(struct page *page)
 	}
 	return page;
 }
+#else
+#define compound_trans_head(page) compound_head(page)
+#endif
 
 extern int do_huge_pmd_numa_page(struct mm_struct *mm, struct vm_area_struct *vma,
 				unsigned long addr, pmd_t pmd, pmd_t *pmdp);
@@ -215,8 +239,8 @@ static inline void vma_adjust_trans_huge(struct vm_area_struct *vma,
 					 long adjust_next)
 {
 }
-static inline int pmd_trans_huge_lock(pmd_t *pmd,
-				      struct vm_area_struct *vma)
+static inline int pmd_trans_huge_lock(pmd_t *pmd, struct vm_area_struct *vma,
+		spinlock_t **ptl)
 {
 	return 0;
 }

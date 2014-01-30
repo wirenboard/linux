@@ -77,7 +77,7 @@ static int clps711x_gpio_remove(struct platform_device *pdev)
 	return bgpio_remove(bgc);
 }
 
-static const struct of_device_id clps711x_gpio_ids[] = {
+static const struct of_device_id __maybe_unused clps711x_gpio_ids[] = {
 	{ .compatible = "cirrus,clps711x-gpio" },
 	{ }
 };
