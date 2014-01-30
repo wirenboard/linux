@@ -12,7 +12,7 @@
  */
 
 /dts-v1/;
-/include/ "imx23.dtsi"
+#include "imx23.dtsi"
 
 / {
 	model = "Wiren Board rev. 2.8 (i.MX23)";
