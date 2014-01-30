@@ -109,32 +109,13 @@
 				pinctrl-names = "default";
 				pinctrl-0 = <&spi2_pins_nocs>;
 				status = "okay";
-				cs-gpios = <&gpio0 3 0 /* cs0 */
-							&gpio2 28 0
-							&gpio1 20 0
-							&gpio2 27 0 /* 91 	25 @ CON2 	UEXT2 CS/GPIO */
+				cs-gpios = <&gpio0 3 0 /* cs0 fixme: use hardware cs directly*/
+							&gpio2 27 0 /* 91  25 @ CON2  MCP2515 chip select */
+							&gpio1 19 0 /* 51  27 @ CON1  RFM69H chip select  */
+							&gpio1 4 0  /* 36  7  @ CON1  NRF24L01 chip select   */
+							/* FIXME: add UEXT */
 							>;
 
-
-
-				spidev0: spidev@0 {
-					compatible = "spidev";
-					spi-max-frequency = <1000000>;
-					reg = <0>;
-				};
-
-
-				spidev1: spidev@1 {
-					compatible = "spidev";
-					spi-max-frequency = <1000000>;
-					reg = <1>;
-				};
-
-				spidev2: spidev@2 {
-					compatible = "spidev";
-					spi-max-frequency = <1000000>;
-					reg = <2>;
-				};
 
 
 				sc16is7x2@0 {
@@ -150,26 +131,21 @@
 				};
 
 
-/*				spidev@3 {
-					compatible = "spidev";
-					spi-max-frequency = <1000000>;
-					reg = <3>;
-				};
-*/
-				spidev@4 {
-					compatible = "spidev";
-					spi-max-frequency = <1000000>;
+
+
+				can0: mcp2515@6 {
+					compatible = "microchip,mcp2515";
 					reg = <4>;
+					spi-max-frequency = <100000>;
+
+					clocks = <&clk16m>;
+
+					interrupt-parent = <&gpio2>;
+					interrupts = <28 0>;  /* gpio 92, 24@con2 */
 				};
 
-				spidev@5 {
-					compatible = "spidev";
-					spi-max-frequency = <1000000>;
-					reg = <5>;
-				};
 
-
-				/* UEXT2 SPI */
+				/* FIXME: UEXT2 SPI */
 			/*	spidev@6 {
 					compatible = "spidev";
 					spi-max-frequency = <100000>;
@@ -177,47 +153,6 @@
 				};*/
 
 
-/*
-				6lowpan@0 {
-					compatible = "microchip,mrf24j40";
-					spi-max-frequency = <100000>;
-					reg = <6>;
-					interrupt-parent = <&gpio1>;
-					interrupts = <21 0>;
-				};
-*/
-
-
-
-/* mcp23s08 crashes kernel for unknown reason */
-/*
-			gpiom2: gpio@5 {
-						compatible = "microchip,mcp23s08";
-						gpio-controller;
-						#gpio-cells = <2>;
-						microchip,spi-present-mask = <0x01>;
-						reg = <5>;
-						spi-max-frequency = <100000>;
-						addr = <0>;
-						base = <120>;
-				};
-*/
-
-
-
-
-
-             can0: mcp2515@6 {
-               compatible = "microchip,mcp2515";
-               reg = <6>;
-               spi-max-frequency = <100000>;
-
-               clocks = <&clk16m>;
-
-               interrupt-parent = <&gpio2>;
-			   interrupts = <28 0>;  /* gpio 92, 24@con2 */
-
-            };
 
 
 
@@ -325,31 +260,29 @@
 
 
 
-	/* Uncomment to enable 1-wire network on GPIO2 (terminal block 9) */
-	/*
+	/* Enable 1-wire network on GPIO4 (terminal block W1) */
+	onewire@0 {
+		compatible = "w1-gpio";
+		gpios = <&gpio0 4 0>;
+	};
+
+	/* Enable 1-wire network on GPIO2 (terminal block W2) */
 	onewire@0 {
 		compatible = "w1-gpio";
 		gpios = <&gpio0 2 0>;
 	};
-	*/
 
-	/* Uncomment to enable 1-wire network on GPIO3 (terminal block 10) */
-
+	/* (uncomment to) Enable 1-wire network on GPIO1 (terminal block W3) */
 	/*
-	onewire@1 {
+	onewire@0 {
 		compatible = "w1-gpio";
-		gpios = <&gpio0 3 0>;
+		gpios = <&gpio0 1 0>;
 	};
 	*/
 
 
-	/* Uncomment to enable 1-wire network on GPIO4 (terminal block 11) */
-	/*
-	onewire@2 {
-		compatible = "w1-gpio";
-		gpios = <&gpio0 4 0>;
-	};
-	*/
+
+
 
 
 	i2c2@0 {
