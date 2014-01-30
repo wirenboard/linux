@@ -267,14 +267,14 @@
 	};
 
 	/* Enable 1-wire network on GPIO2 (terminal block W2) */
-	onewire@0 {
+	onewire@1 {
 		compatible = "w1-gpio";
 		gpios = <&gpio0 2 0>;
 	};
 
 	/* (uncomment to) Enable 1-wire network on GPIO1 (terminal block W3) */
 	/*
-	onewire@0 {
+	onewire@2 {
 		compatible = "w1-gpio";
 		gpios = <&gpio0 1 0>;
 	};
