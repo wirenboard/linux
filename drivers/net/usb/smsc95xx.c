@@ -1162,7 +1162,7 @@ static int smsc95xx_gpio_request(struct gpio_chip *gpio, unsigned offset)
 		//~ else
 
 		val |= BIT(type_shift);
-		val |= BIT(smsc95xx_gpio_get_dir_offset(offset));
+		val &= ~BIT(smsc95xx_gpio_get_dir_offset(offset));
 
 		ret = smsc95xx_write_reg(pdata->dev, reg, val);
 	}
@@ -1285,7 +1285,7 @@ static int smsc95xx_gpio_get(struct gpio_chip *gpio, unsigned offset)
 		return -EINVAL;
 	}
 
-	return val & BIT(smsc95xx_gpio_get_val_offset(offset));
+	return (val >> smsc95xx_gpio_get_val_offset(offset)) & 0x01;
 }
 
 static void smsc95xx_gpio_set(struct gpio_chip *gpio, unsigned offset, int value)
