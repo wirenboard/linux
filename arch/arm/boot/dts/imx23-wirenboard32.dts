@@ -112,8 +112,9 @@
 				cs-gpios = <&gpio0 3 0 /* cs0 fixme: use hardware cs directly*/
 							&gpio2 27 0 /* 91  25 @ CON2  MCP2515 chip select */
 							&gpio1 19 0 /* 51  27 @ CON1  RFM69H chip select  */
-							&gpio1 4 0  /* 36  7  @ CON1  NRF24L01 chip select   */
-							/* FIXME: add UEXT */
+							&gpio1 3 0  /* 35  6  @ CON1  NRF24L01 chip select   */
+
+							&gpio1 6 0  /* 38  9  @ CON1  UEXT chip select   */
 							>;
 
 
@@ -145,13 +146,27 @@
 				};
 
 
-				/* FIXME: UEXT2 SPI */
-			/*	spidev@6 {
+				/* RFM69 spidev */
+				spidev@5 {
+					compatible = "spidev";
+					spi-max-frequency = <100000>;
+					reg = <5>;
+				};
+
+				/* NRF24 spidev */
+				spidev@6 {
 					compatible = "spidev";
 					spi-max-frequency = <100000>;
 					reg = <6>;
-				};*/
+				};
 
+
+				/* UEXT1 spidev */
+				spidev@7 {
+					compatible = "spidev";
+					spi-max-frequency = <100000>;
+					reg = <7>;
+				};
 
 
 
