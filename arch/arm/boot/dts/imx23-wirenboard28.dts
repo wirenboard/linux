@@ -162,11 +162,11 @@
 
 
 				/* UEXT2 SPI */
-			/*	spidev@6 {
+				spidev@6 {
 					compatible = "spidev";
 					spi-max-frequency = <100000>;
 					reg = <6>;
-				};*/
+				};
 
 
 /*
