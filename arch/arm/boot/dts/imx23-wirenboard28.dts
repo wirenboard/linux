@@ -58,6 +58,41 @@
 					fsl,pull-up = <0>;
 				};
 
+
+				pin_gpio_pu_0_2: pin_gpio_pu_0_2@0 {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						0x0023 /* MX23_PAD_GPMI_D02__GPIO_0_2 */
+
+					>;
+					fsl,drive-strength = <0>;
+					fsl,voltage = <1>;
+					fsl,pull-up = <1>;
+				};
+
+				pin_gpio_pu_0_3: pin_gpio_pu_0_3@0 {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						0x0033 /* MX23_PAD_GPMI_D03__GPIO_0_3 */
+
+					>;
+					fsl,drive-strength = <0>;
+					fsl,voltage = <1>;
+					fsl,pull-up = <1>;
+				};
+
+				pin_gpio_pu_0_4: pin_gpio_pu_0_4@0 {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						0x0043 /* MX23_PAD_GPMI_D04__GPIO_0_4 */
+
+					>;
+					fsl,drive-strength = <0>;
+					fsl,voltage = <1>;
+					fsl,pull-up = <1>;
+				};
+
+
 				i2c_gpio: i2c_gpio {
 					reg = <0>;
 					fsl,pinmux-ids = <
@@ -246,13 +281,13 @@
 
 
 			/* Uncomment to use PWM instead of gpio-60  */
-			/*
+
 			pwm: pwm@80064000 {
 		            pinctrl-names = "default";
 		            pinctrl-0 = <&pwm2_pins_a>;
 		            status = "okay";
 		    };
-		    */
+
 
 
 
@@ -265,7 +300,13 @@
 		usb0: usb@80080000 {
 		    /*vbus-supply = <&reg_33v_bus>;*/
 			status = "okay";
+
+
+
 		};
+
+
+
 	};
 
 
@@ -285,6 +326,27 @@
 		compatible = "fsl,mxs-builtin-audio";
 		audio-codec = <&codec>;
 		cpu-dai = <&platform_dai>;
+	};
+
+
+
+	/* enable 47K pull-ups for TB9-TB11 gpios */
+	single-gpio0_2@0 {
+			pinctrl-names = "default";
+			pinctrl-0 = <&pin_gpio_pu_0_2>;
+			status = "okay";
+	};
+
+	single-gpio0_3@0 {
+			pinctrl-names = "default";
+			pinctrl-0 = <&pin_gpio_pu_0_3>;
+			status = "okay";
+	};
+
+	single-gpio0_4@0 {
+			pinctrl-names = "default";
+			pinctrl-0 = <&pin_gpio_pu_0_4>;
+			status = "okay";
 	};
 
 
@@ -313,6 +375,9 @@
 		gpios = <&gpio0 4 0>;
 	};
 	*/
+
+
+
 
 
 };
