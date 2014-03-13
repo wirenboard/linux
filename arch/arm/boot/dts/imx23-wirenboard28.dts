@@ -48,16 +48,6 @@
 					fsl,pull-up = <0>;
 				};
 
-				led_pin_gpio2_1: led_gpio2_1@0 {
-					reg = <0>;
-					fsl,pinmux-ids = <
-						0x2013 /* MX23_PAD_SSP1_DETECT__GPIO_2_1 */
-					>;
-					fsl,drive-strength = <0>;
-					fsl,voltage = <1>;
-					fsl,pull-up = <0>;
-				};
-
 
 				pin_gpio_pu_0_2: pin_gpio_pu_0_2@0 {
 					reg = <0>;
@@ -94,6 +84,17 @@
 					fsl,voltage = <1>;
 					/* enable 47K pull-up for TB11 gpio */
 					fsl,pull-up = <1>;
+				};
+
+
+				led_pin_gpio2_1: led_gpio2_1@0 {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						0x2013 /* MX23_PAD_SSP1_DETECT__GPIO_2_1 */
+					>;
+					fsl,drive-strength = <0>;
+					fsl,voltage = <1>;
+					fsl,pull-up = <0>;
 				};
 
 
