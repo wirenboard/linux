@@ -35,7 +35,7 @@
 
 			pinctrl@80018000 {
 				pinctrl-names = "default";
-				pinctrl-0 = <&hog_pins_a>;
+				pinctrl-0 = <&hog_pins_a &pin_gpio_pu_0_2 &pin_gpio_pu_0_3 &pin_gpio_pu_0_4>;
 
 				hog_pins_a: hog@0 {
 					reg = <0>;
@@ -67,6 +67,7 @@
 					>;
 					fsl,drive-strength = <0>;
 					fsl,voltage = <1>;
+					/* enable 47K pull-up for TB9 gpio */
 					fsl,pull-up = <1>;
 				};
 
@@ -78,6 +79,8 @@
 					>;
 					fsl,drive-strength = <0>;
 					fsl,voltage = <1>;
+
+					/* enable 47K pull-up for TB10 gpios */
 					fsl,pull-up = <1>;
 				};
 
@@ -89,6 +92,7 @@
 					>;
 					fsl,drive-strength = <0>;
 					fsl,voltage = <1>;
+					/* enable 47K pull-up for TB11 gpio */
 					fsl,pull-up = <1>;
 				};
 
@@ -326,28 +330,15 @@
 		compatible = "fsl,mxs-builtin-audio";
 		audio-codec = <&codec>;
 		cpu-dai = <&platform_dai>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&pin_gpio_pu_0_2>;
+
+
 	};
 
 
 
-	/* enable 47K pull-ups for TB9-TB11 gpios */
-	single-gpio0_2@0 {
-			pinctrl-names = "default";
-			pinctrl-0 = <&pin_gpio_pu_0_2>;
-			status = "okay";
-	};
-
-	single-gpio0_3@0 {
-			pinctrl-names = "default";
-			pinctrl-0 = <&pin_gpio_pu_0_3>;
-			status = "okay";
-	};
-
-	single-gpio0_4@0 {
-			pinctrl-names = "default";
-			pinctrl-0 = <&pin_gpio_pu_0_4>;
-			status = "okay";
-	};
 
 
 
