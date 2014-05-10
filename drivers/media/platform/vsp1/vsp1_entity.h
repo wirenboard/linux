@@ -1,7 +1,7 @@
 /*
  * vsp1_entity.h  --  R-Car VSP1 Base Entity
  *
- * Copyright (C) 2013 Renesas Corporation
+ * Copyright (C) 2013-2014 Renesas Electronics Corporation
  *
  * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  *
@@ -20,8 +20,12 @@
 struct vsp1_device;
 
 enum vsp1_entity_type {
+	VSP1_ENTITY_HSI,
+	VSP1_ENTITY_HST,
 	VSP1_ENTITY_LIF,
+	VSP1_ENTITY_LUT,
 	VSP1_ENTITY_RPF,
+	VSP1_ENTITY_SRU,
 	VSP1_ENTITY_UDS,
 	VSP1_ENTITY_WPF,
 };

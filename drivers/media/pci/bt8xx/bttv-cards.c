@@ -2426,7 +2426,7 @@ struct tvcard bttv_tvcards[] = {
 	},
 		/* ---- card 0x87---------------------------------- */
 	[BTTV_BOARD_DVICO_FUSIONHDTV_5_LITE] = {
-		/* Michael Krufky <mkrufky@m1k.net> */
+		/* Michael Krufky <mkrufky@linuxtv.org> */
 		.name           = "DViCO FusionHDTV 5 Lite",
 		.tuner_type     = TUNER_LG_TDVS_H06XF, /* TDVS-H064F */
 		.tuner_addr	= ADDR_UNSET,
@@ -2855,7 +2855,22 @@ struct tvcard bttv_tvcards[] = {
 		.tuner_type	= TUNER_ABSENT,
 		.tuner_addr	= ADDR_UNSET,
 	},
-
+	[BTTV_BOARD_KWORLD_VSTREAM_XPERT] = {
+		/* Pojar George <geoubuntu@gmail.com> */
+		.name           = "Kworld V-Stream Xpert TV PVR878",
+		.video_inputs   = 3,
+		/* .audio_inputs= 1, */
+		.svhs           = 2,
+		.gpiomask       = 0x001c0007,
+		.muxsel         = MUXSEL(2, 3, 1, 1),
+		.gpiomux        = { 0, 1, 2, 2 },
+		.gpiomute       = 3,
+		.pll            = PLL_28,
+		.tuner_type     = TUNER_TENA_9533_DI,
+		.tuner_addr    = ADDR_UNSET,
+		.has_remote     = 1,
+		.has_radio      = 1,
+	},
 };
 
 static const unsigned int bttv_num_tvcards = ARRAY_SIZE(bttv_tvcards);

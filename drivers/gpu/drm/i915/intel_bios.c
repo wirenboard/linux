@@ -259,7 +259,7 @@ parse_lfp_panel_data(struct drm_i915_private *dev_priv,
 			downclock = dvo_timing->clock;
 	}
 
-	if (downclock < panel_dvo_timing->clock && i915_lvds_downclock) {
+	if (downclock < panel_dvo_timing->clock && i915.lvds_downclock) {
 		dev_priv->lvds_downclock_avail = 1;
 		dev_priv->lvds_downclock = downclock * 10;
 		DRM_DEBUG_KMS("LVDS downclock is found in VBT. "
@@ -281,6 +281,44 @@ parse_lfp_panel_data(struct drm_i915_private *dev_priv,
 	}
 }
 
+static void
+parse_lfp_backlight(struct drm_i915_private *dev_priv, struct bdb_header *bdb)
+{
+	const struct bdb_lfp_backlight_data *backlight_data;
+	const struct bdb_lfp_backlight_data_entry *entry;
+
+	/* Err to enabling backlight if no backlight block. */
+	dev_priv->vbt.backlight.present = true;
+
+	backlight_data = find_section(bdb, BDB_LVDS_BACKLIGHT);
+	if (!backlight_data)
+		return;
+
+	if (backlight_data->entry_size != sizeof(backlight_data->data[0])) {
+		DRM_DEBUG_KMS("Unsupported backlight data entry size %u\n",
+			      backlight_data->entry_size);
+		return;
+	}
+
+	entry = &backlight_data->data[panel_type];
+
+	dev_priv->vbt.backlight.present = entry->type == BDB_BACKLIGHT_TYPE_PWM;
+	if (!dev_priv->vbt.backlight.present) {
+		DRM_DEBUG_KMS("PWM backlight not present in VBT (type %u)\n",
+			      entry->type);
+		return;
+	}
+
+	dev_priv->vbt.backlight.pwm_freq_hz = entry->pwm_freq_hz;
+	dev_priv->vbt.backlight.active_low_pwm = entry->active_low_pwm;
+	DRM_DEBUG_KMS("VBT backlight PWM modulation frequency %u Hz, "
+		      "active %s, min brightness %u, level %u\n",
+		      dev_priv->vbt.backlight.pwm_freq_hz,
+		      dev_priv->vbt.backlight.active_low_pwm ? "low" : "high",
+		      entry->min_brightness,
+		      backlight_data->level[panel_type]);
+}
+
 /* Try to find sdvo panel data */
 static void
 parse_sdvo_panel_data(struct drm_i915_private *dev_priv,
@@ -290,7 +328,7 @@ parse_sdvo_panel_data(struct drm_i915_private *dev_priv,
 	struct drm_display_mode *panel_fixed_mode;
 	int index;
 
-	index = i915_vbt_sdvo_panel_type;
+	index = i915.vbt_sdvo_panel_type;
 	if (index == -2) {
 		DRM_DEBUG_KMS("Ignore SDVO panel mode from BIOS VBT tables.\n");
 		return;
@@ -327,12 +365,12 @@ static int intel_bios_ssc_frequency(struct drm_device *dev,
 {
 	switch (INTEL_INFO(dev)->gen) {
 	case 2:
-		return alternate ? 66 : 48;
+		return alternate ? 66667 : 48000;
 	case 3:
 	case 4:
-		return alternate ? 100 : 96;
+		return alternate ? 100000 : 96000;
 	default:
-		return alternate ? 100 : 120;
+		return alternate ? 100000 : 120000;
 	}
 }
 
@@ -571,14 +609,14 @@ parse_mipi(struct drm_i915_private *dev_priv, struct bdb_header *bdb)
 {
 	struct bdb_mipi *mipi;
 
-	mipi = find_section(bdb, BDB_MIPI);
+	mipi = find_section(bdb, BDB_MIPI_CONFIG);
 	if (!mipi) {
 		DRM_DEBUG_KMS("No MIPI BDB found");
 		return;
 	}
 
 	/* XXX: add more info */
-	dev_priv->vbt.dsi.panel_id = mipi->panel_id;
+	dev_priv->vbt.dsi.panel_id = MIPI_DSI_GENERIC_PANEL_ID;
 }
 
 static void parse_ddi_port(struct drm_i915_private *dev_priv, enum port port,
@@ -796,7 +834,7 @@ init_vbt_defaults(struct drm_i915_private *dev_priv)
 	 */
 	dev_priv->vbt.lvds_ssc_freq = intel_bios_ssc_frequency(dev,
 			!HAS_PCH_SPLIT(dev));
-	DRM_DEBUG_KMS("Set default to SSC at %dMHz\n", dev_priv->vbt.lvds_ssc_freq);
+	DRM_DEBUG_KMS("Set default to SSC at %d kHz\n", dev_priv->vbt.lvds_ssc_freq);
 
 	for (port = PORT_A; port < I915_MAX_PORTS; port++) {
 		struct ddi_vbt_port_info *info =
@@ -894,6 +932,7 @@ intel_parse_bios(struct drm_device *dev)
 	parse_general_features(dev_priv, bdb);
 	parse_general_definitions(dev_priv, bdb);
 	parse_lfp_panel_data(dev_priv, bdb);
+	parse_lfp_backlight(dev_priv, bdb);
 	parse_sdvo_panel_data(dev_priv, bdb);
 	parse_sdvo_device_mapping(dev_priv, bdb);
 	parse_device_mapping(dev_priv, bdb);

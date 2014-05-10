@@ -24,6 +24,7 @@
 #include <sound/soc.h>
 #include <sound/jack.h>
 
+#include <mach/gpio-samsung.h>
 #include "regs-iis.h"
 #include <asm/mach-types.h>
 
@@ -130,10 +131,6 @@ static int rx1950_startup(struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 
-	runtime->hw.rate_min = hw_rates.list[0];
-	runtime->hw.rate_max = hw_rates.list[hw_rates.count - 1];
-	runtime->hw.rates = SNDRV_PCM_RATE_KNOT;
-
 	return snd_pcm_hw_constraint_list(runtime, 0,
 					SNDRV_PCM_HW_PARAM_RATE,
 					&hw_rates);
@@ -225,7 +222,6 @@ static int rx1950_uda1380_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_soc_codec *codec = rtd->codec;
 	struct snd_soc_dapm_context *dapm = &codec->dapm;
-	int err;
 
 	snd_soc_dapm_enable_pin(dapm, "Headphone Jack");
 	snd_soc_dapm_enable_pin(dapm, "Speaker");

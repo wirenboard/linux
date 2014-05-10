@@ -23,31 +23,22 @@
 #include <linux/irqchip/versatile-fpga.h>
 #include <linux/gfp.h>
 #include <linux/mtd/physmap.h>
-#include <linux/platform_data/clk-integrator.h>
 #include <linux/of_irq.h>
 #include <linux/of_address.h>
 #include <linux/of_platform.h>
 #include <linux/sys_soc.h>
+#include <linux/sched_clock.h>
 
-#include <mach/hardware.h>
-#include <mach/platform.h>
 #include <asm/setup.h>
 #include <asm/mach-types.h>
-#include <asm/hardware/arm_timer.h>
-#include <asm/hardware/icst.h>
-
-#include <mach/lm.h>
-
 #include <asm/mach/arch.h>
 #include <asm/mach/irq.h>
 #include <asm/mach/map.h>
 #include <asm/mach/time.h>
 
-#include <asm/hardware/timer-sp.h>
-
 #include <plat/clcd.h>
-#include <plat/sched_clock.h>
 
+#include "hardware.h"
 #include "cm.h"
 #include "common.h"
 
@@ -64,6 +55,7 @@ static void __iomem *intcp_con_base;
 
 /*
  * Logical      Physical
+ * f1000000	10000000	Core module registers
  * f1300000	13000000	Counter/Timer
  * f1400000	14000000	Interrupt controller
  * f1600000	16000000	UART 0
@@ -75,6 +67,11 @@ static void __iomem *intcp_con_base;
 
 static struct map_desc intcp_io_desc[] __initdata __maybe_unused = {
 	{
+		.virtual	= IO_ADDRESS(INTEGRATOR_HDR_BASE),
+		.pfn		= __phys_to_pfn(INTEGRATOR_HDR_BASE),
+		.length		= SZ_4K,
+		.type		= MT_DEVICE
+	}, {
 		.virtual	= IO_ADDRESS(INTEGRATOR_CT_BASE),
 		.pfn		= __phys_to_pfn(INTEGRATOR_CT_BASE),
 		.length		= SZ_4K,
@@ -228,11 +225,14 @@ static struct clcd_board clcd_data = {
 
 #define REFCOUNTER (__io_address(INTEGRATOR_HDR_BASE) + 0x28)
 
+static u64 notrace intcp_read_sched_clock(void)
+{
+	return readl(REFCOUNTER);
+}
+
 static void __init intcp_init_early(void)
 {
-#ifdef CONFIG_PLAT_VERSATILE_SCHED_CLOCK
-	versatile_sched_clock_init(REFCOUNTER, 24000000);
-#endif
+	sched_clock_register(intcp_read_sched_clock, 32, 24000000);
 }
 
 static const struct of_device_id fpga_irq_of_match[] __initconst = {
@@ -244,7 +244,6 @@ static void __init intcp_init_irq_of(void)
 {
 	cm_init();
 	of_irq_init(fpga_irq_of_match);
-	integrator_clk_init(true);
 }
 
 /*

@@ -15,6 +15,10 @@
 #include "drm.h"
 #include "gem.h"
 
+struct tegra_dc_soc_info {
+	bool supports_interlacing;
+};
+
 struct tegra_plane {
 	struct drm_plane base;
 	unsigned int index;
@@ -231,14 +235,14 @@ static void tegra_dc_finish_page_flip(struct tegra_dc *dc)
 	if (!dc->event)
 		return;
 
-	bo = tegra_fb_get_plane(crtc->fb, 0);
+	bo = tegra_fb_get_plane(crtc->primary->fb, 0);
 
 	/* check if new start address has been latched */
 	tegra_dc_writel(dc, READ_MUX, DC_CMD_STATE_ACCESS);
 	base = tegra_dc_readl(dc, DC_WINBUF_START_ADDR);
 	tegra_dc_writel(dc, 0, DC_CMD_STATE_ACCESS);
 
-	if (base == bo->paddr + crtc->fb->offsets[0]) {
+	if (base == bo->paddr + crtc->primary->fb->offsets[0]) {
 		spin_lock_irqsave(&drm->event_lock, flags);
 		drm_send_vblank_event(drm, dc->pipe, dc->event);
 		drm_vblank_put(drm, dc->pipe);
@@ -280,7 +284,7 @@ static int tegra_dc_page_flip(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 	}
 
 	tegra_dc_set_base(dc, 0, 0, fb);
-	crtc->fb = fb;
+	crtc->primary->fb = fb;
 
 	return 0;
 }
@@ -308,7 +312,7 @@ static void tegra_crtc_disable(struct drm_crtc *crtc)
 	struct drm_device *drm = crtc->dev;
 	struct drm_plane *plane;
 
-	list_for_each_entry(plane, &drm->mode_config.plane_list, head) {
+	drm_for_each_legacy_plane(plane, &drm->mode_config.plane_list) {
 		if (plane->crtc == crtc) {
 			tegra_plane_disable(plane);
 			plane->crtc = NULL;
@@ -641,7 +645,7 @@ static int tegra_crtc_mode_set(struct drm_crtc *crtc,
 			       struct drm_display_mode *adjusted,
 			       int x, int y, struct drm_framebuffer *old_fb)
 {
-	struct tegra_bo *bo = tegra_fb_get_plane(crtc->fb, 0);
+	struct tegra_bo *bo = tegra_fb_get_plane(crtc->primary->fb, 0);
 	struct tegra_dc *dc = to_tegra_dc(crtc);
 	struct tegra_dc_window window;
 	unsigned long div, value;
@@ -658,19 +662,12 @@ static int tegra_crtc_mode_set(struct drm_crtc *crtc,
 	/* program display mode */
 	tegra_dc_set_timings(dc, mode);
 
-	value = DE_SELECT_ACTIVE | DE_CONTROL_NORMAL;
-	tegra_dc_writel(dc, value, DC_DISP_DATA_ENABLE_OPTIONS);
-
-	value = tegra_dc_readl(dc, DC_COM_PIN_OUTPUT_POLARITY(1));
-	value &= ~LVS_OUTPUT_POLARITY_LOW;
-	value &= ~LHS_OUTPUT_POLARITY_LOW;
-	tegra_dc_writel(dc, value, DC_COM_PIN_OUTPUT_POLARITY(1));
-
-	value = DISP_DATA_FORMAT_DF1P1C | DISP_ALIGNMENT_MSB |
-		DISP_ORDER_RED_BLUE;
-	tegra_dc_writel(dc, value, DC_DISP_DISP_INTERFACE_CONTROL);
-
-	tegra_dc_writel(dc, 0x00010001, DC_DISP_SHIFT_CLOCK_OPTIONS);
+	/* interlacing isn't supported yet, so disable it */
+	if (dc->soc->supports_interlacing) {
+		value = tegra_dc_readl(dc, DC_DISP_INTERLACE_CONTROL);
+		value &= ~INTERLACE_ENABLE;
+		tegra_dc_writel(dc, value, DC_DISP_INTERLACE_CONTROL);
+	}
 
 	value = SHIFT_CLK_DIVIDER(div) | PIXEL_CLK_DIVIDER_PCD1;
 	tegra_dc_writel(dc, value, DC_DISP_DISP_CLOCK_CONTROL);
@@ -685,9 +682,9 @@ static int tegra_crtc_mode_set(struct drm_crtc *crtc,
 	window.dst.y = 0;
 	window.dst.w = mode->hdisplay;
 	window.dst.h = mode->vdisplay;
-	window.format = tegra_dc_format(crtc->fb->pixel_format);
-	window.bits_per_pixel = crtc->fb->bits_per_pixel;
-	window.stride[0] = crtc->fb->pitches[0];
+	window.format = tegra_dc_format(crtc->primary->fb->pixel_format);
+	window.bits_per_pixel = crtc->primary->fb->bits_per_pixel;
+	window.stride[0] = crtc->primary->fb->pitches[0];
 	window.base[0] = bo->paddr;
 
 	err = tegra_dc_setup_window(dc, 0, &window);
@@ -702,7 +699,7 @@ static int tegra_crtc_mode_set_base(struct drm_crtc *crtc, int x, int y,
 {
 	struct tegra_dc *dc = to_tegra_dc(crtc);
 
-	return tegra_dc_set_base(dc, x, y, crtc->fb);
+	return tegra_dc_set_base(dc, x, y, crtc->primary->fb);
 }
 
 static void tegra_crtc_prepare(struct drm_crtc *crtc)
@@ -734,10 +731,6 @@ static void tegra_crtc_prepare(struct drm_crtc *crtc)
 	value = PW0_ENABLE | PW1_ENABLE | PW2_ENABLE | PW3_ENABLE |
 		PW4_ENABLE | PM0_ENABLE | PM1_ENABLE;
 	tegra_dc_writel(dc, value, DC_CMD_DISPLAY_POWER_CONTROL);
-
-	value = tegra_dc_readl(dc, DC_CMD_DISPLAY_COMMAND);
-	value |= DISP_CTRL_MODE_C_DISPLAY;
-	tegra_dc_writel(dc, value, DC_CMD_DISPLAY_COMMAND);
 
 	/* initialize timer */
 	value = CURSOR_THRESHOLD(0) | WINDOW_A_THRESHOLD(0x20) |
@@ -1107,8 +1100,6 @@ static int tegra_dc_init(struct host1x_client *client)
 	struct tegra_dc *dc = host1x_client_to_dc(client);
 	int err;
 
-	dc->pipe = tegra->drm->mode_config.num_crtc;
-
 	drm_crtc_init(tegra->drm, &dc->base, &tegra_crtc_funcs);
 	drm_mode_crtc_set_gamma_size(&dc->base, 256);
 	drm_crtc_helper_add(&dc->base, &tegra_crtc_helper_funcs);
@@ -1167,8 +1158,71 @@ static const struct host1x_client_ops dc_client_ops = {
 	.exit = tegra_dc_exit,
 };
 
+static const struct tegra_dc_soc_info tegra20_dc_soc_info = {
+	.supports_interlacing = false,
+};
+
+static const struct tegra_dc_soc_info tegra30_dc_soc_info = {
+	.supports_interlacing = false,
+};
+
+static const struct tegra_dc_soc_info tegra124_dc_soc_info = {
+	.supports_interlacing = true,
+};
+
+static const struct of_device_id tegra_dc_of_match[] = {
+	{
+		.compatible = "nvidia,tegra124-dc",
+		.data = &tegra124_dc_soc_info,
+	}, {
+		.compatible = "nvidia,tegra30-dc",
+		.data = &tegra30_dc_soc_info,
+	}, {
+		.compatible = "nvidia,tegra20-dc",
+		.data = &tegra20_dc_soc_info,
+	}, {
+		/* sentinel */
+	}
+};
+
+static int tegra_dc_parse_dt(struct tegra_dc *dc)
+{
+	struct device_node *np;
+	u32 value = 0;
+	int err;
+
+	err = of_property_read_u32(dc->dev->of_node, "nvidia,head", &value);
+	if (err < 0) {
+		dev_err(dc->dev, "missing \"nvidia,head\" property\n");
+
+		/*
+		 * If the nvidia,head property isn't present, try to find the
+		 * correct head number by looking up the position of this
+		 * display controller's node within the device tree. Assuming
+		 * that the nodes are ordered properly in the DTS file and
+		 * that the translation into a flattened device tree blob
+		 * preserves that ordering this will actually yield the right
+		 * head number.
+		 *
+		 * If those assumptions don't hold, this will still work for
+		 * cases where only a single display controller is used.
+		 */
+		for_each_matching_node(np, tegra_dc_of_match) {
+			if (np == dc->dev->of_node)
+				break;
+
+			value++;
+		}
+	}
+
+	dc->pipe = value;
+
+	return 0;
+}
+
 static int tegra_dc_probe(struct platform_device *pdev)
 {
+	const struct of_device_id *id;
 	struct resource *regs;
 	struct tegra_dc *dc;
 	int err;
@@ -1177,9 +1231,18 @@ static int tegra_dc_probe(struct platform_device *pdev)
 	if (!dc)
 		return -ENOMEM;
 
+	id = of_match_node(tegra_dc_of_match, pdev->dev.of_node);
+	if (!id)
+		return -ENODEV;
+
 	spin_lock_init(&dc->lock);
 	INIT_LIST_HEAD(&dc->list);
 	dc->dev = &pdev->dev;
+	dc->soc = id->data;
+
+	err = tegra_dc_parse_dt(dc);
+	if (err < 0)
+		return err;
 
 	dc->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(dc->clk)) {
@@ -1252,12 +1315,6 @@ static int tegra_dc_remove(struct platform_device *pdev)
 
 	return 0;
 }
-
-static struct of_device_id tegra_dc_of_match[] = {
-	{ .compatible = "nvidia,tegra30-dc", },
-	{ .compatible = "nvidia,tegra20-dc", },
-	{ },
-};
 
 struct platform_driver tegra_dc_driver = {
 	.driver = {

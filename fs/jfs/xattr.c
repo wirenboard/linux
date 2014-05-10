@@ -791,6 +791,19 @@ int __jfs_setxattr(tid_t tid, struct inode *inode, const char *name,
 			/* Completely new ea list */
 			xattr_size = sizeof (struct jfs_ea_list);
 
+		/*
+		 * The size of EA value is limitted by on-disk format up to
+		 *  __le16, there would be an overflow if the size is equal
+		 * to XATTR_SIZE_MAX (65536).  In order to avoid this issue,
+		 * we can pre-checkup the value size against USHRT_MAX, and
+		 * return -E2BIG in this case, which is consistent with the
+		 * VFS setxattr interface.
+		 */
+		if (value_len >= USHRT_MAX) {
+			rc = -E2BIG;
+			goto release;
+		}
+
 		ea = (struct jfs_ea *) ((char *) ealist + xattr_size);
 		ea->flag = 0;
 		ea->namelen = namelen;
@@ -805,7 +818,7 @@ int __jfs_setxattr(tid_t tid, struct inode *inode, const char *name,
 	/* DEBUG - If we did this right, these number match */
 	if (xattr_size != new_size) {
 		printk(KERN_ERR
-		       "jfs_xsetattr: xattr_size = %d, new_size = %d\n",
+		       "__jfs_setxattr: xattr_size = %d, new_size = %d\n",
 		       xattr_size, new_size);
 
 		rc = -EINVAL;
@@ -841,9 +854,6 @@ int jfs_setxattr(struct dentry *dentry, const char *name, const void *value,
 	int rc;
 	tid_t tid;
 
-	if ((rc = can_set_xattr(inode, name, value, value_len)))
-		return rc;
-
 	/*
 	 * If this is a request for a synthetic attribute in the system.*
 	 * namespace use the generic infrastructure to resolve a handler
@@ -851,6 +861,9 @@ int jfs_setxattr(struct dentry *dentry, const char *name, const void *value,
 	 */
 	if (!strncmp(name, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
 		return generic_setxattr(dentry, name, value, value_len, flags);
+
+	if ((rc = can_set_xattr(inode, name, value, value_len)))
+		return rc;
 
 	if (value == NULL) {	/* empty EA, do not remove */
 		value = "";
@@ -1021,9 +1034,6 @@ int jfs_removexattr(struct dentry *dentry, const char *name)
 	int rc;
 	tid_t tid;
 
-	if ((rc = can_set_xattr(inode, name, NULL, 0)))
-		return rc;
-
 	/*
 	 * If this is a request for a synthetic attribute in the system.*
 	 * namespace use the generic infrastructure to resolve a handler
@@ -1031,6 +1041,9 @@ int jfs_removexattr(struct dentry *dentry, const char *name)
 	 */
 	if (!strncmp(name, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
 		return generic_removexattr(dentry, name);
+
+	if ((rc = can_set_xattr(inode, name, NULL, 0)))
+		return rc;
 
 	tid = txBegin(inode->i_sb, 0);
 	mutex_lock(&ji->commit_mutex);
@@ -1048,7 +1061,7 @@ int jfs_removexattr(struct dentry *dentry, const char *name)
  * attributes are handled directly.
  */
 const struct xattr_handler *jfs_xattr_handlers[] = {
-#ifdef JFS_POSIX_ACL
+#ifdef CONFIG_JFS_POSIX_ACL
 	&posix_acl_access_xattr_handler,
 	&posix_acl_default_xattr_handler,
 #endif

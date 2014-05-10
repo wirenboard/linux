@@ -72,28 +72,46 @@ struct msm_gpu {
 
 	uint32_t submitted_fence;
 
+	/* is gpu powered/active? */
+	int active_cnt;
+	bool inactive;
+
 	/* worker for handling active-list retiring: */
 	struct work_struct retire_work;
 
 	void __iomem *mmio;
 	int irq;
 
-	struct iommu_domain *iommu;
+	struct msm_mmu *mmu;
 	int id;
 
 	/* Power Control: */
 	struct regulator *gpu_reg, *gpu_cx;
 	struct clk *ebi1_clk, *grp_clks[5];
 	uint32_t fast_rate, slow_rate, bus_freq;
-	uint32_t bsc;
 
-	/* Hang Detction: */
+#ifdef CONFIG_MSM_BUS_SCALING
+	struct msm_bus_scale_pdata *bus_scale_table;
+	uint32_t bsc;
+#endif
+
+	/* Hang and Inactivity Detection:
+	 */
+#define DRM_MSM_INACTIVE_PERIOD   66 /* in ms (roughly four frames) */
+#define DRM_MSM_INACTIVE_JIFFIES  msecs_to_jiffies(DRM_MSM_INACTIVE_PERIOD)
+	struct timer_list inactive_timer;
+	struct work_struct inactive_work;
 #define DRM_MSM_HANGCHECK_PERIOD 500 /* in ms */
 #define DRM_MSM_HANGCHECK_JIFFIES msecs_to_jiffies(DRM_MSM_HANGCHECK_PERIOD)
 	struct timer_list hangcheck_timer;
 	uint32_t hangcheck_fence;
 	struct work_struct recover_work;
 };
+
+static inline bool msm_gpu_active(struct msm_gpu *gpu)
+{
+	return gpu->submitted_fence > gpu->funcs->last_fence(gpu);
+}
 
 static inline void gpu_write(struct msm_gpu *gpu, u32 reg, u32 data)
 {

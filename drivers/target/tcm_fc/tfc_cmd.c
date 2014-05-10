@@ -426,6 +426,11 @@ void ft_queue_tm_resp(struct se_cmd *se_cmd)
 	ft_send_resp_code(cmd, code);
 }
 
+void ft_aborted_task(struct se_cmd *se_cmd)
+{
+	return;
+}
+
 static void ft_send_work(struct work_struct *work);
 
 /*
@@ -438,7 +443,7 @@ static void ft_recv_cmd(struct ft_sess *sess, struct fc_frame *fp)
 	struct se_session *se_sess = sess->se_sess;
 	int tag;
 
-	tag = percpu_ida_alloc(&se_sess->sess_tag_pool, GFP_ATOMIC);
+	tag = percpu_ida_alloc(&se_sess->sess_tag_pool, TASK_RUNNING);
 	if (tag < 0)
 		goto busy;
 

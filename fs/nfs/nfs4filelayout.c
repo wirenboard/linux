@@ -324,8 +324,9 @@ static void filelayout_read_prepare(struct rpc_task *task, void *data)
 			&rdata->res.seq_res,
 			task))
 		return;
-	nfs4_set_rw_stateid(&rdata->args.stateid, rdata->args.context,
-			rdata->args.lock_context, FMODE_READ);
+	if (nfs4_set_rw_stateid(&rdata->args.stateid, rdata->args.context,
+			rdata->args.lock_context, FMODE_READ) == -EIO)
+		rpc_exit(task, -EIO); /* lost lock, terminate I/O */
 }
 
 static void filelayout_read_call_done(struct rpc_task *task, void *data)
@@ -335,8 +336,10 @@ static void filelayout_read_call_done(struct rpc_task *task, void *data)
 	dprintk("--> %s task->tk_status %d\n", __func__, task->tk_status);
 
 	if (test_bit(NFS_IOHDR_REDO, &rdata->header->flags) &&
-	    task->tk_status == 0)
+	    task->tk_status == 0) {
+		nfs41_sequence_done(task, &rdata->res.seq_res);
 		return;
+	}
 
 	/* Note this may cause RPC to be resent */
 	rdata->header->mds_ops->rpc_call_done(task, data);
@@ -433,8 +436,9 @@ static void filelayout_write_prepare(struct rpc_task *task, void *data)
 			&wdata->res.seq_res,
 			task))
 		return;
-	nfs4_set_rw_stateid(&wdata->args.stateid, wdata->args.context,
-			wdata->args.lock_context, FMODE_WRITE);
+	if (nfs4_set_rw_stateid(&wdata->args.stateid, wdata->args.context,
+			wdata->args.lock_context, FMODE_WRITE) == -EIO)
+		rpc_exit(task, -EIO); /* lost lock, terminate I/O */
 }
 
 static void filelayout_write_call_done(struct rpc_task *task, void *data)
@@ -442,8 +446,10 @@ static void filelayout_write_call_done(struct rpc_task *task, void *data)
 	struct nfs_write_data *wdata = data;
 
 	if (test_bit(NFS_IOHDR_REDO, &wdata->header->flags) &&
-	    task->tk_status == 0)
+	    task->tk_status == 0) {
+		nfs41_sequence_done(task, &wdata->res.seq_res);
 		return;
+	}
 
 	/* Note this may cause RPC to be resent */
 	wdata->header->mds_ops->rpc_call_done(task, data);

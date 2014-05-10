@@ -22,6 +22,7 @@
 #include <linux/of_platform.h>
 #include <linux/export.h>
 #include <linux/irqchip/arm-gic.h>
+#include <linux/irqchip/irq-crossbar.h>
 #include <linux/of_address.h>
 #include <linux/reboot.h>
 
@@ -125,6 +126,12 @@ void gic_dist_disable(void)
 {
 	if (gic_dist_base_addr)
 		__raw_writel(0x0, gic_dist_base_addr + GIC_DIST_CTRL);
+}
+
+void gic_dist_enable(void)
+{
+	if (gic_dist_base_addr)
+		__raw_writel(0x1, gic_dist_base_addr + GIC_DIST_CTRL);
 }
 
 bool gic_dist_disabled(void)
@@ -282,5 +289,8 @@ void __init omap_gic_of_init(void)
 
 skip_errata_init:
 	omap_wakeupgen_init();
+#ifdef CONFIG_IRQ_CROSSBAR
+	irqcrossbar_init();
+#endif
 	irqchip_init();
 }

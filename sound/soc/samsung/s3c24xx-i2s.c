@@ -24,16 +24,18 @@
 #include <sound/pcm_params.h>
 
 #include <mach/dma.h>
+#include <mach/gpio-samsung.h>
+#include <plat/gpio-cfg.h>
 #include "regs-iis.h"
 
 #include "dma.h"
 #include "s3c24xx-i2s.h"
 
-static struct s3c2410_dma_client s3c24xx_dma_client_out = {
+static struct s3c_dma_client s3c24xx_dma_client_out = {
 	.name = "I2S PCM Stereo out"
 };
 
-static struct s3c2410_dma_client s3c24xx_dma_client_in = {
+static struct s3c_dma_client s3c24xx_dma_client_in = {
 	.name = "I2S PCM Stereo in"
 };
 

@@ -727,18 +727,6 @@ int acpi_pm_device_sleep_wake(struct device *dev, bool enable)
 #endif /* CONFIG_PM_SLEEP */
 
 /**
- * acpi_dev_pm_get_node - Get ACPI device node for the given physical device.
- * @dev: Device to get the ACPI node for.
- */
-struct acpi_device *acpi_dev_pm_get_node(struct device *dev)
-{
-	acpi_handle handle = ACPI_HANDLE(dev);
-	struct acpi_device *adev;
-
-	return handle && !acpi_bus_get_device(handle, &adev) ? adev : NULL;
-}
-
-/**
  * acpi_dev_pm_low_power - Put ACPI device into a low-power state.
  * @dev: Device to put into a low-power state.
  * @adev: ACPI device node corresponding to @dev.
@@ -778,7 +766,7 @@ static int acpi_dev_pm_full_power(struct acpi_device *adev)
  */
 int acpi_dev_runtime_suspend(struct device *dev)
 {
-	struct acpi_device *adev = acpi_dev_pm_get_node(dev);
+	struct acpi_device *adev = ACPI_COMPANION(dev);
 	bool remote_wakeup;
 	int error;
 
@@ -809,7 +797,7 @@ EXPORT_SYMBOL_GPL(acpi_dev_runtime_suspend);
  */
 int acpi_dev_runtime_resume(struct device *dev)
 {
-	struct acpi_device *adev = acpi_dev_pm_get_node(dev);
+	struct acpi_device *adev = ACPI_COMPANION(dev);
 	int error;
 
 	if (!adev)
@@ -862,7 +850,7 @@ EXPORT_SYMBOL_GPL(acpi_subsys_runtime_resume);
  */
 int acpi_dev_suspend_late(struct device *dev)
 {
-	struct acpi_device *adev = acpi_dev_pm_get_node(dev);
+	struct acpi_device *adev = ACPI_COMPANION(dev);
 	u32 target_state;
 	bool wakeup;
 	int error;
@@ -894,7 +882,7 @@ EXPORT_SYMBOL_GPL(acpi_dev_suspend_late);
  */
 int acpi_dev_resume_early(struct device *dev)
 {
-	struct acpi_device *adev = acpi_dev_pm_get_node(dev);
+	struct acpi_device *adev = ACPI_COMPANION(dev);
 	int error;
 
 	if (!adev)
@@ -913,13 +901,28 @@ EXPORT_SYMBOL_GPL(acpi_dev_resume_early);
 int acpi_subsys_prepare(struct device *dev)
 {
 	/*
-	 * Follow PCI and resume devices suspended at run time before running
-	 * their system suspend callbacks.
+	 * Devices having power.ignore_children set may still be necessary for
+	 * suspending their children in the next phase of device suspend.
 	 */
-	pm_runtime_resume(dev);
+	if (dev->power.ignore_children)
+		pm_runtime_resume(dev);
+
 	return pm_generic_prepare(dev);
 }
 EXPORT_SYMBOL_GPL(acpi_subsys_prepare);
+
+/**
+ * acpi_subsys_suspend - Run the device driver's suspend callback.
+ * @dev: Device to handle.
+ *
+ * Follow PCI and resume devices suspended at run time before running their
+ * system suspend callbacks.
+ */
+int acpi_subsys_suspend(struct device *dev)
+{
+	pm_runtime_resume(dev);
+	return pm_generic_suspend(dev);
+}
 
 /**
  * acpi_subsys_suspend_late - Suspend device using ACPI.
@@ -949,6 +952,23 @@ int acpi_subsys_resume_early(struct device *dev)
 	return ret ? ret : pm_generic_resume_early(dev);
 }
 EXPORT_SYMBOL_GPL(acpi_subsys_resume_early);
+
+/**
+ * acpi_subsys_freeze - Run the device driver's freeze callback.
+ * @dev: Device to handle.
+ */
+int acpi_subsys_freeze(struct device *dev)
+{
+	/*
+	 * This used to be done in acpi_subsys_prepare() for all devices and
+	 * some drivers may depend on it, so do it here.  Ideally, however,
+	 * runtime-suspended devices should not be touched during freeze/thaw
+	 * transitions.
+	 */
+	pm_runtime_resume(dev);
+	return pm_generic_freeze(dev);
+}
+
 #endif /* CONFIG_PM_SLEEP */
 
 static struct dev_pm_domain acpi_general_pm_domain = {
@@ -959,8 +979,11 @@ static struct dev_pm_domain acpi_general_pm_domain = {
 #endif
 #ifdef CONFIG_PM_SLEEP
 		.prepare = acpi_subsys_prepare,
+		.suspend = acpi_subsys_suspend,
 		.suspend_late = acpi_subsys_suspend_late,
 		.resume_early = acpi_subsys_resume_early,
+		.freeze = acpi_subsys_freeze,
+		.poweroff = acpi_subsys_suspend,
 		.poweroff_late = acpi_subsys_suspend_late,
 		.restore_early = acpi_subsys_resume_early,
 #endif
@@ -985,7 +1008,7 @@ static struct dev_pm_domain acpi_general_pm_domain = {
  */
 int acpi_dev_pm_attach(struct device *dev, bool power_on)
 {
-	struct acpi_device *adev = acpi_dev_pm_get_node(dev);
+	struct acpi_device *adev = ACPI_COMPANION(dev);
 
 	if (!adev)
 		return -ENODEV;
@@ -1017,7 +1040,7 @@ EXPORT_SYMBOL_GPL(acpi_dev_pm_attach);
  */
 void acpi_dev_pm_detach(struct device *dev, bool power_off)
 {
-	struct acpi_device *adev = acpi_dev_pm_get_node(dev);
+	struct acpi_device *adev = ACPI_COMPANION(dev);
 
 	if (adev && dev->pm_domain == &acpi_general_pm_domain) {
 		dev->pm_domain = NULL;

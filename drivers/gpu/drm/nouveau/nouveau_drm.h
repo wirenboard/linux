@@ -54,6 +54,7 @@ enum nouveau_drm_handle {
 	NVDRM_CLIENT  = 0xffffffff,
 	NVDRM_DEVICE  = 0xdddddddd,
 	NVDRM_CONTROL = 0xdddddddc,
+	NVDRM_DISPLAY = 0xd1500000,
 	NVDRM_PUSH    = 0xbbbb0000, /* |= client chid */
 	NVDRM_CHAN    = 0xcccc0000, /* |= client chid */
 	NVDRM_NVSW    = 0x55550000,
@@ -160,10 +161,7 @@ int nouveau_pmops_resume(struct device *);
 #define NV_ERROR(cli, fmt, args...) nv_error((cli), fmt, ##args)
 #define NV_WARN(cli, fmt, args...) nv_warn((cli), fmt, ##args)
 #define NV_INFO(cli, fmt, args...) nv_info((cli), fmt, ##args)
-#define NV_DEBUG(cli, fmt, args...) do {                                       \
-	if (drm_debug & DRM_UT_DRIVER)                                         \
-		nv_info((cli), fmt, ##args);                                   \
-} while (0)
+#define NV_DEBUG(cli, fmt, args...) nv_debug((cli), fmt, ##args)
 
 extern int nouveau_modeset;
 

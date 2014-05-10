@@ -832,10 +832,11 @@ static void nfsd4_put_drc_mem(struct nfsd4_channel_attrs *ca)
 	spin_unlock(&nfsd_drc_lock);
 }
 
-static struct nfsd4_session *alloc_session(struct nfsd4_channel_attrs *attrs)
+static struct nfsd4_session *alloc_session(struct nfsd4_channel_attrs *fattrs,
+					   struct nfsd4_channel_attrs *battrs)
 {
-	int numslots = attrs->maxreqs;
-	int slotsize = slot_bytes(attrs);
+	int numslots = fattrs->maxreqs;
+	int slotsize = slot_bytes(fattrs);
 	struct nfsd4_session *new;
 	int mem, i;
 
@@ -852,6 +853,10 @@ static struct nfsd4_session *alloc_session(struct nfsd4_channel_attrs *attrs)
 		if (!new->se_slots[i])
 			goto out_free;
 	}
+
+	memcpy(&new->se_fchannel, fattrs, sizeof(struct nfsd4_channel_attrs));
+	memcpy(&new->se_bchannel, battrs, sizeof(struct nfsd4_channel_attrs));
+
 	return new;
 out_free:
 	while (i--)
@@ -997,8 +1002,7 @@ static void init_session(struct svc_rqst *rqstp, struct nfsd4_session *new, stru
 	list_add(&new->se_perclnt, &clp->cl_sessions);
 	spin_unlock(&clp->cl_lock);
 	spin_unlock(&nn->client_lock);
-	memcpy(&new->se_fchannel, &cses->fore_channel,
-			sizeof(struct nfsd4_channel_attrs));
+
 	if (cses->flags & SESSION4_BACK_CHAN) {
 		struct sockaddr *sa = svc_addr(rqstp);
 		/*
@@ -1534,7 +1538,7 @@ out_err:
 }
 
 /*
- * Cache a reply. nfsd4_check_drc_limit() has bounded the cache size.
+ * Cache a reply. nfsd4_check_resp_size() has bounded the cache size.
  */
 void
 nfsd4_store_cache_entry(struct nfsd4_compoundres *resp)
@@ -1592,7 +1596,7 @@ nfsd4_enc_sequence_replay(struct nfsd4_compoundargs *args,
  * The sequence operation is not cached because we can use the slot and
  * session values.
  */
-__be32
+static __be32
 nfsd4_replay_cache_entry(struct nfsd4_compoundres *resp,
 			 struct nfsd4_sequence *seq)
 {
@@ -1601,9 +1605,8 @@ nfsd4_replay_cache_entry(struct nfsd4_compoundres *resp,
 
 	dprintk("--> %s slot %p\n", __func__, slot);
 
-	/* Either returns 0 or nfserr_retry_uncached */
 	status = nfsd4_enc_sequence_replay(resp->rqstp->rq_argp, resp);
-	if (status == nfserr_retry_uncached_rep)
+	if (status)
 		return status;
 
 	/* The sequence operation has been encoded, cstate->datap set. */
@@ -1851,6 +1854,11 @@ static __be32 check_forechannel_attrs(struct nfsd4_channel_attrs *ca, struct nfs
 	return nfs_ok;
 }
 
+#define NFSD_CB_MAX_REQ_SZ	((NFS4_enc_cb_recall_sz + \
+				 RPC_MAX_HEADER_WITH_AUTH) * sizeof(__be32))
+#define NFSD_CB_MAX_RESP_SZ	((NFS4_dec_cb_recall_sz + \
+				 RPC_MAX_REPHEADER_WITH_AUTH) * sizeof(__be32))
+
 static __be32 check_backchannel_attrs(struct nfsd4_channel_attrs *ca)
 {
 	ca->headerpadsz = 0;
@@ -1861,9 +1869,9 @@ static __be32 check_backchannel_attrs(struct nfsd4_channel_attrs *ca)
 	 * less than 1k.  Tighten up this estimate in the unlikely event
 	 * it turns out to be a problem for some client:
 	 */
-	if (ca->maxreq_sz < NFS4_enc_cb_recall_sz + RPC_MAX_HEADER_WITH_AUTH)
+	if (ca->maxreq_sz < NFSD_CB_MAX_REQ_SZ)
 		return nfserr_toosmall;
-	if (ca->maxresp_sz < NFS4_dec_cb_recall_sz + RPC_MAX_REPHEADER_WITH_AUTH)
+	if (ca->maxresp_sz < NFSD_CB_MAX_RESP_SZ)
 		return nfserr_toosmall;
 	ca->maxresp_cached = 0;
 	if (ca->maxops < 2)
@@ -1913,9 +1921,9 @@ nfsd4_create_session(struct svc_rqst *rqstp,
 		return status;
 	status = check_backchannel_attrs(&cr_ses->back_channel);
 	if (status)
-		return status;
+		goto out_release_drc_mem;
 	status = nfserr_jukebox;
-	new = alloc_session(&cr_ses->fore_channel);
+	new = alloc_session(&cr_ses->fore_channel, &cr_ses->back_channel);
 	if (!new)
 		goto out_release_drc_mem;
 	conn = alloc_conn_from_crses(rqstp, cr_ses);
@@ -2278,7 +2286,8 @@ out:
 	if (!list_empty(&clp->cl_revoked))
 		seq->status_flags |= SEQ4_STATUS_RECALLABLE_STATE_REVOKED;
 out_no_session:
-	kfree(conn);
+	if (conn)
+		free_conn(conn);
 	spin_unlock(&nn->client_lock);
 	return status;
 out_put_session:
@@ -3034,18 +3043,18 @@ static int nfs4_setlease(struct nfs4_delegation *dp)
 	if (!fl)
 		return -ENOMEM;
 	fl->fl_file = find_readable_file(fp);
-	list_add(&dp->dl_perclnt, &dp->dl_stid.sc_client->cl_delegations);
 	status = vfs_setlease(fl->fl_file, fl->fl_type, &fl);
-	if (status) {
-		list_del_init(&dp->dl_perclnt);
-		locks_free_lock(fl);
-		return status;
-	}
+	if (status)
+		goto out_free;
+	list_add(&dp->dl_perclnt, &dp->dl_stid.sc_client->cl_delegations);
 	fp->fi_lease = fl;
 	fp->fi_deleg_file = get_file(fl->fl_file);
 	atomic_set(&fp->fi_delegees, 1);
 	list_add(&dp->dl_perfile, &fp->fi_delegations);
 	return 0;
+out_free:
+	locks_free_lock(fl);
+	return status;
 }
 
 static int nfs4_set_delegation(struct nfs4_delegation *dp, struct nfs4_file *fp)
@@ -3125,6 +3134,7 @@ nfs4_open_delegation(struct net *net, struct svc_fh *fh,
 				goto out_no_deleg;
 			break;
 		case NFS4_OPEN_CLAIM_NULL:
+		case NFS4_OPEN_CLAIM_FH:
 			/*
 			 * Let's not give out any delegations till everyone's
 			 * had the chance to reclaim theirs....
@@ -3617,8 +3627,11 @@ static __be32 nfsd4_lookup_stateid(stateid_t *stateid, unsigned char typemask,
 		return nfserr_bad_stateid;
 	status = lookup_clientid(&stateid->si_opaque.so_clid, sessions,
 							nn, &cl);
-	if (status == nfserr_stale_clientid)
+	if (status == nfserr_stale_clientid) {
+		if (sessions)
+			return nfserr_bad_stateid;
 		return nfserr_stale_stateid;
+	}
 	if (status)
 		return status;
 	*s = find_stateid_by_type(cl, stateid, typemask);
@@ -5052,7 +5065,6 @@ nfs4_state_destroy_net(struct net *net)
 	int i;
 	struct nfs4_client *clp = NULL;
 	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
-	struct rb_node *node, *tmp;
 
 	for (i = 0; i < CLIENT_HASH_SIZE; i++) {
 		while (!list_empty(&nn->conf_id_hashtbl[i])) {
@@ -5061,13 +5073,11 @@ nfs4_state_destroy_net(struct net *net)
 		}
 	}
 
-	node = rb_first(&nn->unconf_name_tree);
-	while (node != NULL) {
-		tmp = node;
-		node = rb_next(tmp);
-		clp = rb_entry(tmp, struct nfs4_client, cl_namenode);
-		rb_erase(tmp, &nn->unconf_name_tree);
-		destroy_client(clp);
+	for (i = 0; i < CLIENT_HASH_SIZE; i++) {
+		while (!list_empty(&nn->unconf_id_hashtbl[i])) {
+			clp = list_entry(nn->unconf_id_hashtbl[i].next, struct nfs4_client, cl_idhash);
+			destroy_client(clp);
+		}
 	}
 
 	kfree(nn->sessionid_hashtbl);

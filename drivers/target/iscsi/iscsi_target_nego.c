@@ -375,7 +375,7 @@ static int iscsi_target_do_tx_login_io(struct iscsi_conn *conn, struct iscsi_log
 	return 0;
 }
 
-static void iscsi_target_sk_data_ready(struct sock *sk, int count)
+static void iscsi_target_sk_data_ready(struct sock *sk)
 {
 	struct iscsi_conn *conn = sk->sk_user_data;
 	bool rc;
@@ -1192,7 +1192,7 @@ get_target:
 	 */
 alloc_tags:
 	tag_num = max_t(u32, ISCSIT_MIN_TAGS, queue_depth);
-	tag_num += (tag_num / 2) + ISCSIT_EXTRA_TAGS;
+	tag_num = (tag_num * 2) + ISCSIT_EXTRA_TAGS;
 	tag_size = sizeof(struct iscsi_cmd) + conn->conn_transport->priv_size;
 
 	ret = transport_alloc_session_tags(sess->se_sess, tag_num, tag_size);

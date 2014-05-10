@@ -111,7 +111,7 @@ static void remove_revmap_chain(struct kvm *kvm, long pte_index,
 	rcbits = hpte_r & (HPTE_R_R | HPTE_R_C);
 	ptel = rev->guest_rpte |= rcbits;
 	gfn = hpte_rpn(ptel, hpte_page_size(hpte_v, ptel));
-	memslot = __gfn_to_memslot(kvm_memslots(kvm), gfn);
+	memslot = __gfn_to_memslot(kvm_memslots_raw(kvm), gfn);
 	if (!memslot)
 		return;
 
@@ -134,7 +134,7 @@ static void remove_revmap_chain(struct kvm *kvm, long pte_index,
 	unlock_rmap(rmap);
 }
 
-static pte_t lookup_linux_pte(pgd_t *pgdir, unsigned long hva,
+static pte_t lookup_linux_pte_and_update(pgd_t *pgdir, unsigned long hva,
 			      int writing, unsigned long *pte_sizep)
 {
 	pte_t *ptep;
@@ -192,7 +192,7 @@ long kvmppc_do_h_enter(struct kvm *kvm, unsigned long flags,
 	/* Find the memslot (if any) for this address */
 	gpa = (ptel & HPTE_R_RPN) & ~(psize - 1);
 	gfn = gpa >> PAGE_SHIFT;
-	memslot = __gfn_to_memslot(kvm_memslots(kvm), gfn);
+	memslot = __gfn_to_memslot(kvm_memslots_raw(kvm), gfn);
 	pa = 0;
 	is_io = ~0ul;
 	rmap = NULL;
@@ -232,7 +232,8 @@ long kvmppc_do_h_enter(struct kvm *kvm, unsigned long flags,
 
 		/* Look up the Linux PTE for the backing page */
 		pte_size = psize;
-		pte = lookup_linux_pte(pgdir, hva, writing, &pte_size);
+		pte = lookup_linux_pte_and_update(pgdir, hva, writing,
+						  &pte_size);
 		if (pte_present(pte)) {
 			if (writing && !pte_write(pte))
 				/* make the actual HPTE be read-only */
@@ -669,10 +670,11 @@ long kvmppc_h_protect(struct kvm_vcpu *vcpu, unsigned long flags,
 
 			psize = hpte_page_size(v, r);
 			gfn = ((r & HPTE_R_RPN) & ~(psize - 1)) >> PAGE_SHIFT;
-			memslot = __gfn_to_memslot(kvm_memslots(kvm), gfn);
+			memslot = __gfn_to_memslot(kvm_memslots_raw(kvm), gfn);
 			if (memslot) {
 				hva = __gfn_to_hva_memslot(memslot, gfn);
-				pte = lookup_linux_pte(pgdir, hva, 1, &psize);
+				pte = lookup_linux_pte_and_update(pgdir, hva,
+								  1, &psize);
 				if (pte_present(pte) && !pte_write(pte))
 					r = hpte_make_readonly(r);
 			}

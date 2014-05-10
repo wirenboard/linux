@@ -57,6 +57,7 @@ struct btrfs_transaction {
 	struct list_head pending_snapshots;
 	struct list_head ordered_operations;
 	struct list_head pending_chunks;
+	struct list_head switch_commits;
 	struct btrfs_delayed_ref_root delayed_refs;
 	int aborted;
 };
@@ -78,6 +79,8 @@ struct btrfs_transaction {
 #define TRANS_EXTWRITERS	(__TRANS_USERSPACE | __TRANS_START |	\
 				 __TRANS_ATTACH)
 
+#define BTRFS_SEND_TRANS_STUB	1
+
 struct btrfs_trans_handle {
 	u64 transid;
 	u64 bytes_reserved;
@@ -93,6 +96,7 @@ struct btrfs_trans_handle {
 	short adding_csums;
 	bool allocating_chunk;
 	bool reloc_reserved;
+	bool sync;
 	unsigned int type;
 	/*
 	 * this root is only needed to validate that the root passed to
@@ -154,8 +158,6 @@ int btrfs_commit_transaction_async(struct btrfs_trans_handle *trans,
 				   int wait_for_unblock);
 int btrfs_end_transaction_throttle(struct btrfs_trans_handle *trans,
 				   struct btrfs_root *root);
-int btrfs_end_transaction_dmeta(struct btrfs_trans_handle *trans,
-				struct btrfs_root *root);
 int btrfs_should_end_transaction(struct btrfs_trans_handle *trans,
 				 struct btrfs_root *root);
 void btrfs_throttle(struct btrfs_root *root);

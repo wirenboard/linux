@@ -104,6 +104,12 @@ vlv_update_plane(struct drm_plane *dplane, struct drm_crtc *crtc,
 		break;
 	}
 
+	/*
+	 * Enable gamma to match primary/cursor plane behaviour.
+	 * FIXME should be user controllable via propertiesa.
+	 */
+	sprctl |= SP_GAMMA_ENABLE;
+
 	if (obj->tiling_mode != I915_TILING_NONE)
 		sprctl |= SP_TILED;
 
@@ -118,15 +124,15 @@ vlv_update_plane(struct drm_plane *dplane, struct drm_crtc *crtc,
 	crtc_w--;
 	crtc_h--;
 
-	I915_WRITE(SPSTRIDE(pipe, plane), fb->pitches[0]);
-	I915_WRITE(SPPOS(pipe, plane), (crtc_y << 16) | crtc_x);
-
 	linear_offset = y * fb->pitches[0] + x * pixel_size;
 	sprsurf_offset = intel_gen4_compute_page_offset(&x, &y,
 							obj->tiling_mode,
 							pixel_size,
 							fb->pitches[0]);
 	linear_offset -= sprsurf_offset;
+
+	I915_WRITE(SPSTRIDE(pipe, plane), fb->pitches[0]);
+	I915_WRITE(SPPOS(pipe, plane), (crtc_y << 16) | crtc_x);
 
 	if (obj->tiling_mode != I915_TILING_NONE)
 		I915_WRITE(SPTILEOFF(pipe, plane), (y << 16) | x);
@@ -135,8 +141,8 @@ vlv_update_plane(struct drm_plane *dplane, struct drm_crtc *crtc,
 
 	I915_WRITE(SPSIZE(pipe, plane), (crtc_h << 16) | crtc_w);
 	I915_WRITE(SPCNTR(pipe, plane), sprctl);
-	I915_MODIFY_DISPBASE(SPSURF(pipe, plane), i915_gem_obj_ggtt_offset(obj) +
-			     sprsurf_offset);
+	I915_WRITE(SPSURF(pipe, plane), i915_gem_obj_ggtt_offset(obj) +
+		   sprsurf_offset);
 	POSTING_READ(SPSURF(pipe, plane));
 }
 
@@ -152,7 +158,7 @@ vlv_disable_plane(struct drm_plane *dplane, struct drm_crtc *crtc)
 	I915_WRITE(SPCNTR(pipe, plane), I915_READ(SPCNTR(pipe, plane)) &
 		   ~SP_ENABLE);
 	/* Activate double buffered register update */
-	I915_MODIFY_DISPBASE(SPSURF(pipe, plane), 0);
+	I915_WRITE(SPSURF(pipe, plane), 0);
 	POSTING_READ(SPSURF(pipe, plane));
 
 	intel_update_sprite_watermarks(dplane, crtc, 0, 0, false, false);
@@ -224,7 +230,6 @@ ivb_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 	u32 sprctl, sprscale = 0;
 	unsigned long sprsurf_offset, linear_offset;
 	int pixel_size = drm_format_plane_cpp(fb->pixel_format, 0);
-	bool scaling_was_enabled = dev_priv->sprite_scaling_enabled;
 
 	sprctl = I915_READ(SPRCTL(pipe));
 
@@ -257,6 +262,12 @@ ivb_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 		BUG();
 	}
 
+	/*
+	 * Enable gamma to match primary/cursor plane behaviour.
+	 * FIXME should be user controllable via propertiesa.
+	 */
+	sprctl |= SPRITE_GAMMA_ENABLE;
+
 	if (obj->tiling_mode != I915_TILING_NONE)
 		sprctl |= SPRITE_TILED;
 
@@ -279,30 +290,17 @@ ivb_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 	crtc_w--;
 	crtc_h--;
 
-	/*
-	 * IVB workaround: must disable low power watermarks for at least
-	 * one frame before enabling scaling.  LP watermarks can be re-enabled
-	 * when scaling is disabled.
-	 */
-	if (crtc_w != src_w || crtc_h != src_h) {
-		dev_priv->sprite_scaling_enabled |= 1 << pipe;
-
-		if (!scaling_was_enabled) {
-			intel_update_watermarks(crtc);
-			intel_wait_for_vblank(dev, pipe);
-		}
+	if (crtc_w != src_w || crtc_h != src_h)
 		sprscale = SPRITE_SCALE_ENABLE | (src_w << 16) | src_h;
-	} else
-		dev_priv->sprite_scaling_enabled &= ~(1 << pipe);
-
-	I915_WRITE(SPRSTRIDE(pipe), fb->pitches[0]);
-	I915_WRITE(SPRPOS(pipe), (crtc_y << 16) | crtc_x);
 
 	linear_offset = y * fb->pitches[0] + x * pixel_size;
 	sprsurf_offset =
 		intel_gen4_compute_page_offset(&x, &y, obj->tiling_mode,
 					       pixel_size, fb->pitches[0]);
 	linear_offset -= sprsurf_offset;
+
+	I915_WRITE(SPRSTRIDE(pipe), fb->pitches[0]);
+	I915_WRITE(SPRPOS(pipe), (crtc_y << 16) | crtc_x);
 
 	/* HSW consolidates SPRTILEOFF and SPRLINOFF into a single SPROFFSET
 	 * register */
@@ -317,13 +315,9 @@ ivb_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 	if (intel_plane->can_scale)
 		I915_WRITE(SPRSCALE(pipe), sprscale);
 	I915_WRITE(SPRCTL(pipe), sprctl);
-	I915_MODIFY_DISPBASE(SPRSURF(pipe),
-			     i915_gem_obj_ggtt_offset(obj) + sprsurf_offset);
+	I915_WRITE(SPRSURF(pipe),
+		   i915_gem_obj_ggtt_offset(obj) + sprsurf_offset);
 	POSTING_READ(SPRSURF(pipe));
-
-	/* potentially re-enable LP watermarks */
-	if (scaling_was_enabled && !dev_priv->sprite_scaling_enabled)
-		intel_update_watermarks(crtc);
 }
 
 static void
@@ -333,23 +327,22 @@ ivb_disable_plane(struct drm_plane *plane, struct drm_crtc *crtc)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_plane *intel_plane = to_intel_plane(plane);
 	int pipe = intel_plane->pipe;
-	bool scaling_was_enabled = dev_priv->sprite_scaling_enabled;
 
 	I915_WRITE(SPRCTL(pipe), I915_READ(SPRCTL(pipe)) & ~SPRITE_ENABLE);
 	/* Can't leave the scaler enabled... */
 	if (intel_plane->can_scale)
 		I915_WRITE(SPRSCALE(pipe), 0);
 	/* Activate double buffered register update */
-	I915_MODIFY_DISPBASE(SPRSURF(pipe), 0);
+	I915_WRITE(SPRSURF(pipe), 0);
 	POSTING_READ(SPRSURF(pipe));
 
-	dev_priv->sprite_scaling_enabled &= ~(1 << pipe);
+	/*
+	 * Avoid underruns when disabling the sprite.
+	 * FIXME remove once watermark updates are done properly.
+	 */
+	intel_wait_for_vblank(dev, pipe);
 
 	intel_update_sprite_watermarks(plane, crtc, 0, 0, false, false);
-
-	/* potentially re-enable LP watermarks */
-	if (scaling_was_enabled && !dev_priv->sprite_scaling_enabled)
-		intel_update_watermarks(crtc);
 }
 
 static int
@@ -453,6 +446,12 @@ ilk_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 		BUG();
 	}
 
+	/*
+	 * Enable gamma to match primary/cursor plane behaviour.
+	 * FIXME should be user controllable via propertiesa.
+	 */
+	dvscntr |= DVS_GAMMA_ENABLE;
+
 	if (obj->tiling_mode != I915_TILING_NONE)
 		dvscntr |= DVS_TILED;
 
@@ -470,17 +469,17 @@ ilk_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 	crtc_h--;
 
 	dvsscale = 0;
-	if (IS_GEN5(dev) || crtc_w != src_w || crtc_h != src_h)
+	if (crtc_w != src_w || crtc_h != src_h)
 		dvsscale = DVS_SCALE_ENABLE | (src_w << 16) | src_h;
-
-	I915_WRITE(DVSSTRIDE(pipe), fb->pitches[0]);
-	I915_WRITE(DVSPOS(pipe), (crtc_y << 16) | crtc_x);
 
 	linear_offset = y * fb->pitches[0] + x * pixel_size;
 	dvssurf_offset =
 		intel_gen4_compute_page_offset(&x, &y, obj->tiling_mode,
 					       pixel_size, fb->pitches[0]);
 	linear_offset -= dvssurf_offset;
+
+	I915_WRITE(DVSSTRIDE(pipe), fb->pitches[0]);
+	I915_WRITE(DVSPOS(pipe), (crtc_y << 16) | crtc_x);
 
 	if (obj->tiling_mode != I915_TILING_NONE)
 		I915_WRITE(DVSTILEOFF(pipe), (y << 16) | x);
@@ -490,8 +489,8 @@ ilk_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 	I915_WRITE(DVSSIZE(pipe), (crtc_h << 16) | crtc_w);
 	I915_WRITE(DVSSCALE(pipe), dvsscale);
 	I915_WRITE(DVSCNTR(pipe), dvscntr);
-	I915_MODIFY_DISPBASE(DVSSURF(pipe),
-			     i915_gem_obj_ggtt_offset(obj) + dvssurf_offset);
+	I915_WRITE(DVSSURF(pipe),
+		   i915_gem_obj_ggtt_offset(obj) + dvssurf_offset);
 	POSTING_READ(DVSSURF(pipe));
 }
 
@@ -507,8 +506,14 @@ ilk_disable_plane(struct drm_plane *plane, struct drm_crtc *crtc)
 	/* Disable the scaler */
 	I915_WRITE(DVSSCALE(pipe), 0);
 	/* Flush double buffered register updates */
-	I915_MODIFY_DISPBASE(DVSSURF(pipe), 0);
+	I915_WRITE(DVSSURF(pipe), 0);
 	POSTING_READ(DVSSURF(pipe));
+
+	/*
+	 * Avoid underruns when disabling the sprite.
+	 * FIXME remove once watermark updates are done properly.
+	 */
+	intel_wait_for_vblank(dev, pipe);
 
 	intel_update_sprite_watermarks(plane, crtc, 0, 0, false, false);
 }
@@ -641,6 +646,15 @@ format_is_yuv(uint32_t format)
 	default:
 		return false;
 	}
+}
+
+static bool colorkey_enabled(struct intel_plane *intel_plane)
+{
+	struct drm_intel_sprite_colorkey key;
+
+	intel_plane->get_colorkey(&intel_plane->base, &key);
+
+	return key.flags != I915_SET_COLORKEY_NONE;
 }
 
 static int
@@ -828,7 +842,7 @@ intel_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 	 * If the sprite is completely covering the primary plane,
 	 * we can disable the primary and save power.
 	 */
-	disable_primary = drm_rect_equals(&dst, &clip);
+	disable_primary = drm_rect_equals(&dst, &clip) && !colorkey_enabled(intel_plane);
 	WARN_ON(disable_primary && !visible && intel_crtc->active);
 
 	mutex_lock(&dev->struct_mutex);

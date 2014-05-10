@@ -68,29 +68,29 @@
 static bool debug;
 static bool check_pselecd;
 
-unsigned int irq = LIRC_IRQ;
-unsigned int io = LIRC_PORT;
+static unsigned int irq = LIRC_IRQ;
+static unsigned int io = LIRC_PORT;
 #ifdef LIRC_TIMER
-unsigned int timer;
-unsigned int default_timer = LIRC_TIMER;
+static unsigned int timer;
+static unsigned int default_timer = LIRC_TIMER;
 #endif
 
 #define RBUF_SIZE (256) /* this must be a power of 2 larger than 1 */
 
 static int rbuf[RBUF_SIZE];
 
-DECLARE_WAIT_QUEUE_HEAD(lirc_wait);
+static DECLARE_WAIT_QUEUE_HEAD(lirc_wait);
 
-unsigned int rptr;
-unsigned int wptr;
-unsigned int lost_irqs;
-int is_open;
+static unsigned int rptr;
+static unsigned int wptr;
+static unsigned int lost_irqs;
+static int is_open;
 
-struct parport *pport;
-struct pardevice *ppdevice;
-int is_claimed;
+static struct parport *pport;
+static struct pardevice *ppdevice;
+static int is_claimed;
 
-unsigned int tx_mask = 1;
+static unsigned int tx_mask = 1;
 
 /*** Internal Functions ***/
 
@@ -220,7 +220,7 @@ static void rbuf_write(int signal)
 	wptr = nwptr;
 }
 
-static void irq_handler(void *blah)
+static void lirc_lirc_irq_handler(void *blah)
 {
 	struct timeval tv;
 	static struct timeval lasttv;
@@ -659,7 +659,7 @@ static int __init lirc_parallel_init(void)
 		goto exit_device_put;
 	}
 	ppdevice = parport_register_device(pport, LIRC_DRIVER_NAME,
-					   pf, kf, irq_handler, 0, NULL);
+					   pf, kf, lirc_lirc_irq_handler, 0, NULL);
 	parport_put_port(pport);
 	if (ppdevice == NULL) {
 		pr_notice("parport_register_device() failed\n");

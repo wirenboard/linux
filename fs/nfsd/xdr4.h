@@ -228,7 +228,7 @@ struct nfsd4_open {
 	u32		op_create;     	    /* request */
 	u32		op_createmode;      /* request */
 	u32		op_bmval[3];        /* request */
-	struct iattr	iattr;              /* UNCHECKED4, GUARDED4, EXCLUSIVE4_1 */
+	struct iattr	op_iattr;           /* UNCHECKED4, GUARDED4, EXCLUSIVE4_1 */
 	nfs4_verifier	op_verf __attribute__((aligned(32)));
 					    /* EXCLUSIVE4 */
 	clientid_t	op_clientid;        /* request */
@@ -250,7 +250,6 @@ struct nfsd4_open {
 	struct nfs4_acl *op_acl;
 	struct xdr_netobj op_label;
 };
-#define op_iattr	iattr
 
 struct nfsd4_open_confirm {
 	stateid_t	oc_req_stateid		/* request */;
@@ -374,7 +373,6 @@ struct nfsd4_test_stateid {
 
 struct nfsd4_free_stateid {
 	stateid_t	fr_stateid;         /* request */
-	__be32		fr_status;          /* response */
 };
 
 /* also used for NVERIFY */
@@ -576,8 +574,6 @@ extern __be32 nfsd4_setclientid_confirm(struct svc_rqst *rqstp,
 		struct nfsd4_compound_state *,
 		struct nfsd4_setclientid_confirm *setclientid_confirm);
 extern void nfsd4_store_cache_entry(struct nfsd4_compoundres *resp);
-extern __be32 nfsd4_replay_cache_entry(struct nfsd4_compoundres *resp,
-		struct nfsd4_sequence *seq);
 extern __be32 nfsd4_exchange_id(struct svc_rqst *rqstp,
 		struct nfsd4_compound_state *, struct nfsd4_exchange_id *);
 extern __be32 nfsd4_backchannel_ctl(struct svc_rqst *, struct nfsd4_compound_state *, struct nfsd4_backchannel_ctl *);

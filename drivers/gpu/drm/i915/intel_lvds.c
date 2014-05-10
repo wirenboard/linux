@@ -256,8 +256,9 @@ static void intel_disable_lvds(struct intel_encoder *encoder)
 	POSTING_READ(lvds_encoder->reg);
 }
 
-static int intel_lvds_mode_valid(struct drm_connector *connector,
-				 struct drm_display_mode *mode)
+static enum drm_mode_status
+intel_lvds_mode_valid(struct drm_connector *connector,
+		      struct drm_display_mode *mode)
 {
 	struct intel_connector *intel_connector = to_intel_connector(connector);
 	struct drm_display_mode *fixed_mode = intel_connector->panel.fixed_mode;
@@ -446,9 +447,19 @@ static int intel_lid_notify(struct notifier_block *nb, unsigned long val,
 	if (dev_priv->modeset_restore == MODESET_DONE)
 		goto exit;
 
-	drm_modeset_lock_all(dev);
-	intel_modeset_setup_hw_state(dev, true);
-	drm_modeset_unlock_all(dev);
+	/*
+	 * Some old platform's BIOS love to wreak havoc while the lid is closed.
+	 * We try to detect this here and undo any damage. The split for PCH
+	 * platforms is rather conservative and a bit arbitrary expect that on
+	 * those platforms VGA disabling requires actual legacy VGA I/O access,
+	 * and as part of the cleanup in the hw state restore we also redisable
+	 * the vga plane.
+	 */
+	if (!HAS_PCH_SPLIT(dev)) {
+		drm_modeset_lock_all(dev);
+		intel_modeset_setup_hw_state(dev, true);
+		drm_modeset_unlock_all(dev);
+	}
 
 	dev_priv->modeset_restore = MODESET_DONE;
 
@@ -744,57 +755,6 @@ static const struct dmi_system_id intel_no_lvds[] = {
 	{ }	/* terminating entry */
 };
 
-/**
- * intel_find_lvds_downclock - find the reduced downclock for LVDS in EDID
- * @dev: drm device
- * @connector: LVDS connector
- *
- * Find the reduced downclock for LVDS in EDID.
- */
-static void intel_find_lvds_downclock(struct drm_device *dev,
-				      struct drm_display_mode *fixed_mode,
-				      struct drm_connector *connector)
-{
-	struct drm_i915_private *dev_priv = dev->dev_private;
-	struct drm_display_mode *scan;
-	int temp_downclock;
-
-	temp_downclock = fixed_mode->clock;
-	list_for_each_entry(scan, &connector->probed_modes, head) {
-		/*
-		 * If one mode has the same resolution with the fixed_panel
-		 * mode while they have the different refresh rate, it means
-		 * that the reduced downclock is found for the LVDS. In such
-		 * case we can set the different FPx0/1 to dynamically select
-		 * between low and high frequency.
-		 */
-		if (scan->hdisplay == fixed_mode->hdisplay &&
-		    scan->hsync_start == fixed_mode->hsync_start &&
-		    scan->hsync_end == fixed_mode->hsync_end &&
-		    scan->htotal == fixed_mode->htotal &&
-		    scan->vdisplay == fixed_mode->vdisplay &&
-		    scan->vsync_start == fixed_mode->vsync_start &&
-		    scan->vsync_end == fixed_mode->vsync_end &&
-		    scan->vtotal == fixed_mode->vtotal) {
-			if (scan->clock < temp_downclock) {
-				/*
-				 * The downclock is already found. But we
-				 * expect to find the lower downclock.
-				 */
-				temp_downclock = scan->clock;
-			}
-		}
-	}
-	if (temp_downclock < fixed_mode->clock && i915_lvds_downclock) {
-		/* We found the downclock for LVDS. */
-		dev_priv->lvds_downclock_avail = 1;
-		dev_priv->lvds_downclock = temp_downclock;
-		DRM_DEBUG_KMS("LVDS downclock is found in EDID. "
-			      "Normal clock %dKhz, downclock %dKhz\n",
-			      fixed_mode->clock, temp_downclock);
-	}
-}
-
 /*
  * Enumerate the child dev array parsed from VBT to check whether
  * the LVDS is present.
@@ -888,8 +848,8 @@ static bool compute_is_dual_link_lvds(struct intel_lvds_encoder *lvds_encoder)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	/* use the module option value if specified */
-	if (i915_lvds_channel_mode > 0)
-		return i915_lvds_channel_mode == 2;
+	if (i915.lvds_channel_mode > 0)
+		return i915.lvds_channel_mode == 2;
 
 	if (dmi_check_system(intel_dual_link_lvds))
 		return true;
@@ -939,6 +899,7 @@ void intel_lvds_init(struct drm_device *dev)
 	struct drm_encoder *encoder;
 	struct drm_display_mode *scan; /* *modes, *bios_mode; */
 	struct drm_display_mode *fixed_mode = NULL;
+	struct drm_display_mode *downclock_mode = NULL;
 	struct edid *edid;
 	struct drm_crtc *crtc;
 	u32 lvds;
@@ -997,11 +958,12 @@ void intel_lvds_init(struct drm_device *dev)
 	intel_encoder->get_hw_state = intel_lvds_get_hw_state;
 	intel_encoder->get_config = intel_lvds_get_config;
 	intel_connector->get_hw_state = intel_connector_get_hw_state;
+	intel_connector->unregister = intel_connector_unregister;
 
 	intel_connector_attach_encoder(intel_connector, intel_encoder);
 	intel_encoder->type = INTEL_OUTPUT_LVDS;
 
-	intel_encoder->cloneable = false;
+	intel_encoder->cloneable = 0;
 	if (HAS_PCH_SPLIT(dev))
 		intel_encoder->crtc_mask = (1 << 0) | (1 << 1) | (1 << 2);
 	else if (IS_GEN4(dev))
@@ -1040,6 +1002,7 @@ void intel_lvds_init(struct drm_device *dev)
 	 * Attempt to get the fixed panel mode from DDC.  Assume that the
 	 * preferred mode is the right one.
 	 */
+	mutex_lock(&dev->mode_config.mutex);
 	edid = drm_get_edid(connector, intel_gmbus_get_adapter(dev_priv, pin));
 	if (edid) {
 		if (drm_add_edid_modes(connector, edid)) {
@@ -1072,8 +1035,21 @@ void intel_lvds_init(struct drm_device *dev)
 
 			fixed_mode = drm_mode_duplicate(dev, scan);
 			if (fixed_mode) {
-				intel_find_lvds_downclock(dev, fixed_mode,
-							  connector);
+				downclock_mode =
+					intel_find_panel_downclock(dev,
+					fixed_mode, connector);
+				if (downclock_mode != NULL &&
+					i915.lvds_downclock) {
+					/* We found the downclock for LVDS. */
+					dev_priv->lvds_downclock_avail = true;
+					dev_priv->lvds_downclock =
+						downclock_mode->clock;
+					DRM_DEBUG_KMS("LVDS downclock is found"
+					" in EDID. Normal clock %dKhz, "
+					"downclock %dKhz\n",
+					fixed_mode->clock,
+					dev_priv->lvds_downclock);
+				}
 				goto out;
 			}
 		}
@@ -1120,6 +1096,8 @@ void intel_lvds_init(struct drm_device *dev)
 		goto failed;
 
 out:
+	mutex_unlock(&dev->mode_config.mutex);
+
 	lvds_encoder->is_dual_link = compute_is_dual_link_lvds(lvds_encoder);
 	DRM_DEBUG_KMS("detected %s-link lvds configuration\n",
 		      lvds_encoder->is_dual_link ? "dual" : "single");
@@ -1142,17 +1120,17 @@ out:
 	}
 	drm_sysfs_connector_add(connector);
 
-	intel_panel_init(&intel_connector->panel, fixed_mode);
+	intel_panel_init(&intel_connector->panel, fixed_mode, downclock_mode);
 	intel_panel_setup_backlight(connector);
 
 	return;
 
 failed:
+	mutex_unlock(&dev->mode_config.mutex);
+
 	DRM_DEBUG_KMS("No LVDS modes found, disabling.\n");
 	drm_connector_cleanup(connector);
 	drm_encoder_cleanup(encoder);
-	if (fixed_mode)
-		drm_mode_destroy(dev, fixed_mode);
 	kfree(lvds_encoder);
 	kfree(lvds_connector);
 	return;

@@ -727,14 +727,10 @@ static int s5p_mfc_set_enc_params(struct s5p_mfc_ctx *ctx)
 	WRITEL(reg, S5P_FIMV_E_RC_CONFIG_V6);
 
 	/* setting for MV range [16, 256] */
-	reg = 0;
-	reg &= ~(0x3FFF);
-	reg = 256;
+	reg = (p->mv_h_range & S5P_FIMV_E_MV_RANGE_V6_MASK);
 	WRITEL(reg, S5P_FIMV_E_MV_HOR_RANGE_V6);
 
-	reg = 0;
-	reg &= ~(0x3FFF);
-	reg = 256;
+	reg = (p->mv_v_range & S5P_FIMV_E_MV_RANGE_V6_MASK);
 	WRITEL(reg, S5P_FIMV_E_MV_VER_RANGE_V6);
 
 	WRITEL(0x0, S5P_FIMV_E_FRAME_INSERTION_V6);
@@ -1197,10 +1193,8 @@ static int s5p_mfc_set_enc_params_vp8(struct s5p_mfc_ctx *ctx)
 	reg |= ((p->num_b_frame & 0x3) << 16);
 	WRITEL(reg, S5P_FIMV_E_GOP_CONFIG_V6);
 
-	/* profile & level */
-	reg = 0;
-	/** profile */
-	reg |= (0x1 << 4);
+	/* profile - 0 ~ 3 */
+	reg = p_vp8->profile & 0x3;
 	WRITEL(reg, S5P_FIMV_E_PICTURE_PROFILE_V6);
 
 	/* rate control config. */
@@ -1217,6 +1211,26 @@ static int s5p_mfc_set_enc_params_vp8(struct s5p_mfc_ctx *ctx)
 		reg |= p->rc_framerate_denom & 0xFFFF;
 		WRITEL(reg, S5P_FIMV_E_RC_FRAME_RATE_V6);
 	}
+
+	/* frame QP */
+	reg &= ~(0x7F);
+	reg |= p_vp8->rc_frame_qp & 0x7F;
+	WRITEL(reg, S5P_FIMV_E_RC_CONFIG_V6);
+
+	/* other QPs */
+	WRITEL(0x0, S5P_FIMV_E_FIXED_PICTURE_QP_V6);
+	if (!p->rc_frame && !p->rc_mb) {
+		reg = 0;
+		reg |= ((p_vp8->rc_p_frame_qp & 0x7F) << 8);
+		reg |= p_vp8->rc_frame_qp & 0x7F;
+		WRITEL(reg, S5P_FIMV_E_FIXED_PICTURE_QP_V6);
+	}
+
+	/* max QP */
+	reg = ((p_vp8->rc_max_qp & 0x7F) << 8);
+	/* min QP */
+	reg |= p_vp8->rc_min_qp & 0x7F;
+	WRITEL(reg, S5P_FIMV_E_RC_QP_BOUND_V6);
 
 	/* vbv buffer size */
 	if (p->frame_skip_mode ==

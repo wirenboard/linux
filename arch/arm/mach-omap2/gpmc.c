@@ -501,7 +501,7 @@ static int gpmc_cs_delete_mem(int cs)
 	int r;
 
 	spin_lock(&gpmc_mem_lock);
-	r = release_resource(&gpmc_cs_mem[cs]);
+	r = release_resource(res);
 	res->start = 0;
 	res->end = 0;
 	spin_unlock(&gpmc_mem_lock);
@@ -527,6 +527,14 @@ static int gpmc_cs_remap(int cs, u32 base)
 		pr_err("%s: requested chip-select is disabled\n", __func__);
 		return -ENODEV;
 	}
+
+	/*
+	 * Make sure we ignore any device offsets from the GPMC partition
+	 * allocated for the chip select and that the new base confirms
+	 * to the GPMC 16MB minimum granularity.
+	 */ 
+	base &= ~(SZ_16M - 1);
+
 	gpmc_cs_get_memconf(cs, &old_base, &size);
 	if (base == old_base)
 		return 0;
@@ -586,6 +594,8 @@ EXPORT_SYMBOL(gpmc_cs_request);
 
 void gpmc_cs_free(int cs)
 {
+	struct resource	*res = &gpmc_cs_mem[cs];
+
 	spin_lock(&gpmc_mem_lock);
 	if (cs >= gpmc_cs_num || cs < 0 || !gpmc_cs_reserved(cs)) {
 		printk(KERN_ERR "Trying to free non-reserved GPMC CS%d\n", cs);
@@ -594,7 +604,8 @@ void gpmc_cs_free(int cs)
 		return;
 	}
 	gpmc_cs_disable_mem(cs);
-	release_resource(&gpmc_cs_mem[cs]);
+	if (res->flags)
+		release_resource(res);
 	gpmc_cs_set_reserved(cs, 0);
 	spin_unlock(&gpmc_mem_lock);
 }
@@ -1339,7 +1350,7 @@ static void __maybe_unused gpmc_read_timings_dt(struct device_node *np,
 		of_property_read_bool(np, "gpmc,time-para-granularity");
 }
 
-#ifdef CONFIG_MTD_NAND
+#if IS_ENABLED(CONFIG_MTD_NAND)
 
 static const char * const nand_xfer_types[] = {
 	[NAND_OMAP_PREFETCH_POLLED]		= "prefetch-polled",
@@ -1429,7 +1440,7 @@ static int gpmc_probe_nand_child(struct platform_device *pdev,
 }
 #endif
 
-#ifdef CONFIG_MTD_ONENAND
+#if IS_ENABLED(CONFIG_MTD_ONENAND)
 static int gpmc_probe_onenand_child(struct platform_device *pdev,
 				 struct device_node *child)
 {

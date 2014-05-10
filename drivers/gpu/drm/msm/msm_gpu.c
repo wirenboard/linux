@@ -17,6 +17,7 @@
 
 #include "msm_gpu.h"
 #include "msm_gem.h"
+#include "msm_mmu.h"
 
 
 /*
@@ -25,20 +26,10 @@
 
 #ifdef CONFIG_MSM_BUS_SCALING
 #include <mach/board.h>
-#include <mach/kgsl.h>
-static void bs_init(struct msm_gpu *gpu, struct platform_device *pdev)
+static void bs_init(struct msm_gpu *gpu)
 {
-	struct drm_device *dev = gpu->dev;
-	struct kgsl_device_platform_data *pdata;
-
-	if (!pdev) {
-		dev_err(dev->dev, "could not find dtv pdata\n");
-		return;
-	}
-
-	pdata = pdev->dev.platform_data;
-	if (pdata->bus_scale_table) {
-		gpu->bsc = msm_bus_scale_register_client(pdata->bus_scale_table);
+	if (gpu->bus_scale_table) {
+		gpu->bsc = msm_bus_scale_register_client(gpu->bus_scale_table);
 		DBG("bus scale client: %08x", gpu->bsc);
 	}
 }
@@ -59,7 +50,7 @@ static void bs_set(struct msm_gpu *gpu, int idx)
 	}
 }
 #else
-static void bs_init(struct msm_gpu *gpu, struct platform_device *pdev) {}
+static void bs_init(struct msm_gpu *gpu) {}
 static void bs_fini(struct msm_gpu *gpu) {}
 static void bs_set(struct msm_gpu *gpu, int idx) {}
 #endif
@@ -163,9 +154,18 @@ static int disable_axi(struct msm_gpu *gpu)
 
 int msm_gpu_pm_resume(struct msm_gpu *gpu)
 {
+	struct drm_device *dev = gpu->dev;
 	int ret;
 
-	DBG("%s", gpu->name);
+	DBG("%s: active_cnt=%d", gpu->name, gpu->active_cnt);
+
+	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
+
+	if (gpu->active_cnt++ > 0)
+		return 0;
+
+	if (WARN_ON(gpu->active_cnt <= 0))
+		return -EINVAL;
 
 	ret = enable_pwrrail(gpu);
 	if (ret)
@@ -184,9 +184,18 @@ int msm_gpu_pm_resume(struct msm_gpu *gpu)
 
 int msm_gpu_pm_suspend(struct msm_gpu *gpu)
 {
+	struct drm_device *dev = gpu->dev;
 	int ret;
 
-	DBG("%s", gpu->name);
+	DBG("%s: active_cnt=%d", gpu->name, gpu->active_cnt);
+
+	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
+
+	if (--gpu->active_cnt > 0)
+		return 0;
+
+	if (WARN_ON(gpu->active_cnt < 0))
+		return -EINVAL;
 
 	ret = disable_axi(gpu);
 	if (ret)
@@ -204,6 +213,55 @@ int msm_gpu_pm_suspend(struct msm_gpu *gpu)
 }
 
 /*
+ * Inactivity detection (for suspend):
+ */
+
+static void inactive_worker(struct work_struct *work)
+{
+	struct msm_gpu *gpu = container_of(work, struct msm_gpu, inactive_work);
+	struct drm_device *dev = gpu->dev;
+
+	if (gpu->inactive)
+		return;
+
+	DBG("%s: inactive!\n", gpu->name);
+	mutex_lock(&dev->struct_mutex);
+	if (!(msm_gpu_active(gpu) || gpu->inactive)) {
+		disable_axi(gpu);
+		disable_clk(gpu);
+		gpu->inactive = true;
+	}
+	mutex_unlock(&dev->struct_mutex);
+}
+
+static void inactive_handler(unsigned long data)
+{
+	struct msm_gpu *gpu = (struct msm_gpu *)data;
+	struct msm_drm_private *priv = gpu->dev->dev_private;
+
+	queue_work(priv->wq, &gpu->inactive_work);
+}
+
+/* cancel inactive timer and make sure we are awake: */
+static void inactive_cancel(struct msm_gpu *gpu)
+{
+	DBG("%s", gpu->name);
+	del_timer(&gpu->inactive_timer);
+	if (gpu->inactive) {
+		enable_clk(gpu);
+		enable_axi(gpu);
+		gpu->inactive = false;
+	}
+}
+
+static void inactive_start(struct msm_gpu *gpu)
+{
+	DBG("%s", gpu->name);
+	mod_timer(&gpu->inactive_timer,
+			round_jiffies_up(jiffies + DRM_MSM_INACTIVE_JIFFIES));
+}
+
+/*
  * Hangcheck detection for locked gpu:
  */
 
@@ -215,7 +273,10 @@ static void recover_worker(struct work_struct *work)
 	dev_err(dev->dev, "%s: hangcheck recover!\n", gpu->name);
 
 	mutex_lock(&dev->struct_mutex);
-	gpu->funcs->recover(gpu);
+	if (msm_gpu_active(gpu)) {
+		inactive_cancel(gpu);
+		gpu->funcs->recover(gpu);
+	}
 	mutex_unlock(&dev->struct_mutex);
 
 	msm_gpu_retire(gpu);
@@ -290,6 +351,9 @@ static void retire_worker(struct work_struct *work)
 	}
 
 	mutex_unlock(&dev->struct_mutex);
+
+	if (!msm_gpu_active(gpu))
+		inactive_start(gpu);
 }
 
 /* call from irq handler to schedule work to retire bo's */
@@ -307,11 +371,11 @@ int msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit,
 	struct msm_drm_private *priv = dev->dev_private;
 	int i, ret;
 
-	mutex_lock(&dev->struct_mutex);
-
 	submit->fence = ++priv->next_fence;
 
 	gpu->submitted_fence = submit->fence;
+
+	inactive_cancel(gpu);
 
 	ret = gpu->funcs->submit(gpu, submit, ctx);
 	priv->lastctx = ctx;
@@ -340,7 +404,6 @@ int msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit,
 			msm_gem_move_to_active(&msm_obj->base, gpu, true, submit->fence);
 	}
 	hangcheck_timer_reset(gpu);
-	mutex_unlock(&dev->struct_mutex);
 
 	return ret;
 }
@@ -363,16 +426,21 @@ int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 		struct msm_gpu *gpu, const struct msm_gpu_funcs *funcs,
 		const char *name, const char *ioname, const char *irqname, int ringsz)
 {
+	struct iommu_domain *iommu;
 	int i, ret;
 
 	gpu->dev = drm;
 	gpu->funcs = funcs;
 	gpu->name = name;
+	gpu->inactive = true;
 
 	INIT_LIST_HEAD(&gpu->active_list);
 	INIT_WORK(&gpu->retire_work, retire_worker);
+	INIT_WORK(&gpu->inactive_work, inactive_worker);
 	INIT_WORK(&gpu->recover_work, recover_worker);
 
+	setup_timer(&gpu->inactive_timer, inactive_handler,
+			(unsigned long)gpu);
 	setup_timer(&gpu->hangcheck_timer, hangcheck_handler,
 			(unsigned long)gpu);
 
@@ -428,13 +496,14 @@ int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 	 * and have separate page tables per context.  For now, to keep things
 	 * simple and to get something working, just use a single address space:
 	 */
-	gpu->iommu = iommu_domain_alloc(&platform_bus_type);
-	if (!gpu->iommu) {
-		dev_err(drm->dev, "failed to allocate IOMMU\n");
-		ret = -ENOMEM;
-		goto fail;
+	iommu = iommu_domain_alloc(&platform_bus_type);
+	if (iommu) {
+		dev_info(drm->dev, "%s: using IOMMU\n", name);
+		gpu->mmu = msm_iommu_new(drm, iommu);
+	} else {
+		dev_info(drm->dev, "%s: no IOMMU, fallback to VRAM carveout!\n", name);
 	}
-	gpu->id = msm_register_iommu(drm, gpu->iommu);
+	gpu->id = msm_register_mmu(drm, gpu->mmu);
 
 	/* Create ringbuffer: */
 	gpu->rb = msm_ringbuffer_new(gpu, ringsz);
@@ -452,7 +521,7 @@ int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 		goto fail;
 	}
 
-	bs_init(gpu, pdev);
+	bs_init(gpu);
 
 	return 0;
 
@@ -474,6 +543,6 @@ void msm_gpu_cleanup(struct msm_gpu *gpu)
 		msm_ringbuffer_destroy(gpu->rb);
 	}
 
-	if (gpu->iommu)
-		iommu_domain_free(gpu->iommu);
+	if (gpu->mmu)
+		gpu->mmu->funcs->destroy(gpu->mmu);
 }

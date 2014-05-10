@@ -20,6 +20,15 @@
 #ifndef cpu_has_tlb
 #define cpu_has_tlb		(cpu_data[0].options & MIPS_CPU_TLB)
 #endif
+#ifndef cpu_has_tlbinv
+#define cpu_has_tlbinv		(cpu_data[0].options & MIPS_CPU_TLBINV)
+#endif
+#ifndef cpu_has_segments
+#define cpu_has_segments	(cpu_data[0].options & MIPS_CPU_SEGMENTS)
+#endif
+#ifndef cpu_has_eva
+#define cpu_has_eva		(cpu_data[0].options & MIPS_CPU_EVA)
+#endif
 
 /*
  * For the moment we don't consider R6000 and R8000 so we can assume that
@@ -290,6 +299,12 @@
 
 #ifndef cpu_has_vz
 #define cpu_has_vz		(cpu_data[0].ases & MIPS_ASE_VZ)
+#endif
+
+#if defined(CONFIG_CPU_HAS_MSA) && !defined(cpu_has_msa)
+# define cpu_has_msa		(cpu_data[0].ases & MIPS_ASE_MSA)
+#elif !defined(cpu_has_msa)
+# define cpu_has_msa		0
 #endif
 
 #endif /* __ASM_CPU_FEATURES_H */

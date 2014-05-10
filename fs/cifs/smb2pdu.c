@@ -413,7 +413,9 @@ SMB2_negotiate(const unsigned int xid, struct cifs_ses *ses)
 
 	/* SMB2 only has an extended negflavor */
 	server->negflavor = CIFS_NEGFLAVOR_EXTENDED;
-	server->maxBuf = le32_to_cpu(rsp->MaxTransactSize);
+	/* set it to the maximum buffer size value we can send with 1 credit */
+	server->maxBuf = min_t(unsigned int, le32_to_cpu(rsp->MaxTransactSize),
+			       SMB2_MAX_BUFFER_SIZE);
 	server->max_read = le32_to_cpu(rsp->MaxReadSize);
 	server->max_write = le32_to_cpu(rsp->MaxWriteSize);
 	/* BB Do we need to validate the SecurityMode? */
@@ -1350,7 +1352,6 @@ SMB2_set_compression(const unsigned int xid, struct cifs_tcon *tcon,
 		     u64 persistent_fid, u64 volatile_fid)
 {
 	int rc;
-	char *res_key = NULL;
 	struct  compress_ioctl fsctl_input;
 	char *ret_data = NULL;
 
@@ -1363,7 +1364,6 @@ SMB2_set_compression(const unsigned int xid, struct cifs_tcon *tcon,
 			2 /* in data len */, &ret_data /* out data */, NULL);
 
 	cifs_dbg(FYI, "set compression rc %d\n", rc);
-	kfree(res_key);
 
 	return rc;
 }
@@ -1890,7 +1890,8 @@ smb2_writev_callback(struct mid_q_entry *mid)
 
 /* smb2_async_writev - send an async write, and set up mid to handle result */
 int
-smb2_async_writev(struct cifs_writedata *wdata)
+smb2_async_writev(struct cifs_writedata *wdata,
+		  void (*release)(struct kref *kref))
 {
 	int rc = -EACCES;
 	struct smb2_write_req *req = NULL;
@@ -1938,7 +1939,7 @@ smb2_async_writev(struct cifs_writedata *wdata)
 				smb2_writev_callback, wdata, 0);
 
 	if (rc) {
-		kref_put(&wdata->refcount, cifs_writedata_release);
+		kref_put(&wdata->refcount, release);
 		cifs_stats_fail_inc(tcon, SMB2_WRITE_HE);
 	}
 

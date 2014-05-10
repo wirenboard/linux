@@ -46,7 +46,6 @@ int drm_host1x_init(struct drm_driver *driver, struct host1x_device *device)
 	struct drm_device *drm;
 	int ret;
 
-	INIT_LIST_HEAD(&driver->device_list);
 	driver->bus = &drm_host1x_bus;
 
 	drm = drm_dev_alloc(driver, &device->dev);
@@ -64,7 +63,7 @@ int drm_host1x_init(struct drm_driver *driver, struct host1x_device *device)
 	return 0;
 
 err_free:
-	drm_dev_free(drm);
+	drm_dev_unref(drm);
 	return ret;
 }
 

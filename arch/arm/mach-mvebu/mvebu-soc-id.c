@@ -38,6 +38,7 @@ static bool is_id_valid;
 static const struct of_device_id mvebu_pcie_of_match_table[] = {
 	{ .compatible = "marvell,armada-xp-pcie", },
 	{ .compatible = "marvell,armada-370-pcie", },
+	{ .compatible = "marvell,kirkwood-pcie" },
 	{},
 };
 
@@ -88,7 +89,7 @@ static int __init mvebu_soc_id_init(void)
 	}
 
 	pci_base = of_iomap(child, 0);
-	if (IS_ERR(pci_base)) {
+	if (pci_base == NULL) {
 		pr_err("cannot map registers\n");
 		ret = -ENOMEM;
 		goto res_ioremap;

@@ -194,10 +194,10 @@ static int do_bio_lustrebacked(struct lloop_device *lo, struct bio *head)
 	struct cl_object     *obj = ll_i2info(inode)->lli_clob;
 	pgoff_t	       offset;
 	int		   ret;
-	int		   i;
 	int		   rw;
 	obd_count	     page_count = 0;
-	struct bio_vec       *bvec;
+	struct bio_vec       bvec;
+	struct bvec_iter   iter;
 	struct bio	   *bio;
 	ssize_t	       bytes;
 
@@ -220,15 +220,15 @@ static int do_bio_lustrebacked(struct lloop_device *lo, struct bio *head)
 	for (bio = head; bio != NULL; bio = bio->bi_next) {
 		LASSERT(rw == bio->bi_rw);
 
-		offset = (pgoff_t)(bio->bi_sector << 9) + lo->lo_offset;
-		bio_for_each_segment(bvec, bio, i) {
-			BUG_ON(bvec->bv_offset != 0);
-			BUG_ON(bvec->bv_len != PAGE_CACHE_SIZE);
+		offset = (pgoff_t)(bio->bi_iter.bi_sector << 9) + lo->lo_offset;
+		bio_for_each_segment(bvec, bio, iter) {
+			BUG_ON(bvec.bv_offset != 0);
+			BUG_ON(bvec.bv_len != PAGE_CACHE_SIZE);
 
-			pages[page_count] = bvec->bv_page;
+			pages[page_count] = bvec.bv_page;
 			offsets[page_count] = offset;
 			page_count++;
-			offset += bvec->bv_len;
+			offset += bvec.bv_len;
 		}
 		LASSERT(page_count <= LLOOP_MAX_SEGMENTS);
 	}
@@ -255,7 +255,7 @@ static int do_bio_lustrebacked(struct lloop_device *lo, struct bio *head)
 	 *    to store parity;
 	 * 2. Reserve the # of (page_count * depth) cl_pages from the reserved
 	 *    pool. Afterwards, the clio would allocate the pages from reserved
-	 *    pool, this guarantees we neeedn't allocate the cl_pages from
+	 *    pool, this guarantees we needn't allocate the cl_pages from
 	 *    generic cl_page slab cache.
 	 *    Of course, if there is NOT enough pages in the pool, we might
 	 *    be asked to write less pages once, this purely depends on
@@ -313,7 +313,8 @@ static unsigned int loop_get_bio(struct lloop_device *lo, struct bio **req)
 	bio = &lo->lo_bio;
 	while (*bio && (*bio)->bi_rw == rw) {
 		CDEBUG(D_INFO, "bio sector %llu size %u count %u vcnt%u \n",
-		       (unsigned long long)(*bio)->bi_sector, (*bio)->bi_size,
+		       (unsigned long long)(*bio)->bi_iter.bi_sector,
+		       (*bio)->bi_iter.bi_size,
 		       page_count, (*bio)->bi_vcnt);
 		if (page_count + (*bio)->bi_vcnt > LLOOP_MAX_SEGMENTS)
 			break;
@@ -324,7 +325,7 @@ static unsigned int loop_get_bio(struct lloop_device *lo, struct bio **req)
 		bio = &(*bio)->bi_next;
 	}
 	if (*bio) {
-		/* Some of bios can't be mergable. */
+		/* Some of bios can't be mergeable. */
 		lo->lo_bio = *bio;
 		*bio = NULL;
 	} else {
@@ -347,7 +348,8 @@ static void loop_make_request(struct request_queue *q, struct bio *old_bio)
 		goto err;
 
 	CDEBUG(D_INFO, "submit bio sector %llu size %u\n",
-	       (unsigned long long)old_bio->bi_sector, old_bio->bi_size);
+	       (unsigned long long)old_bio->bi_iter.bi_sector,
+	       old_bio->bi_iter.bi_size);
 
 	spin_lock_irq(&lo->lo_lock);
 	inactive = (lo->lo_state != LLOOP_BOUND);
@@ -367,7 +369,7 @@ static void loop_make_request(struct request_queue *q, struct bio *old_bio)
 	loop_add_bio(lo, old_bio);
 	return;
 err:
-	cfs_bio_io_error(old_bio, old_bio->bi_size);
+	cfs_bio_io_error(old_bio, old_bio->bi_iter.bi_size);
 }
 
 
@@ -378,7 +380,7 @@ static inline void loop_handle_bio(struct lloop_device *lo, struct bio *bio)
 	while (bio) {
 		struct bio *tmp = bio->bi_next;
 		bio->bi_next = NULL;
-		cfs_bio_endio(bio, bio->bi_size, ret);
+		cfs_bio_endio(bio, bio->bi_iter.bi_size, ret);
 		bio = tmp;
 	}
 }
@@ -656,7 +658,7 @@ static struct block_device_operations lo_fops = {
  * ll_iocontrol_call.
  *
  * This is a llite regular file ioctl function. It takes the responsibility
- * of attaching or detaching a file by a lloop's device numner.
+ * of attaching or detaching a file by a lloop's device number.
  */
 static enum llioc_iter lloop_ioctl(struct inode *unused, struct file *file,
 				   unsigned int cmd, unsigned long arg,
