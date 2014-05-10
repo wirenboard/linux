@@ -43,7 +43,13 @@
 
 			pinctrl@80018000 {
 				pinctrl-names = "default";
-				pinctrl-0 = <&hog_pins_a>;
+				pinctrl-0 = <&hog_pins_a &i2c0_pins_a_gpio
+							&pin_gpio_pu_0_5
+							&pin_gpio_pu_0_6
+							&pin_gpio_pu_0_7
+							&pin_gpio_pu_0_16
+							>;
+
 
 				hog_pins_a: hog@0 {
 					reg = <0>;
@@ -78,8 +84,19 @@
 		        i2c0_pins_a: i2c0@0 {
 		           reg = <0>;
 		           fsl,pinmux-ids = <
-		           0x1170 /* MX23_PAD_LCD_ENABLE__LCD_ENABLE */
-		           0x1180 /* MX23_PAD_LCD_HSYNC__LCD_HSYNC */
+		           0x1171 /* MX23_PAD_LCD_ENABLE__I2C_SCL */
+		           0x1181 /* MX23_PAD_LCD_HSYNC__I2C_SDA */
+		           >;
+		           fsl,drive-strength = <1>;
+		           fsl,voltage = <1>;
+		           fsl,pull-up = <1>;
+		        };
+
+		        i2c0_pins_a_gpio: i2c0_pins_a_gpio {
+		           reg = <0>;
+		           fsl,pinmux-ids = <
+		           0x1173 /* MX23_PAD_LCD_ENABLE__GPIO_1_23 */
+		           0x1183 /* MX23_PAD_LCD_HSYNC__GPIO_1_24 */
 		           >;
 		           fsl,drive-strength = <1>;
 		           fsl,voltage = <1>;
@@ -98,6 +115,66 @@
 					fsl,pull-up = <1>;
 				};
 
+		        cs_mem_gpio_pins: cs_mem_gpio_pins{
+		           reg = <0>;
+		           fsl,pinmux-ids = <
+			           0x0133 /* MX23_PAD_GPMI_RDY0__GPIO_0_19 */
+		           >;
+		           fsl,drive-strength = <1>;
+		           fsl,voltage = <1>;
+		        };
+
+
+				pin_gpio_pu_0_5: pin_gpio_pu_0_5@0 {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						0x0053 /* MX23_PAD_GPMI_D05__GPIO_0_5 */
+
+					>;
+					fsl,drive-strength = <0>;
+					fsl,voltage = <1>;
+					/* enable 47K pull-up on terminal block R4 (gpio 5) */
+					fsl,pull-up = <1>;
+				};
+
+				pin_gpio_pu_0_6: pin_gpio_pu_0_6@0 {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						0x0063 /* MX23_PAD_GPMI_D06__GPIO_0_6 */
+
+					>;
+					fsl,drive-strength = <0>;
+					fsl,voltage = <1>;
+					/* enable 47K pull-up on terminal block R3 (gpio 6) */
+					fsl,pull-up = <1>;
+				};
+
+				pin_gpio_pu_0_7: pin_gpio_pu_0_7@0 {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						0x0073 /* MX23_PAD_GPMI_D07__GPIO_0_7 */
+
+					>;
+					fsl,drive-strength = <0>;
+					fsl,voltage = <1>;
+					/* enable 47K pull-up on terminal block R2 (gpio 7) */
+					fsl,pull-up = <1>;
+				};
+
+				pin_gpio_pu_0_16: pin_gpio_pu_0_16@0 {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						0x0103 /* MX23_PAD_GPMI_CLE__GPIO_0_16 */
+
+					>;
+					fsl,drive-strength = <0>;
+					fsl,voltage = <1>;
+					/* enable 47K pull-up on terminal block R1 (gpio 16) */
+					fsl,pull-up = <1>;
+				};
+
+
+
 
 
 			};
@@ -107,7 +184,7 @@
 				#size-cells = <0>;
 				compatible = "fsl,imx23-spi";
 				pinctrl-names = "default";
-				pinctrl-0 = <&spi2_pins_nocs>;
+				pinctrl-0 = <&spi2_pins_nocs &cs_mem_gpio_pins>;
 				status = "okay";
 				cs-gpios = <&gpio0 3 0 /* cs0 fixme: use hardware cs directly*/
 							&gpio2 27 0 /* 91  25 @ CON2  MCP2515 chip select */
@@ -115,6 +192,9 @@
 							&gpio1 3 0  /* 35  6  @ CON1  NRF24L01 chip select   */
 
 							&gpio1 6 0  /* 38  9  @ CON1  UEXT chip select   */
+
+
+						  /*	&gpio0 19 0 *//* CS MEMORY (reg=8) */
 							>;
 
 
@@ -171,6 +251,31 @@
 
 
 
+				/*
+				flash: flash@0 {
+					#address-cells = <1>;
+					#size-cells = <1>;
+					compatible = "spansion,s25fl512s";
+					reg = <8>;
+					spi-max-frequency = <10000000>;
+					m25p,fast-read;
+
+					partition@0 {
+						label = "loader";
+						reg = <0x00000000 0x00080000>;
+					};
+					partition@80000 {
+						label = "bootenv";
+						reg = <0x00080000 0x00080000>;
+					};
+					partition@100000 {
+						label = "data";
+						reg = <0x00100000 0x03f00000>;
+					};
+				};
+				*/
+
+
 
 
 
@@ -181,18 +286,21 @@
 
 		apbx@80040000 {
 			rtc@8005c000 {
-				status = "disabled";
+				status = "okay";
 			};
 
 			lradc@80050000 {
 				status = "okay";
 			};
 
+/* Uncomment no enable hardware i2c */
+/*
 			i2c0: i2c@80058000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&i2c0_pins_a>;
 				status = "okay";
 			};
+*/
 
 			duart: serial@80070000 {
 				pinctrl-names = "default";
@@ -312,7 +420,9 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&i2c_gpio>;
 
-			status = "okay";
+			/*status = "okay";*/
+			status = "disabled";
+
 			rtc@6f {
 					compatible = "dallas,mcp7941x";
 					reg = <0x6f>;
@@ -321,8 +431,26 @@
 					compatible = "at,24c02";
 					reg = <0x57>;
 			};
+
+
 	};
 
+
+	i2c1gpio@1 {
+			compatible = "i2c-gpio";
+			gpios = <&gpio1 24 0 /* sda */
+					 &gpio1 23 0 /* scl */
+					>;
+			i2c-gpio,delay-us = <2>;        /* ~100 kHz */
+			i2c-gpio,scl-output-only = <0>;
+			i2c-gpio,sda-open-drain = <1>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c0_pins_a_gpio>;
+
+			/*status = "okay";*/
+			status = "disabled";
+	};
 
 
 };
