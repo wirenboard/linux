@@ -450,11 +450,16 @@
 				status = "disabled";
 			};
 
-			i2c@80058000 {
+			i2c: i2c@80058000 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				compatible = "fsl,imx23-i2c";
 				reg = <0x80058000 0x2000>;
 				dmas = <&dma_apbx 3>;
 				dma-names = "rx-tx";
 				status = "disabled";
+				interrupts = <27>;
+				clock-frequency = <100000>;
 			};
 
 			rtc@8005c000 {
