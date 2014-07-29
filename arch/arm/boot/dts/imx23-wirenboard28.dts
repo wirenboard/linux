@@ -119,7 +119,7 @@
 		        };
 
 
-		        i2c0_pins_a: i2c0@0 {
+		        i2c0_pins_a: i2c0_pins_a {
 		           reg = <0>;
 		           fsl,pinmux-ids = <
 		           0x1171 /* MX23_PAD_LCD_ENABLE__I2C_SCL */
@@ -254,13 +254,12 @@
 			lradc@80050000 {
 				status = "okay";
 			};
-			/*
-			i2c0: i2c@80058000 {
+
+			i2c: i2c@80058000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&i2c0_pins_a>;
 				status = "okay";
 			};
-			*/
 
 			duart: serial@80070000 {
 				pinctrl-names = "default";
@@ -383,6 +382,7 @@
 
 
 
+
 	i2c1sw@0 {
 			compatible = "i2c-gpio";
 			gpios = <&gpio1 24 0 /* sda */
@@ -395,8 +395,26 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&i2c0_pins_a_gpio>;
 
-			status = "okay";
+			/*status = "okay";*/
+			status = "disabled";
 	};
+
+	i2c2sw@0 {
+			compatible = "i2c-gpio";
+			gpios = <&gpio0 25 0 /* sda */
+					 &gpio0 23 0 /* scl */
+					>;
+			i2c-gpio,delay-us = <2>;        /* ~100 kHz */
+			i2c-gpio,scl-output-only = <0>;
+			i2c-gpio,sda-open-drain = <1>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c_gpio>;
+
+			status = "okay";
+			/*status = "disabled";*/
+	};
+
 
 
 };
