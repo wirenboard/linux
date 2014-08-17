@@ -94,6 +94,8 @@ struct sc16is7x2_channel {
 	bool		handle_baud;	/* baud rate needs update */
 	bool		handle_regs;	/* other regs need update */
 	u8		buf[FIFO_SIZE+1]; /* fifo transfer buffer */
+
+	bool use_modem_pins_by_default;
 };
 
 struct sc16is7x2_chip {
@@ -997,10 +999,13 @@ static void sc16is7x2_gpio_free(struct gpio_chip *gpio, unsigned offset)
 	ts->io_gpio &= ~BIT(offset);
 	dev_dbg(&ts->spi->dev, "%s: io_gpio = 0x%02X\n", __func__, ts->io_gpio);
 	if (!(ts->io_control & control) && !(ts->io_gpio & mask)) {
-		dev_dbg(&ts->spi->dev, "deactivate GPIOs %s\n",
-				(offset < 4) ? "0-3" : "4-7");
-		ts->io_control |= control;
-		sc16is7x2_write(ts, REG_IOC, 0, ts->io_control);
+		if (ts->channel[offset < 4 ? 0 : 1].use_modem_pins_by_default) {
+
+			dev_dbg(&ts->spi->dev, "deactivate GPIOs %s\n",
+					(offset < 4) ? "0-3" : "4-7");
+			ts->io_control |= control;
+			sc16is7x2_write(ts, REG_IOC, 0, ts->io_control);
+		}
 	}
 
 	mutex_unlock(&ts->io_lock);
@@ -1121,14 +1126,11 @@ static int sc16is7x2_register_gpio(struct sc16is7x2_chip *ts)
 
 	mutex_init(&ts->io_lock);
 
-	/* disable all GPIOs, enable on request */
 	ts->io_gpio = 0;
-	ts->io_control = IOC_GPIO30 | IOC_GPIO74;
 	ts->io_state = 0;
 	ts->io_dir = 0;
 
 	sc16is7x2_write(ts, REG_IOI, 0, 0); /* no support for irqs yet */
-	sc16is7x2_write(ts, REG_IOC, 0, ts->io_control);
 	sc16is7x2_write(ts, REG_IOS, 0, ts->io_state);
 	sc16is7x2_write(ts, REG_IOD, 0, ts->io_dir);
 
@@ -1218,8 +1220,12 @@ static int sc16is7x2_probe_dt(struct sc16is7x2_chip *ts,
 
 
 	dev_err(&spi->dev, "uart_base=%d\n",ts->uart_base);
-	ts->uart_base = 0;
 
+	if (of_property_read_bool(np, "disable-modem-pins-on-startup-a"))
+		ts->channel[0].use_modem_pins_by_default = false;
+
+	if (of_property_read_bool(np, "disable-modem-pins-on-startup-b"))
+		ts->channel[1].use_modem_pins_by_default = false;
 
 
 	return 0;
@@ -1255,6 +1261,7 @@ static int sc16is7x2_probe(struct spi_device *spi)
 	//~ struct sc16is7x2_platform_data fake_pdata;
 
 	int ret;
+	unsigned char ch;
 
 	/* Only even uart base numbers are supported */
 	dev_info(&spi->dev, "probe start\n");
@@ -1266,6 +1273,9 @@ static int sc16is7x2_probe(struct spi_device *spi)
 	spi_set_drvdata(spi, ts);
 	ts->spi = spi;
 
+	for (ch = 0; ch < 2; ++ch) {
+		ts->channel[ch].use_modem_pins_by_default = true;
+	}
 
 	ret = sc16is7x2_probe_dt(ts, spi);
 	if (ret > 0)
@@ -1292,6 +1302,17 @@ static int sc16is7x2_probe(struct spi_device *spi)
 
 	/* Reset the chip */
 	sc16is7x2_write(ts, REG_IOC, 0, IOC_SRESET);
+
+	/* disable all GPIOs, enable on request */
+	ts->io_control = 0;
+	if (ts->channel[0].use_modem_pins_by_default)
+		ts->io_control |= IOC_GPIO30;
+
+	if (ts->channel[1].use_modem_pins_by_default)
+		ts->io_control |= IOC_GPIO74;
+
+	sc16is7x2_write(ts, REG_IOC, 0, ts->io_control);
+
 
 	ret = sc16is7x2_register_uart_port(ts, 0);
 	if (ret)
