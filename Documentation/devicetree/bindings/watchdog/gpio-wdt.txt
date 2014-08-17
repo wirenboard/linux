@@ -12,12 +12,24 @@ Required Properties:
     the opposite level disables the WDT. Active level is determined
     by the GPIO flags.
 - hw_margin_ms: Maximum time to reset watchdog circuit (milliseconds).
+- always-enabled: Use with watchdog timer which is always enabled
+  in hardware, i.e. there is no way to enable/disable it via GPIO pin.
+  Driver will start pinging WDT immediately upon loading.
 
-Example:
+Examples:
 	watchdog: watchdog {
 		/* ADM706 */
 		compatible = "linux,wdt-gpio";
 		gpios = <&gpio3 9 GPIO_ACTIVE_LOW>;
 		hw_algo = "toggle";
 		hw_margin_ms = <1600>;
+	};
+
+	watchdog: watchdog {
+		/* TPS3813 */
+		compatible = "linux,wdt-gpio";
+		gpios = <&gpio3 9 GPIO_ACTIVE_LOW>;
+		hw_algo = "toggle";
+		hw_margin_ms = <10000>;
+		always-enabled;
 	};
