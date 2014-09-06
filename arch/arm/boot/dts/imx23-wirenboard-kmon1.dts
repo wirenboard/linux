@@ -16,7 +16,7 @@
 
 / {
 	model = "Wiren Board KMON rev. 1.0 (i.MX23)";
-	compatible = "contactless,imx23-wirenboard-kmon1", "olimex,imx23-olinuxino", "fsl,imx23";
+	compatible = "contactless,imx23-wirenboard-kmon1", "contactless,imx23-wirenboard32", "olimex,imx23-olinuxino", "fsl,imx23";
 
 	memory {
 		reg = <0x40000000 0x04000000>;
@@ -56,16 +56,6 @@
 					fsl,pinmux-ids = <
 						0x2013 /* MX23_PAD_SSP1_DETECT__GPIO_2_1 */
 						0x0113 /* MX23_PAD_GPMI_ALE__GPIO_0_17 */
-					>;
-					fsl,drive-strength = <0>;
-					fsl,voltage = <1>;
-					fsl,pull-up = <0>;
-				};
-
-				led_pin_gpio2_1: led_gpio2_1@0 {
-					reg = <0>;
-					fsl,pinmux-ids = <
-						0x2013 /* MX23_PAD_SSP1_DETECT__GPIO_2_1 */
 					>;
 					fsl,drive-strength = <0>;
 					fsl,voltage = <1>;
@@ -201,6 +191,12 @@
 					interrupt-parent = <&gpio1>;
 					interrupts = <20 0>;
 					uartclk = <14745600>;
+
+					disable-modem-pins-on-startup-a;
+					disable-modem-pins-on-startup-b;
+
+					#gpio-cells = <2>;
+					gpio-controller;
 				};
 
 				sc16is7x2_1: sc16is7x2@1 {
@@ -213,6 +209,8 @@
 					interrupt-parent = <&gpio1>;
 					interrupts = <18 0>;
 					uartclk = <14745600>;
+					#gpio-cells = <2>;
+					gpio-controller;
 				};
 
 
@@ -302,24 +300,23 @@
 	leds {
 		compatible = "gpio-leds";
 		pinctrl-names = "default";
-		pinctrl-0 = <&led_pin_gpio2_1>;
 
 		som {
 			label = "som";
-			gpios = <&gpio2 1 1>;
-			linux,default-trigger = "default-on";
+			gpios = <&gpio2 1 0>;
+			linux,default-trigger = "timer";
 		};
 
 		green {
 			label = "green";
-			gpios = <&sc16is7x2_0 7 0>;
+			gpios = <&sc16is7x2_0 7 1>;
 			linux,default-trigger = "default-on";
 		};
 
 
 		red {
 			label = "red";
-			gpios = <&sc16is7x2_0 6 0>;
+			gpios = <&sc16is7x2_0 6 1>;
 			linux,default-trigger = "timer";
 		};
 
@@ -347,10 +344,14 @@
 	tps3813: watchdog {
 		/* tps3813 */
 		compatible = "linux,wdt-gpio";
-		gpios = <&gpio1 19 0>;
+		gpios = <&gpio2 27 0>;
 		hw_algo = "toggle";
-		hw_margin_ms = <1600>;
+		hw_margin_ms = <1000>;
+		always-enabled;
+		timeout-sec = <30>;
 	};
+
+
 
 
 
