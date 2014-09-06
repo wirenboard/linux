@@ -50,7 +50,7 @@ static void gpio_wdt_disable(struct gpio_wdt_priv *priv)
 		gpio_direction_input(priv->gpio);
 }
 
-static int gpio_wdt_start_timer(struct gpio_wdt_priv *priv)
+static int gpio_wdt_start_hwping(struct gpio_wdt_priv *priv)
 {
 	priv->state = priv->active_low;
 	gpio_direction_output(priv->gpio, priv->state);
@@ -65,10 +65,10 @@ static int gpio_wdt_start(struct watchdog_device *wdd)
 	struct gpio_wdt_priv *priv = watchdog_get_drvdata(wdd);
 	priv->started = true;
 	if (priv->always_enabled) {
-		/* harware ping timer is already enabled */
+		/* hardware ping timer is already enabled */
 		priv->last_jiffies = jiffies;
 	} else {
-		gpio_wdt_start_timer(priv);
+		gpio_wdt_start_hwping(priv);
 	}
 
 	return 0;
@@ -107,12 +107,11 @@ static void gpio_wdt_hwping(unsigned long data)
 	struct watchdog_device *wdd = (struct watchdog_device *)data;
 	struct gpio_wdt_priv *priv = watchdog_get_drvdata(wdd);
 
-	if (priv->started) {
-		if (time_after(jiffies, priv->last_jiffies +
+	if (priv->started &&
+		time_after(jiffies, priv->last_jiffies +
 			       msecs_to_jiffies(wdd->timeout * 1000))) {
-			dev_crit(wdd->dev, "Timer expired. System will reboot soon!\n");
-			return;
-		}
+		dev_crit(wdd->dev, "Timer expired. System will reboot soon!\n");
+		return;
 	}
 
 	/* Restart timer */
@@ -237,13 +236,15 @@ static int gpio_wdt_probe(struct platform_device *pdev)
 
 	priv->notifier.notifier_call = gpio_wdt_notify_sys;
 	ret = register_reboot_notifier(&priv->notifier);
-	if (ret)
+	if (ret) {
 		watchdog_unregister_device(&priv->wdd);
+		return ret;
+	}
 
 	if (priv->always_enabled)
-		gpio_wdt_start_timer(priv);
+		gpio_wdt_start_hwping(priv);
 
-	return ret;
+	return 0;
 }
 
 static int gpio_wdt_remove(struct platform_device *pdev)
