@@ -234,6 +234,13 @@
 			gpios = <&gpio2 1 0>;
 			linux,default-trigger = "timer";
 		};
+
+		led {
+			label = "led";
+			gpios = <&gpio1 4 0>;
+			linux,default-trigger = "none";
+		};
+
 	};
 
 
