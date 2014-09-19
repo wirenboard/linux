@@ -130,7 +130,7 @@ if [ "$ARCH" = "um" ] ; then
 	cp System.map "$tmpdir/usr/lib/uml/modules/$version/System.map"
 	cp $KCONFIG_CONFIG "$tmpdir/usr/share/doc/$packagename/config"
 	gzip "$tmpdir/usr/share/doc/$packagename/config"
-else 
+else
 	cp System.map "$tmpdir/boot/System.map-$version"
 	cp $KCONFIG_CONFIG "$tmpdir/boot/config-$version"
 fi
@@ -164,6 +164,8 @@ if grep -q '^CONFIG_MODULES=y' $KCONFIG_CONFIG ; then
 		)
 	fi
 fi
+
+$MAKE KBUILD_SRC=  INSTALL_FW_PATH="$tmpdir/lib/firmware" firmware_install
 
 if [ "$ARCH" != "um" ]; then
 	$MAKE headers_check KBUILD_SRC=
