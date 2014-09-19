@@ -2510,3 +2510,5 @@ config FB_SSD1307
 	  OLED controller over I2C.
 
 endmenu
+
+source "drivers/video/fbtft/Kconfig"
