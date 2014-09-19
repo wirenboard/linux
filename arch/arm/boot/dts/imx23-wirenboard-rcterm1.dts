@@ -160,7 +160,7 @@
 
 				spidev@4 {
 					compatible = "spidev";
-					spi-max-frequency = <1000000>;
+					spi-max-frequency = <10000000>;
 					reg = <4>;
 				};
 
@@ -322,6 +322,7 @@
 						0x0501000b /* 0 */
 						0x0502001C /* enetr */
 						>;
+		/* status = "disabled"; */
 	};
 
 
