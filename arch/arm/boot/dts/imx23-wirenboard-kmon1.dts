@@ -323,6 +323,25 @@
 
 	};
 
+    /*
+    reg_isolated_5v: regulator@1 {
+		compatible = "regulator-fixed";
+		regulator-name = "5v_isolated";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&sc16is7x2_1 3 0>;
+		startup-delay-us = <70000>;
+		enable-active-high;
+		regulator-boot-on;
+
+	};
+
+	userspacereg {
+		compatible = "reg-userspace-consumer";
+		vtest-supply = <&reg_isolated_5v>;
+	};
+	*/
+
 	mxs-builtin-audio {
 		compatible = "fsl,mxs-builtin-audio";
 		audio-codec = <&codec>;
