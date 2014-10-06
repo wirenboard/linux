@@ -215,7 +215,7 @@
 
 
 				can0: mcp2515@6 {
-					compatible = "microchip,mcp2515";
+					compatible = "mcp2515";
 					reg = <4>;
 					spi-max-frequency = <100000>;
 
