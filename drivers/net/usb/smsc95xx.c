@@ -1114,31 +1114,26 @@ static const struct net_device_ops smsc95xx_netdev_ops = {
 
 #ifdef CONFIG_GPIOLIB
 
-static inline u32 smsc95xx_gpio_get_register(unsigned gpio)
-{
+static inline u32 smsc95xx_gpio_get_register(unsigned gpio) {
 	if (gpio < 8)
 		return GPIO_CFG;
 	else
 		return LED_GPIO_CFG;
 }
 
-static inline u8 smsc95xx_gpio_get_enable_offset(unsigned gpio)
-{
+static inline u8 smsc95xx_gpio_get_enable_offset(unsigned gpio) {
 	return (gpio < 8) ? (24 + gpio) : (gpio * 4 - 16);
 }
 
-static inline u8 smsc95xx_gpio_get_type_offset(unsigned gpio)
-{
+static inline u8 smsc95xx_gpio_get_type_offset(unsigned gpio) {
 	return (gpio < 8) ? (16 + gpio) : gpio;
 }
 
-static inline u8 smsc95xx_gpio_get_dir_offset(unsigned gpio)
-{
+static inline u8 smsc95xx_gpio_get_dir_offset(unsigned gpio) {
 	return (gpio < 8) ? (8 + gpio) : (gpio - 4);
 }
 
-static inline u8 smsc95xx_gpio_get_val_offset(unsigned gpio)
-{
+static inline u8 smsc95xx_gpio_get_val_offset(unsigned gpio) {
 	return (gpio < 8) ? (gpio) : (gpio - 8);
 }
 
@@ -1160,6 +1155,11 @@ static int smsc95xx_gpio_request(struct gpio_chip *gpio, unsigned offset)
 	ret = smsc95xx_read_reg(pdata->dev, reg, &val);
 	if (ret >= 0) {
 		val &= ~BIT(smsc95xx_gpio_get_enable_offset(offset));
+
+		//FIXME: what is type?
+		//~ if (type)
+				//~ val &= ~(1 << type_shift);
+		//~ else
 
 		val |= BIT(type_shift);
 		val &= ~BIT(smsc95xx_gpio_get_dir_offset(offset));
@@ -1192,9 +1192,13 @@ static void smsc95xx_gpio_free(struct gpio_chip *gpio, unsigned offset)
 		val |= BIT(smsc95xx_gpio_get_enable_offset(offset));
 
 		if (offset >= 8) {
-			/* Let the chip control LED GPIOs */
+			// Let the chip control LED GPIOs
 			val &= ~BIT(type_shift);
 			val |= BIT(smsc95xx_gpio_get_dir_offset(offset));
+		} else {
+			//FIXME: check this:
+			//~ // set GPIO as input
+			//~ val &= ~BIT(smsc95xx_gpio_get_dir_offset(offset));
 		}
 
 		ret = smsc95xx_write_reg(pdata->dev, reg, val);
@@ -1204,13 +1208,11 @@ static void smsc95xx_gpio_free(struct gpio_chip *gpio, unsigned offset)
 	mutex_unlock(&pdata->gpio_lock);
 
 	if (ret < 0)
-		netif_err(pdata->dev, ifdown, pdata->dev->net,
-			"error freeing gpio %d\n", offset);
+		netif_err(pdata->dev, ifdown, pdata->dev->net, "error freeing gpio %d\n", offset);
 
 }
 
-static int smsc95xx_gpio_direction_input(struct gpio_chip *gpio,
-			unsigned offset)
+static int smsc95xx_gpio_direction_input(struct gpio_chip *gpio, unsigned offset)
 {
 	int ret = -1;
 	u32 val, reg;
@@ -1233,9 +1235,11 @@ static int smsc95xx_gpio_direction_input(struct gpio_chip *gpio,
 	return (ret < 0) ? ret : 0;
 }
 
-static int smsc95xx_gpio_direction_output(struct gpio_chip *gpio,
-			unsigned offset, int value)
+static int smsc95xx_gpio_direction_output(struct gpio_chip *gpio, unsigned offset,
+				    int value)
 {
+
+
 	int ret = -1;
 	u32 val, reg;
 
@@ -1250,10 +1254,11 @@ static int smsc95xx_gpio_direction_output(struct gpio_chip *gpio,
 	if (ret >= 0) {
 		val |= BIT(smsc95xx_gpio_get_dir_offset(offset));
 
-		if (value)
+		if (value) {
 			val |= BIT(smsc95xx_gpio_get_val_offset(offset));
-		else
+		} else {
 			val &= ~BIT(smsc95xx_gpio_get_val_offset(offset));
+		}
 
 		ret = smsc95xx_write_reg(pdata->dev, reg, val);
 	}
@@ -1276,16 +1281,14 @@ static int smsc95xx_gpio_get(struct gpio_chip *gpio, unsigned offset)
 	ret = smsc95xx_read_reg(pdata->dev, reg, &val);
 
 	if (ret < 0) {
-		netif_err(pdata->dev, ifdown, pdata->dev->net,
-			"error reading gpio %d\n", offset);
+		netif_err(pdata->dev, ifdown, pdata->dev->net, "error reading gpio %d\n", offset);
 		return -EINVAL;
 	}
 
 	return (val >> smsc95xx_gpio_get_val_offset(offset)) & 0x01;
 }
 
-static void smsc95xx_gpio_set(struct gpio_chip *gpio, unsigned offset,
-				int value)
+static void smsc95xx_gpio_set(struct gpio_chip *gpio, unsigned offset, int value)
 {
 	int ret = -1;
 	u32 val, reg;
@@ -1299,10 +1302,11 @@ static void smsc95xx_gpio_set(struct gpio_chip *gpio, unsigned offset,
 	ret = smsc95xx_read_reg(pdata->dev, reg, &val);
 
 	if (ret >= 0) {
-		if (value)
+		if (value) {
 			val |= BIT(smsc95xx_gpio_get_val_offset(offset));
-		else
+		} else {
 			val &= ~BIT(smsc95xx_gpio_get_val_offset(offset));
+		}
 
 		ret = smsc95xx_write_reg(pdata->dev, reg, val);
 	}
@@ -1310,8 +1314,7 @@ static void smsc95xx_gpio_set(struct gpio_chip *gpio, unsigned offset,
 	mutex_unlock(&pdata->gpio_lock);
 
 	if (ret < 0) {
-		netif_err(pdata->dev, ifdown, pdata->dev->net,
-			"error writing gpio %d=%d\n", offset, value);
+		netif_err(pdata->dev, ifdown, pdata->dev->net, "error writing gpio %d=%d\n", offset, value);
 		return;
 	}
 }
@@ -1420,12 +1423,13 @@ static void smsc95xx_unbind(struct usbnet *dev, struct usb_interface *intf)
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 	if (pdata) {
 		#ifdef CONFIG_GPIOLIB
-		ret = gpiochip_remove(&pdata->gpio);
-		if (ret) {
-			netif_err(dev, ifdown, dev->net,
-				"error removing gpiochip\n");
-		}
+			ret = gpiochip_remove(&pdata->gpio);
+			if (ret) {
+				netif_err(dev, ifdown, dev->net, "error removing gpiochip\n");
+			}
+
 		#endif
+
 
 		netif_dbg(dev, ifdown, dev->net, "free pdata\n");
 		kfree(pdata);
