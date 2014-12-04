@@ -27,6 +27,7 @@
 #include <linux/freezer.h>
 #include <linux/platform_data/sc16is7x2.h>
 #include <linux/of_device.h>
+#include <linux/console.h>
 
 
 #define MAX_SC16IS7X2		8
@@ -66,9 +67,9 @@ struct sc16is7x2_chip;
  * To save time we cache them here in memory.
  */
 struct sc16is7x2_channel {
-		struct spi_transfer	t;
-		struct spi_message	m;
-		u8		test_buf[4];
+	struct spi_transfer	t;
+	struct spi_message	m;
+	u8		test_buf[4];
 
 	struct sc16is7x2_chip	*chip;	/* back link */
 	struct uart_port	uart;
@@ -96,6 +97,7 @@ struct sc16is7x2_channel {
 	u8		buf[FIFO_SIZE+1]; /* fifo transfer buffer */
 
 	bool use_modem_pins_by_default;
+	bool console_enabled;
 };
 
 struct sc16is7x2_chip {
@@ -124,6 +126,8 @@ struct sc16is7x2_chip {
 	u8		io_control;	/* cache for IOControl register */
 #endif
 };
+
+static struct sc16is7x2_channel *sc16is7x2_channels[MAX_SC16IS7X2];
 
 
 /////////////// test spi wrappers
@@ -683,7 +687,12 @@ static int sc16is7x2_startup(struct uart_port *port)
 	unsigned ch = (&ts->channel[1] == chan) ? 1 : 0;
 	unsigned long flags;
 
-	dev_dbg(&ts->spi->dev, "\n%s (%d)\n", __func__, port->line);
+	dev_info(&ts->spi->dev, "\n%s (%d)\n", __func__, port->line);
+
+	if (chan->workqueue) {
+		dev_err(&ts->spi->dev, "\n%s (%d) duplicate startup, do nothing\n", __func__, port->line);
+		return 0;
+	}
 
 
 
@@ -767,6 +776,12 @@ static void sc16is7x2_shutdown(struct uart_port *port)
 	unsigned ch = port->line & 0x01;
 
 	dev_info(&ts->spi->dev, "%s\n", __func__);
+
+	if (chan->console_enabled) {
+		// no need to actually shutdown port if console is enabled on this port
+		return;
+	}
+
 
 	BUG_ON(!chan);
 	BUG_ON(!ts);
@@ -896,6 +911,8 @@ sc16is7x2_set_termios(struct uart_port *port, struct ktermios *termios,
 
 	/* Trigger work thread for doing the actual configuration change */
 	sc16is7x2_dowork(chan);
+
+
 }
 
 static const char * sc16is7x2_type(struct uart_port *port)
@@ -1144,6 +1161,7 @@ static int sc16is7x2_register_uart_port(struct sc16is7x2_chip *ts, unsigned ch)
 {
 	struct sc16is7x2_channel *chan = &(ts->channel[ch]);
 	struct uart_port *uart = &chan->uart;
+	int ret;
 
 	/* Disable irqs and go to sleep */
 	sc16is7x2_write(ts, UART_IER, ch, UART_IERX_SLEEP);
@@ -1160,9 +1178,35 @@ static int sc16is7x2_register_uart_port(struct sc16is7x2_chip *ts, unsigned ch)
 	uart->type = PORT_SC16IS7X2;
 	uart->dev = &ts->spi->dev;
 
-	return uart_add_one_port(&sc16is7x2_uart_driver, uart);
+
+	sc16is7x2_channels[uart->line] = chan;
+
+	ret = uart_add_one_port(&sc16is7x2_uart_driver, uart);
+	if (!ret) {
+		register_console(uart->cons);
+	} else {
+		sc16is7x2_channels[uart->line] = NULL;
+	}
+
+
+	return ret;
 }
 
+
+static int sc16is7x2_remove_one_port(struct sc16is7x2_chip *ts, unsigned ch)
+{
+	struct sc16is7x2_channel *chan = &(ts->channel[ch]);
+	struct uart_port *uart = &chan->uart;
+	int line =  uart->line;
+	int ret;
+
+	ret = uart_remove_one_port(&sc16is7x2_uart_driver, &ts->channel[1].uart);
+	if (!ret) {
+		sc16is7x2_channels[line] = NULL;
+	}
+
+	return ret;
+}
 
 
 
@@ -1360,10 +1404,10 @@ static int sc16is7x2_probe(struct spi_device *spi)
 	return 0;
 
 exit_uart1:
-	uart_remove_one_port(&sc16is7x2_uart_driver, &ts->channel[1].uart);
+	sc16is7x2_remove_one_port(ts, 1);
 
 exit_uart0:
-	uart_remove_one_port(&sc16is7x2_uart_driver, &ts->channel[0].uart);
+	sc16is7x2_remove_one_port(ts, 0);
 
 exit_destroy:
 	dev_set_drvdata(&spi->dev, NULL);
@@ -1379,11 +1423,11 @@ static int sc16is7x2_remove(struct spi_device *spi)
 	if (ts == NULL)
 		return -ENODEV;
 
-	ret = uart_remove_one_port(&sc16is7x2_uart_driver, &ts->channel[0].uart);
+	ret = sc16is7x2_remove_one_port(ts, 0);
 	if (ret)
 		return ret;
 
-	ret = uart_remove_one_port(&sc16is7x2_uart_driver, &ts->channel[1].uart);
+	ret = sc16is7x2_remove_one_port(ts, 1);
 	if (ret)
 		return ret;
 
@@ -1398,11 +1442,131 @@ static int sc16is7x2_remove(struct spi_device *spi)
 	return 0;
 }
 
+
+
+
+
+static inline int __uart_put_char(struct uart_port *port,
+				struct circ_buf *circ, unsigned char c)
+{
+	unsigned long flags;
+	int ret = 0;
+
+	if (!circ->buf)
+		return 0;
+
+	spin_lock_irqsave(&port->lock, flags);
+	if (uart_circ_chars_free(circ) != 0) {
+		circ->buf[circ->head] = c;
+		circ->head = (circ->head + 1) & (UART_XMIT_SIZE - 1);
+		ret = 1;
+	}
+	spin_unlock_irqrestore(&port->lock, flags);
+	return ret;
+}
+
+static int uart_put_char(struct tty_struct *tty, unsigned char ch)
+{
+	struct uart_state *state = tty->driver_data;
+
+	return __uart_put_char(state->uart_port, &state->xmit, ch);
+}
+
+static void sc16is7x2_console_putchar(struct uart_port *port, int character)
+{
+	struct sc16is7x2_channel *chan =  to_sc16is7x2_channel(port);
+	unsigned ch = (chan == chan->chip->channel) ? 0 : 1;
+
+	sc16is7x2_write(chan->chip, UART_TX, ch, character);
+
+
+
+	//~ struct tty_port *tty_port = &ch->uart.state->port;
+	//~ struct tty_struct *tty = tty_port_tty_get(tty_port);
+	//~ struct uart_state *state = tty->driver_data;
+	//~ printk("test state=%d\n", state);
+	//~ return __uart_put_char(state->uart_port, &state->xmit, ch);
+
+
+
+
+}
+
+static void
+sc16is7x2_console_write(struct console *co, const char *s, unsigned int count)
+{
+
+	struct sc16is7x2_channel *ch = sc16is7x2_channels[co->index];
+
+	uart_console_write(&ch->uart, s, count, sc16is7x2_console_putchar);
+
+}
+static int __init sc16is7x2_console_setup(struct console *co, char *options)
+{
+	//~ printk("sc16is7x2_console_setup co=%d options=%s\n", co, options);
+	printk("sc16is7x2_console_setup\n");
+	struct sc16is7x2_channel *ch;
+	int baud = 115200;
+	int bits = 8;
+	int parity = 'n';
+	int flow = 'n';
+	int ret;
+	/*
+	 * Check whether an invalid uart number has been specified, and
+	 * if so, search for the first available port that does have
+	 * console support.
+	 */
+
+	if (co->index >= MAX_SC16IS7X2)
+		co->index = 0;
+
+	ch = sc16is7x2_channels[co->index];
+	if (!ch)
+		return -ENODEV;
+
+
+	if (ch->console_enabled) {
+		return 0;
+	}
+	ch->console_enabled = true;
+
+	if (options)
+		uart_parse_options(options, &baud, &parity, &bits, &flow);
+
+	printk("setup ch->uart=%d, co=%d\n", &ch->uart, co);
+
+	sc16is7x2_startup(&ch->uart);
+
+
+
+
+	return uart_set_options(&ch->uart, co, baud, parity, bits, flow);
+	return 0;
+}
+
+
+
+
+static struct uart_driver sc16is7x2_uart_driver;
+static struct console sc16is7x2_console = {
+	.name		= "ttyNSC",
+	.write		= sc16is7x2_console_write,
+	.device		= uart_console_device,
+	.setup		= sc16is7x2_console_setup,
+	.flags		= CON_PRINTBUFFER,
+	.index		= -1,
+	.data		= &sc16is7x2_uart_driver,
+};
+
+#define SC16IS7x2_CONSOLE	(&sc16is7x2_console)
+
 static struct uart_driver sc16is7x2_uart_driver = {
 	.owner          = THIS_MODULE,
 	.driver_name    = DRIVER_NAME,
 	.dev_name       = "ttyNSC",
 	.nr             = MAX_SC16IS7X2,
+	.cons			= SC16IS7x2_CONSOLE,
+
 };
 
 
