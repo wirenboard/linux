@@ -28,6 +28,7 @@
 #include <linux/freezer.h>
 #include <linux/platform_data/sc16is7x2.h>
 #include <linux/of_device.h>
+#include <linux/console.h>
 
 
 #define MAX_SC16IS7X2		8
@@ -121,7 +122,7 @@ struct sc16is7x2_channel {
 	u8      efcr;       /* cache for EFCR register */
 
 	u8		rxlvl;		/* last readed value of rxlvl */
-	u8		txlvl;		/* last readed value of txlvl */	
+	u8		txlvl;		/* last readed value of txlvl */
 
 #ifdef DEBUG
 	bool		handle_irq;
@@ -130,6 +131,7 @@ struct sc16is7x2_channel {
 	bool		handle_regs;	/* other regs need update */
 
 	bool use_modem_pins_by_default;
+	bool console_enabled;
 };
 
 struct sc16is7x2_chip {
@@ -160,6 +162,8 @@ struct sc16is7x2_chip {
 	u8		io_control;	/* cache for IOControl register */
 #endif
 };
+
+static struct sc16is7x2_channel *sc16is7x2_channels[MAX_SC16IS7X2];
 
 
 /* ***************************** REG NAMES ****************************** */
@@ -272,7 +276,7 @@ static void sc16is7x2_read_status(struct sc16is7x2_chip *ts, unsigned ch)
 
 static void sc16is7x2_handle_channel(struct work_struct *w)
 {
-	
+
 	struct sc16is7x2_channel *chan =
 			container_of(w, struct sc16is7x2_channel, work);
 	struct sc16is7x2_chip *ts = chan->chip;
@@ -390,7 +394,7 @@ sc16is7x2_async_spi_run(struct spi_device *spi, struct sc16is7x2_async_spi *as)
 
 /**
  * sc16is7x2_read_reg_val - read reg value from sc16is7x2_async_spi
- * 
+ *
  * @as - sc16is7x2_async_spi in complete function
  * Just helper
  */
@@ -430,7 +434,7 @@ sc16is7x2_read_reg_async(struct sc16is7x2_channel *chan, u8 reg,
 
 static void
 sc16is7x2_write_reg_async(struct sc16is7x2_channel *chan,
-							u8 reg, u8 tx, 
+							u8 reg, u8 tx,
 							struct sc16is7x2_async_spi *as_persist,
 							void (*complete)(void*, struct sc16is7x2_async_spi*),
 							void *context)
@@ -459,7 +463,7 @@ sc16is7x2_write_reg_async(struct sc16is7x2_channel *chan,
 	sc16is7x2_async_spi_run(ts->spi, as);
 }
 
-static void 
+static void
 sc16is7x2_read_rx_async(struct sc16is7x2_channel *chan, u8 rxlvl);
 
 static void
@@ -514,7 +518,7 @@ static void sc16is7x2_read_rxlvl_async(struct sc16is7x2_channel *chan)
 
 	if(!chan->rx_reading){
 		chan->rx_reading = true;
-		sc16is7x2_read_reg_async(chan, REG_RXLVL, NULL, 
+		sc16is7x2_read_reg_async(chan, REG_RXLVL, NULL,
 									sc16is7x2_read_rxlvl_complete, chan);
 	} else {
 		dev_dbg(&ts->spi->dev, "%s ch%d: already", __func__, ch);
@@ -553,7 +557,7 @@ static void sc16is7x2_read_txlvl_async(struct sc16is7x2_channel *chan)
 {
 	if(!chan->tx_writing){
 		chan->tx_writing = true;
-		sc16is7x2_read_reg_async(chan, REG_TXLVL, NULL, 
+		sc16is7x2_read_reg_async(chan, REG_TXLVL, NULL,
 									sc16is7x2_read_txlvl_complete, chan);
 	}
 }
@@ -565,7 +569,7 @@ static void sc16is7x2_read_txlvl_async(struct sc16is7x2_channel *chan)
 static void sc16is7x2_read_status_async(struct sc16is7x2_channel *chan)
 {
 	sc16is7x2_read_rxlvl_async(chan);
-	sc16is7x2_read_reg_async(chan, UART_IIR, NULL, 
+	sc16is7x2_read_reg_async(chan, UART_IIR, NULL,
 								sc16is7x2_read_irq_complete, chan);
 }
 
@@ -591,7 +595,7 @@ static void sc16is7x2_write_tx_async(struct sc16is7x2_channel *chan){
 	unsigned i, len;
 	int chars_pending;
 
-#ifdef DEBUG2	
+#ifdef DEBUG2
 	u8 j, curByte, curHalfByte;
 #endif
 
@@ -624,7 +628,7 @@ static void sc16is7x2_write_tx_async(struct sc16is7x2_channel *chan){
 	chars_pending = (int)uart_circ_chars_pending(xmit);
 	len = min(32, chars_pending);
 	chan->tx_buffer_wait = len < chars_pending;
-		
+
 	dev_dbg(&ts->spi->dev, "%s ch%i: %d bytes will be sent\n", __func__, ch, len);
 
 	/* fill buffer to send */
@@ -644,7 +648,7 @@ static void sc16is7x2_write_tx_async(struct sc16is7x2_channel *chan){
 	sc16is7x2_async_spi_run(ts->spi, &chan->as_tx);
 
 	/* get TXLVL after sending */
-	sc16is7x2_read_reg_async(chan, REG_TXLVL, NULL, 
+	sc16is7x2_read_reg_async(chan, REG_TXLVL, NULL,
 									sc16is7x2_read_txlvl_complete, chan);
 }
 
@@ -653,7 +657,7 @@ static void sc16is7x2_write_tx_async(struct sc16is7x2_channel *chan){
 *
 * @data - current channel
 */
-static void 
+static void
 sc16is7x2_read_rx_complete(void *data, struct sc16is7x2_async_spi *as){
 	struct sc16is7x2_channel *chan = data;
 	struct sc16is7x2_chip *ts = chan->chip;
@@ -689,11 +693,11 @@ static void sc16is7x2_read_rx_async(struct sc16is7x2_channel *chan, u8 rxlvl){
 	sc16is7x2_async_spi_set_rx_len(&chan->as_rx, rxlvl);
 	sc16is7x2_async_spi_run(ts->spi, &chan->as_rx);
 
-	sc16is7x2_read_reg_async(chan, REG_RXLVL, NULL, 
+	sc16is7x2_read_reg_async(chan, REG_RXLVL, NULL,
 								sc16is7x2_read_rxlvl_complete, chan);
 }
 
-static void 
+static void
 sc16is7x2_read_irq_complete(void *data, struct sc16is7x2_async_spi *as){
 	struct sc16is7x2_channel *chan = data;
 
@@ -710,8 +714,8 @@ sc16is7x2_read_irq_complete(void *data, struct sc16is7x2_async_spi *as){
 #ifdef DEBUG
 	#define print_iir_if(iir)	case iir: \
 			dev_dbg(&ts->spi->dev, "%s: ch%d: " #iir, __func__, ch); \
-			break; 
-	
+			break;
+
 	switch(curiir & 0x3F){
 		print_iir_if(UART_IIR_NO_INT);
 		print_iir_if(UART_IIR_MSI);
@@ -733,7 +737,7 @@ sc16is7x2_read_irq_complete(void *data, struct sc16is7x2_async_spi *as){
 			sc16is7x2_write_tx_async(chan);
 			break;
 		case UART_IIR_RLSI:
-			sc16is7x2_read_reg_async(chan, UART_LSR, NULL, 
+			sc16is7x2_read_reg_async(chan, UART_LSR, NULL,
 								sc16is7x2_read_status_lsr, chan);
 			break;
 		default: ;
@@ -743,14 +747,14 @@ sc16is7x2_read_irq_complete(void *data, struct sc16is7x2_async_spi *as){
 
 /**
 * sc16is7x2_irq - handle irq
-* 
+*
 */
 static irqreturn_t sc16is7x2_irq(int irq, void *data){
 
 	struct sc16is7x2_chip *ts = data;
 	u8 i;
 
-	for(i = 0; i < 2; ++i){	
+	for(i = 0; i < 2; ++i){
 		if(ts->channel[i].started){
 			if(ts->channel[i].iir_reading){
 				dev_dbg(&ts->spi->dev, "%s ch%d: iir already reading", __func__, i);
@@ -881,6 +885,13 @@ static int sc16is7x2_startup(struct uart_port *port)
 
 	//unsigned char test_char_r;
 	//unsigned char test_char_w = 'H';
+	dev_info(&ts->spi->dev, "\n%s (%d)\n", __func__, port->line);
+
+	if (chan->workqueue) {
+		dev_err(&ts->spi->dev, "\n%s (%d) duplicate startup, do nothing\n", __func__, port->line);
+		return 0;
+	}
+
 
 	dev_dbg(&ts->spi->dev, "%s ch%d", __func__, port->line);
 
@@ -931,6 +942,12 @@ static void sc16is7x2_shutdown(struct uart_port *port)
 	unsigned ch = port->line & 0x01;
 
 	dev_info(&ts->spi->dev, "%s ch%d\n", __func__, ch);
+
+	if (chan->console_enabled) {
+		// no need to actually shutdown port if console is enabled on this port
+		return;
+	}
+
 
 	BUG_ON(!chan);
 	BUG_ON(!ts);
@@ -1061,6 +1078,8 @@ sc16is7x2_set_termios(struct uart_port *port, struct ktermios *termios,
 
 	/* Trigger work thread for doing the actual configuration change */
 	sc16is7x2_dowork(chan);
+
+
 }
 
 static const char * sc16is7x2_type(struct uart_port *port)
@@ -1309,6 +1328,7 @@ static int sc16is7x2_register_uart_port(struct sc16is7x2_chip *ts, unsigned ch)
 {
 	struct sc16is7x2_channel *chan = &(ts->channel[ch]);
 	struct uart_port *uart = &chan->uart;
+	int ret;
 
 	/* Disable irqs and go to sleep */
 	sc16is7x2_write(ts, UART_IER, ch, UART_IERX_SLEEP);
@@ -1325,9 +1345,35 @@ static int sc16is7x2_register_uart_port(struct sc16is7x2_chip *ts, unsigned ch)
 	uart->type = PORT_SC16IS7X2;
 	uart->dev = &ts->spi->dev;
 
-	return uart_add_one_port(&sc16is7x2_uart_driver, uart);
+
+	sc16is7x2_channels[uart->line] = chan;
+
+	ret = uart_add_one_port(&sc16is7x2_uart_driver, uart);
+	if (!ret) {
+		register_console(uart->cons);
+	} else {
+		sc16is7x2_channels[uart->line] = NULL;
+	}
+
+
+	return ret;
 }
 
+
+static int sc16is7x2_remove_one_port(struct sc16is7x2_chip *ts, unsigned ch)
+{
+	struct sc16is7x2_channel *chan = &(ts->channel[ch]);
+	struct uart_port *uart = &chan->uart;
+	int line =  uart->line;
+	int ret;
+
+	ret = uart_remove_one_port(&sc16is7x2_uart_driver, &ts->channel[1].uart);
+	if (!ret) {
+		sc16is7x2_channels[line] = NULL;
+	}
+
+	return ret;
+}
 
 
 
@@ -1497,7 +1543,7 @@ static int sc16is7x2_probe(struct spi_device *spi)
 		ts->channel[ch].as_rx_buf[0] = read_cmd(UART_RX, ch);
 
 		ts->channel[ch].as_tx.tx_buf = &ts->channel[ch].as_tx_buf[0];
-		sc16is7x2_async_spi_init(&ts->channel[ch].as_tx, 
+		sc16is7x2_async_spi_init(&ts->channel[ch].as_tx,
 									(FIFO_SIZE >> 1) + 1, 0);
 		ts->channel[ch].as_tx.persistent = true;
 		ts->channel[ch].as_tx.complete = &sc16is7x2_write_tx_complete;
@@ -1520,10 +1566,10 @@ exit_gpio:
 #endif
 
 exit_uart1:
-	uart_remove_one_port(&sc16is7x2_uart_driver, &ts->channel[1].uart);
+	sc16is7x2_remove_one_port(ts, 1);
 
 exit_uart0:
-	uart_remove_one_port(&sc16is7x2_uart_driver, &ts->channel[0].uart);
+	sc16is7x2_remove_one_port(ts, 0);
 
 exit_destroy:
 	dev_set_drvdata(&spi->dev, NULL);
@@ -1543,11 +1589,11 @@ static int sc16is7x2_remove(struct spi_device *spi)
 	/* Free the interrupt */
 	free_irq(spi->irq, ts);
 
-	ret = uart_remove_one_port(&sc16is7x2_uart_driver, &ts->channel[0].uart);
+	ret = sc16is7x2_remove_one_port(ts, 0);
 	if (ret)
 		return ret;
 
-	ret = uart_remove_one_port(&sc16is7x2_uart_driver, &ts->channel[1].uart);
+	ret = sc16is7x2_remove_one_port(ts, 1);
 	if (ret)
 		return ret;
 
@@ -1562,11 +1608,131 @@ static int sc16is7x2_remove(struct spi_device *spi)
 	return 0;
 }
 
+
+
+
+
+static inline int __uart_put_char(struct uart_port *port,
+				struct circ_buf *circ, unsigned char c)
+{
+	unsigned long flags;
+	int ret = 0;
+
+	if (!circ->buf)
+		return 0;
+
+	spin_lock_irqsave(&port->lock, flags);
+	if (uart_circ_chars_free(circ) != 0) {
+		circ->buf[circ->head] = c;
+		circ->head = (circ->head + 1) & (UART_XMIT_SIZE - 1);
+		ret = 1;
+	}
+	spin_unlock_irqrestore(&port->lock, flags);
+	return ret;
+}
+
+static int uart_put_char(struct tty_struct *tty, unsigned char ch)
+{
+	struct uart_state *state = tty->driver_data;
+
+	return __uart_put_char(state->uart_port, &state->xmit, ch);
+}
+
+static void sc16is7x2_console_putchar(struct uart_port *port, int character)
+{
+	struct sc16is7x2_channel *chan =  to_sc16is7x2_channel(port);
+	unsigned ch = (chan == chan->chip->channel) ? 0 : 1;
+
+	sc16is7x2_write(chan->chip, UART_TX, ch, character);
+
+
+
+	//~ struct tty_port *tty_port = &ch->uart.state->port;
+	//~ struct tty_struct *tty = tty_port_tty_get(tty_port);
+	//~ struct uart_state *state = tty->driver_data;
+	//~ printk("test state=%d\n", state);
+	//~ return __uart_put_char(state->uart_port, &state->xmit, ch);
+
+
+
+
+}
+
+static void
+sc16is7x2_console_write(struct console *co, const char *s, unsigned int count)
+{
+
+	struct sc16is7x2_channel *ch = sc16is7x2_channels[co->index];
+
+	uart_console_write(&ch->uart, s, count, sc16is7x2_console_putchar);
+
+}
+static int __init sc16is7x2_console_setup(struct console *co, char *options)
+{
+	//~ printk("sc16is7x2_console_setup co=%d options=%s\n", co, options);
+	printk("sc16is7x2_console_setup\n");
+	struct sc16is7x2_channel *ch;
+	int baud = 115200;
+	int bits = 8;
+	int parity = 'n';
+	int flow = 'n';
+	int ret;
+	/*
+	 * Check whether an invalid uart number has been specified, and
+	 * if so, search for the first available port that does have
+	 * console support.
+	 */
+
+	if (co->index >= MAX_SC16IS7X2)
+		co->index = 0;
+
+	ch = sc16is7x2_channels[co->index];
+	if (!ch)
+		return -ENODEV;
+
+
+	if (ch->console_enabled) {
+		return 0;
+	}
+	ch->console_enabled = true;
+
+	if (options)
+		uart_parse_options(options, &baud, &parity, &bits, &flow);
+
+	printk("setup ch->uart=%d, co=%d\n", &ch->uart, co);
+
+	sc16is7x2_startup(&ch->uart);
+
+
+
+
+	return uart_set_options(&ch->uart, co, baud, parity, bits, flow);
+	return 0;
+}
+
+
+
+
+static struct uart_driver sc16is7x2_uart_driver;
+static struct console sc16is7x2_console = {
+	.name		= "ttyNSC",
+	.write		= sc16is7x2_console_write,
+	.device		= uart_console_device,
+	.setup		= sc16is7x2_console_setup,
+	.flags		= CON_PRINTBUFFER,
+	.index		= -1,
+	.data		= &sc16is7x2_uart_driver,
+};
+
+#define SC16IS7x2_CONSOLE	(&sc16is7x2_console)
+
 static struct uart_driver sc16is7x2_uart_driver = {
 	.owner          = THIS_MODULE,
 	.driver_name    = DRIVER_NAME,
 	.dev_name       = "ttyNSC",
 	.nr             = MAX_SC16IS7X2,
+	.cons			= SC16IS7x2_CONSOLE,
+
 };
 
 
