@@ -38,6 +38,7 @@ struct mxs_adc_priv {
 	void __iomem *aout_base;
 	void __iomem *rtc_base;
 	struct clk *clk;
+	bool disable_mic_bias;
 };
 
 static unsigned int mxs_regmap[] = {
@@ -409,14 +410,16 @@ mxs_codec_adc_power_on(struct mxs_adc_priv *mxs_adc)
 		      mxs_adc->ain_base + HW_AUDIOIN_ADCVOL_SET);
 
 	/* Supply bias voltage to microphone */
-	__raw_writel(BF(1, AUDIOIN_MICLINE_MIC_RESISTOR),
-		      mxs_adc->ain_base + HW_AUDIOIN_MICLINE_SET);
-	__raw_writel(BM_AUDIOIN_MICLINE_MIC_SELECT,
-		      mxs_adc->ain_base + HW_AUDIOIN_MICLINE_CLR);
-	__raw_writel(BF(1, AUDIOIN_MICLINE_MIC_GAIN),
-		      mxs_adc->ain_base + HW_AUDIOIN_MICLINE_SET);
-	__raw_writel(BF(7, AUDIOIN_MICLINE_MIC_BIAS),
-		      mxs_adc->ain_base + HW_AUDIOIN_MICLINE_SET);
+	if (!mxs_adc->disable_mic_bias) {
+		__raw_writel(BF(1, AUDIOIN_MICLINE_MIC_RESISTOR),
+			      mxs_adc->ain_base + HW_AUDIOIN_MICLINE_SET);
+		__raw_writel(BM_AUDIOIN_MICLINE_MIC_SELECT,
+			      mxs_adc->ain_base + HW_AUDIOIN_MICLINE_CLR);
+		__raw_writel(BF(1, AUDIOIN_MICLINE_MIC_GAIN),
+			      mxs_adc->ain_base + HW_AUDIOIN_MICLINE_SET);
+		__raw_writel(BF(7, AUDIOIN_MICLINE_MIC_BIAS),
+			      mxs_adc->ain_base + HW_AUDIOIN_MICLINE_SET);
+    }
 
 	/* Set max ADC volume */
 	reg = __raw_readl(mxs_adc->ain_base + HW_AUDIOIN_ADCVOLUME);
@@ -777,6 +780,10 @@ static int mxs_set_bias_level(struct snd_soc_codec *codec,
 	struct mxs_adc_priv *mxs_adc = snd_soc_codec_get_drvdata(codec);
 
 	pr_debug("dapm level %d\n", level);
+
+	if (mxs_adc->disable_mic_bias)
+		return 0;
+
 	switch (level) {
 	case SND_SOC_BIAS_ON:		/* full On */
 		if (codec->dapm.bias_level == SND_SOC_BIAS_ON)
@@ -953,7 +960,18 @@ static struct snd_soc_dai_driver mxs_codec_dai_driver = {
 /* MXS-ADC Codec driver */
 static int mxs_codec_driver_probe(struct snd_soc_codec *codec)
 {
+	struct mxs_adc_priv *mxs_adc = snd_soc_codec_get_drvdata(codec);
+	struct device *dev = codec->dev;
+	struct device_node *np = dev->of_node;
 	int ret = 0;
+
+	if (np) {
+		mxs_adc->disable_mic_bias = of_property_read_bool(np,
+						"disable-mic-bias");
+
+	}
+
+
 	/* We don't use snd_soc_codec_set_cache_io because we are using
 	 * our own IO functions: write, read. */
 
@@ -963,6 +981,12 @@ static int mxs_codec_driver_probe(struct snd_soc_codec *codec)
 	ret = mxs_set_bias_level(codec, SND_SOC_BIAS_STANDBY);
 	if (ret)
 		goto err;
+
+
+
+
+
+
 
 	return 0;
 
@@ -1025,6 +1049,8 @@ static int mxs_adc_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	platform_set_drvdata(pdev, mxs_adc);
+
+	mxs_adc->disable_mic_bias = false;
 
 	/* audio-in IO memory */
 	r = platform_get_resource_byname(pdev, IORESOURCE_MEM, "audioin");
