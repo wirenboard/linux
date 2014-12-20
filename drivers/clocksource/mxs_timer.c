@@ -30,6 +30,7 @@
 #include <linux/of_irq.h>
 #include <linux/stmp_device.h>
 #include <linux/sched_clock.h>
+#include <linux/pwm.h>
 
 #include <asm/mach/time.h>
 
@@ -73,37 +74,59 @@
 #define BM_TIMROT_TIMCTRLn_IRQ		(1 << 15)
 #define BP_TIMROT_TIMCTRLn_SELECT	0
 #define BV_TIMROTv1_TIMCTRLn_SELECT__32KHZ_XTAL		0x8
+#define BV_TIMROTv1_TIMCTRLn_SELECT__TICK_ALWAYS    0xc
+
+#define BV_TIMROTv1_TIMCTRLn_PRESCALE__DIV_BY_8     (0x3 << 4)
+
 #define BV_TIMROTv2_TIMCTRLn_SELECT__32KHZ_XTAL		0xb
 #define BV_TIMROTv2_TIMCTRLn_SELECT__TICK_ALWAYS	0xf
 
 static struct clock_event_device mxs_clockevent_device;
+static struct clocksource clocksource_mxs;
 static enum clock_event_mode mxs_clockevent_mode = CLOCK_EVT_MODE_UNUSED;
 
 static void __iomem *mxs_timrot_base;
 static u32 timrot_major_version;
 
-static inline void timrot_irq_disable(void)
+static u16 mxs_clocksource_counter_high = 0xffff;
+
+
+static inline void timrot_irq_disable(int timer)
 {
 	__raw_writel(BM_TIMROT_TIMCTRLn_IRQ_EN, mxs_timrot_base +
-		     HW_TIMROT_TIMCTRLn(0) + STMP_OFFSET_REG_CLR);
+		     HW_TIMROT_TIMCTRLn(timer) + STMP_OFFSET_REG_CLR);
 }
 
-static inline void timrot_irq_enable(void)
+static inline void timrot_irq_enable(int timer)
 {
 	__raw_writel(BM_TIMROT_TIMCTRLn_IRQ_EN, mxs_timrot_base +
-		     HW_TIMROT_TIMCTRLn(0) + STMP_OFFSET_REG_SET);
+		     HW_TIMROT_TIMCTRLn(timer) + STMP_OFFSET_REG_SET);
 }
 
-static void timrot_irq_acknowledge(void)
+static void timrot_irq_acknowledge(int timer)
 {
 	__raw_writel(BM_TIMROT_TIMCTRLn_IRQ, mxs_timrot_base +
-		     HW_TIMROT_TIMCTRLn(0) + STMP_OFFSET_REG_CLR);
+		     HW_TIMROT_TIMCTRLn(timer) + STMP_OFFSET_REG_CLR);
 }
 
 static cycle_t timrotv1_get_cycles(struct clocksource *cs)
 {
-	return ~((__raw_readl(mxs_timrot_base + HW_TIMROT_TIMCOUNTn(1))
-			& 0xffff0000) >> 16);
+	//~ static u8 counter = 0xff;
+
+	u32 raw_val = __raw_readl(mxs_timrot_base + HW_TIMROT_TIMCOUNTn(1));
+	u32 inv_val =
+		(((raw_val
+			& 0xffff0000) >> 16)  | ( mxs_clocksource_counter_high << 16)
+			);
+
+	cycle_t val = ~inv_val;
+
+	//~ if (!(counter--)) {
+
+
+		//~ pr_err("get_cycles high=%x timer=%x inv=%x val=%llx\n", mxs_clocksource_counter_high, raw_val, inv_val, val);
+	//~ }
+	return val;
 }
 
 static int timrotv1_set_next_event(unsigned long evt,
@@ -128,8 +151,21 @@ static irqreturn_t mxs_timer_interrupt(int irq, void *dev_id)
 {
 	struct clock_event_device *evt = dev_id;
 
-	timrot_irq_acknowledge();
+	timrot_irq_acknowledge(0);
 	evt->event_handler(evt);
+
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t mxs_timer_interrupt_source(int irq, void *dev_id)
+{
+	timrot_irq_acknowledge(1);
+
+	mxs_clocksource_counter_high--;
+
+	if (!mxs_clocksource_counter_high) {
+		pr_info("mxs_timer_interrupt source counter high=%x\n", mxs_clocksource_counter_high);
+	}
 
 	return IRQ_HANDLED;
 }
@@ -140,6 +176,14 @@ static struct irqaction mxs_timer_irq = {
 	.flags		= IRQF_TIMER | IRQF_IRQPOLL,
 	.handler	= mxs_timer_interrupt,
 };
+
+static struct irqaction mxs_timer_irq_source = {
+	.name		= "MXS Timer Tick (source)",
+	.dev_id		= &clocksource_mxs,
+	.flags		= IRQF_TIMER | IRQF_IRQPOLL,
+	.handler	= mxs_timer_interrupt_source,
+};
+
 
 #ifdef DEBUG
 static const char *clock_event_mode_label[] const = {
@@ -154,7 +198,7 @@ static void mxs_set_mode(enum clock_event_mode mode,
 				struct clock_event_device *evt)
 {
 	/* Disable interrupt in timer module */
-	timrot_irq_disable();
+	timrot_irq_disable(0);
 
 	if (mode != mxs_clockevent_mode) {
 		/* Set event time into the furthest future */
@@ -166,7 +210,7 @@ static void mxs_set_mode(enum clock_event_mode mode,
 				mxs_timrot_base + HW_TIMROT_FIXED_COUNTn(1));
 
 		/* Clear pending interrupt */
-		timrot_irq_acknowledge();
+		timrot_irq_acknowledge(0);
 	}
 
 #ifdef DEBUG
@@ -183,7 +227,7 @@ static void mxs_set_mode(enum clock_event_mode mode,
 		pr_err("%s: Periodic mode is not implemented\n", __func__);
 		break;
 	case CLOCK_EVT_MODE_ONESHOT:
-		timrot_irq_enable();
+		timrot_irq_enable(0);
 		break;
 	case CLOCK_EVT_MODE_SHUTDOWN:
 	case CLOCK_EVT_MODE_UNUSED:
@@ -218,7 +262,7 @@ static struct clocksource clocksource_mxs = {
 	.name		= "mxs_timer",
 	.rating		= 200,
 	.read		= timrotv1_get_cycles,
-	.mask		= CLOCKSOURCE_MASK(16),
+	.mask		= CLOCKSOURCE_MASK(32),
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
 };
 
@@ -245,7 +289,8 @@ static int __init mxs_clocksource_init(struct clk *timer_clk)
 static void __init mxs_timer_init(struct device_node *np)
 {
 	struct clk *timer_clk;
-	int irq;
+	struct clk *timer_clk_source;
+	int irq, irq_source;
 
 	mxs_timrot_base = of_iomap(np, 0);
 	WARN_ON(!mxs_timrot_base);
@@ -256,7 +301,38 @@ static void __init mxs_timer_init(struct device_node *np)
 		return;
 	}
 
+
+	timer_clk_source = of_clk_get(np, 1);
+	if (IS_ERR(timer_clk_source)) {
+		pr_err("%s: failed to get clk\n", __func__);
+		return;
+	}
+
+
 	clk_prepare_enable(timer_clk);
+	clk_prepare_enable(timer_clk_source);
+
+	struct pwm_device * pwm;
+	pwm = of_pwm_get(np, NULL);
+	if (IS_ERR(pwm)) {
+		pr_err("pwm err: %d\n", pwm);
+	}
+
+	//~ if (IS_ERR(led_dat->pwm)) {
+		//~ dev_err(&pdev->dev, "unable to request PWM for %s\n",
+			//~ led_dat->cdev.name);
+		//~ ret = PTR_ERR(led_dat->pwm);
+		//~ goto err;
+	//~ }
+		/* Get the period from PWM core when n*/
+	//~ led_dat->period = pwm_get_period(led_dat->pwm);
+
+
+
+
+
+
+
 
 	/*
 	 * Initialize timers to a known state
@@ -272,7 +348,11 @@ static void __init mxs_timer_init(struct device_node *np)
 
 	/* one for clock_event */
 	__raw_writel((timrot_is_v1() ?
-			BV_TIMROTv1_TIMCTRLn_SELECT__32KHZ_XTAL :
+			BV_TIMROTv1_TIMCTRLn_SELECT__32KHZ_XTAL
+			//~ BV_TIMROTv1_TIMCTRLn_SELECT__TICK_ALWAYS |
+			//~ BV_TIMROTv1_TIMCTRLn_PRESCALE__DIV_BY_8
+
+			 :
 			BV_TIMROTv2_TIMCTRLn_SELECT__TICK_ALWAYS) |
 			BM_TIMROT_TIMCTRLn_UPDATE |
 			BM_TIMROT_TIMCTRLn_IRQ_EN,
@@ -280,25 +360,37 @@ static void __init mxs_timer_init(struct device_node *np)
 
 	/* another for clocksource */
 	__raw_writel((timrot_is_v1() ?
-			BV_TIMROTv1_TIMCTRLn_SELECT__32KHZ_XTAL :
+			//~ BV_TIMROTv1_TIMCTRLn_SELECT__32KHZ_XTAL
+
+			BV_TIMROTv1_TIMCTRLn_SELECT__TICK_ALWAYS |
+			BV_TIMROTv1_TIMCTRLn_PRESCALE__DIV_BY_8 |
+			BM_TIMROT_TIMCTRLn_IRQ_EN
+			:
 			BV_TIMROTv2_TIMCTRLn_SELECT__TICK_ALWAYS) |
-			BM_TIMROT_TIMCTRLn_RELOAD,
+			BM_TIMROT_TIMCTRLn_RELOAD
+			,
 			mxs_timrot_base + HW_TIMROT_TIMCTRLn(1));
 
 	/* set clocksource timer fixed count to the maximum */
-	if (timrot_is_v1())
+	if (timrot_is_v1()) {
+		mxs_clocksource_counter_high = 0xffff;
 		__raw_writel(0xffff,
 			mxs_timrot_base + HW_TIMROT_TIMCOUNTn(1));
-	else
+	} else
 		__raw_writel(0xffffffff,
 			mxs_timrot_base + HW_TIMROT_FIXED_COUNTn(1));
 
 	/* init and register the timer to the framework */
-	mxs_clocksource_init(timer_clk);
+	mxs_clocksource_init(timer_clk_source);
 	mxs_clockevent_init(timer_clk);
 
 	/* Make irqs happen */
 	irq = irq_of_parse_and_map(np, 0);
 	setup_irq(irq, &mxs_timer_irq);
+
+	if (timrot_is_v1()) {
+		irq_source = irq_of_parse_and_map(np, 2);
+		setup_irq(irq_source, &mxs_timer_irq_source);
+	}
 }
 CLOCKSOURCE_OF_DECLARE(mxs, "fsl,timrot", mxs_timer_init);
