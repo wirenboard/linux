@@ -301,7 +301,7 @@ static int init_port(void)
 {
 	int i, nlow, nhigh, ret, irq;
 
-	gpiochip = gpiochip_find("bcm2708_gpio", is_right_chip);
+	gpiochip = gpiochip_find("gpio.0", is_right_chip);
 
 	if (!gpiochip)
 		return -ENODEV;
