@@ -1350,7 +1350,9 @@ static int sc16is7x2_register_uart_port(struct sc16is7x2_chip *ts, unsigned ch)
 
 	ret = uart_add_one_port(&sc16is7x2_uart_driver, uart);
 	if (!ret) {
-		register_console(uart->cons);
+		if (uart->cons) {
+			register_console(uart->cons);
+		}
 	} else {
 		sc16is7x2_channels[uart->line] = NULL;
 	}
@@ -1367,7 +1369,7 @@ static int sc16is7x2_remove_one_port(struct sc16is7x2_chip *ts, unsigned ch)
 	int line =  uart->line;
 	int ret;
 
-	ret = uart_remove_one_port(&sc16is7x2_uart_driver, &ts->channel[1].uart);
+	ret = uart_remove_one_port(&sc16is7x2_uart_driver, &ts->channel[ch].uart);
 	if (!ret) {
 		sc16is7x2_channels[line] = NULL;
 	}
@@ -1480,6 +1482,7 @@ static int sc16is7x2_probe(struct spi_device *spi)
 
 	for (ch = 0; ch < 2; ++ch) {
 		ts->channel[ch].use_modem_pins_by_default = true;
+		ts->channel[ch].console_enabled = false;
 	}
 
 	ret = sc16is7x2_probe_dt(ts, spi);
@@ -1714,6 +1717,7 @@ static int __init sc16is7x2_console_setup(struct console *co, char *options)
 
 
 static struct uart_driver sc16is7x2_uart_driver;
+#ifndef MODULE
 static struct console sc16is7x2_console = {
 	.name		= "ttyNSC",
 	.write		= sc16is7x2_console_write,
@@ -1725,14 +1729,16 @@ static struct console sc16is7x2_console = {
 };
 
 #define SC16IS7x2_CONSOLE	(&sc16is7x2_console)
+#endif
 
 static struct uart_driver sc16is7x2_uart_driver = {
 	.owner          = THIS_MODULE,
 	.driver_name    = DRIVER_NAME,
 	.dev_name       = "ttyNSC",
 	.nr             = MAX_SC16IS7X2,
+#ifndef MODULE
 	.cons			= SC16IS7x2_CONSOLE,
-
+#endif
 };
 
 
