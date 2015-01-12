@@ -89,6 +89,7 @@ static void __iomem *mxs_timrot_base;
 static u32 timrot_major_version;
 
 static u16 mxs_clocksource_counter_high = 0xffff;
+static u16 mxs_clocksource_counter_low = 0xffff;
 
 
 static inline void timrot_irq_disable(int timer)
@@ -113,11 +114,16 @@ static cycle_t timrotv1_get_cycles(struct clocksource *cs)
 {
 	//~ static u8 counter = 0xff;
 
-	u32 raw_val = __raw_readl(mxs_timrot_base + HW_TIMROT_TIMCOUNTn(1));
+	u16 counter_low = (__raw_readl(mxs_timrot_base + HW_TIMROT_TIMCOUNTn(1)) & 0xffff0000) >> 16;
+
+	if (counter_low > mxs_clocksource_counter_low) {
+		mxs_clocksource_counter_high--;
+	}
+	mxs_clocksource_counter_low = counter_low;
+
+
 	u32 inv_val =
-		(((raw_val
-			& 0xffff0000) >> 16)  | ( mxs_clocksource_counter_high << 16)
-			);
+		((counter_low  | ( mxs_clocksource_counter_high << 16)));
 
 	cycle_t val = ~inv_val;
 
@@ -161,7 +167,13 @@ static irqreturn_t mxs_timer_interrupt_source(int irq, void *dev_id)
 {
 	timrot_irq_acknowledge(1);
 
-	mxs_clocksource_counter_high--;
+	u16 counter_low = (__raw_readl(mxs_timrot_base + HW_TIMROT_TIMCOUNTn(1)) & 0xffff0000) >> 16;
+
+	if (counter_low > mxs_clocksource_counter_low) {
+		mxs_clocksource_counter_high--;
+	}
+	mxs_clocksource_counter_low = counter_low;
+
 
 	if (!mxs_clocksource_counter_high) {
 		pr_info("mxs_timer_interrupt source counter high=%x\n", mxs_clocksource_counter_high);
