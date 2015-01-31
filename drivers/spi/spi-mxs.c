@@ -615,6 +615,7 @@ static int mxs_spi_probe(struct platform_device *pdev)
 	master->num_chipselect = 3 + num_gpio_cs;
 	master->dev.of_node = np;
 	master->flags = SPI_MASTER_HALF_DUPLEX;
+	master->rt = true;
 
 	spi = spi_master_get_devdata(master);
 
