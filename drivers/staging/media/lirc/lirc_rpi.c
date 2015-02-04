@@ -41,7 +41,7 @@
 #include <linux/gpio.h>
 
 #define LIRC_DRIVER_NAME "lirc_rpi"
-#define RBUF_LEN 256
+#define RBUF_LEN 4096
 #define LIRC_TRANSMITTER_LATENCY 50
 
 #ifndef MAX_UDELAY_MS
@@ -137,10 +137,10 @@ static long send_pulse_softcarrier(unsigned long length)
 
 	while (actual < length) {
 		if (flag) {
-			gpiochip->set(gpiochip, gpio_out_pin, invert);
+			gpio_set_value(gpio_out_pin, invert);
 			target += space_width;
 		} else {
-			gpiochip->set(gpiochip, gpio_out_pin, !invert);
+			gpio_set_value(gpio_out_pin, !invert);
 			target += pulse_width;
 		}
 		initial_us = actual_us;
@@ -166,7 +166,7 @@ static long send_pulse(unsigned long length)
 	if (softcarrier) {
 		return send_pulse_softcarrier(length);
 	} else {
-		gpiochip->set(gpiochip, gpio_out_pin, !invert);
+		gpio_set_value(gpio_out_pin, !invert);
 		safe_udelay(length);
 		return 0;
 	}
@@ -174,7 +174,7 @@ static long send_pulse(unsigned long length)
 
 static void send_space(long length)
 {
-	gpiochip->set(gpiochip, gpio_out_pin, invert);
+	gpio_set_value(gpio_out_pin, invert);
 	if (length <= 0)
 		return;
 	safe_udelay(length);
@@ -241,7 +241,7 @@ static irqreturn_t irq_handler(int i, void *blah, struct pt_regs *regs)
 	int signal;
 
 	/* use the GPIO signal level */
-	signal = gpiochip->get(gpiochip, gpio_in_pin);
+	signal = gpio_get_value(gpio_in_pin);
 
 	/* unmask the irq */
 	irqchip->irq_unmask(irqdata);
@@ -301,10 +301,6 @@ static int init_port(void)
 {
 	int i, nlow, nhigh, ret, irq;
 
-	gpiochip = gpiochip_find("gpio.0", is_right_chip);
-
-	if (!gpiochip)
-		return -ENODEV;
 
 	if (gpio_request(gpio_out_pin, LIRC_DRIVER_NAME " ir/out")) {
 		printk(KERN_ALERT LIRC_DRIVER_NAME
@@ -320,11 +316,11 @@ static int init_port(void)
 		goto exit_gpio_free_out_pin;
 	}
 
-	gpiochip->direction_input(gpiochip, gpio_in_pin);
-	gpiochip->direction_output(gpiochip, gpio_out_pin, 1);
-	gpiochip->set(gpiochip, gpio_out_pin, invert);
+	gpio_direction_input(gpio_in_pin);
+	gpio_direction_output(gpio_out_pin, 1);
+	gpio_set_value(gpio_out_pin, invert);
 
-	irq = gpiochip->to_irq(gpiochip, gpio_in_pin);
+	irq = gpio_to_irq(gpio_in_pin);
 	dprintk("to_irq %d\n", irq);
 	irqdata = irq_get_irq_data(irq);
 
@@ -347,7 +343,7 @@ static int init_port(void)
 		nlow = 0;
 		nhigh = 0;
 		for (i = 0; i < 9; i++) {
-			if (gpiochip->get(gpiochip, gpio_in_pin))
+			if (gpio_get_value(gpio_in_pin))
 				nlow++;
 			else
 				nhigh++;
@@ -384,7 +380,7 @@ static int set_use_inc(void *data)
 	/* initialize timestamp */
 	do_gettimeofday(&lasttv);
 
-	result = request_irq(gpiochip->to_irq(gpiochip, gpio_in_pin),
+	result = request_irq(gpio_to_irq(gpio_in_pin),
 			     (irq_handler_t) irq_handler, 0,
 			     LIRC_DRIVER_NAME, (void*) 0);
 
@@ -392,7 +388,7 @@ static int set_use_inc(void *data)
 	case -EBUSY:
 		printk(KERN_ERR LIRC_DRIVER_NAME
 		       ": IRQ %d is busy\n",
-		       gpiochip->to_irq(gpiochip, gpio_in_pin));
+		       gpio_to_irq(gpio_in_pin));
 		return -EBUSY;
 	case -EINVAL:
 		printk(KERN_ERR LIRC_DRIVER_NAME
@@ -400,7 +396,7 @@ static int set_use_inc(void *data)
 		return -EINVAL;
 	default:
 		dprintk("Interrupt %d obtained\n",
-			gpiochip->to_irq(gpiochip, gpio_in_pin));
+			gpio_to_irq(gpio_in_pin));
 		break;
 	};
 
@@ -433,10 +429,10 @@ static void set_use_dec(void *data)
 
 	spin_unlock_irqrestore(&lock, flags);
 
-	free_irq(gpiochip->to_irq(gpiochip, gpio_in_pin), (void *) 0);
+	free_irq(gpio_to_irq(gpio_in_pin), (void *) 0);
 
 	dprintk(KERN_INFO LIRC_DRIVER_NAME
-		": freed IRQ %d\n", gpiochip->to_irq(gpiochip, gpio_in_pin));
+		": freed IRQ %d\n", gpio_to_irq(gpio_in_pin));
 }
 
 static ssize_t lirc_write(struct file *file, const char *buf,
@@ -461,7 +457,7 @@ static ssize_t lirc_write(struct file *file, const char *buf,
 		else
 			delta = send_pulse(wbuf[i]);
 	}
-	gpiochip->set(gpiochip, gpio_out_pin, invert);
+	gpio_set_value(gpio_out_pin, invert);
 
 	spin_unlock_irqrestore(&lock, flags);
 	kfree(wbuf);
@@ -605,23 +601,6 @@ static int __init lirc_rpi_init_module(void)
 	if (result)
 		return result;
 
-	/* check if the module received valid gpio pin numbers */
-	result = 0;
-	if (gpio_in_pin != gpio_out_pin) {
-		for(i = 0; (i < ARRAY_SIZE(valid_gpio_pins)) && (result != 2); i++) {
-			if (gpio_in_pin == valid_gpio_pins[i] ||
-			   gpio_out_pin == valid_gpio_pins[i]) {
-				result++;
-			}
-		}
-	}
-
-	if (result != 2) {
-		result = -EINVAL;
-		printk(KERN_ERR LIRC_DRIVER_NAME
-		       ": invalid GPIO pin(s) specified!\n");
-		goto exit_rpi;
-	}
 
 	result = init_port();
 	if (result < 0)
