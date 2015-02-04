@@ -309,14 +309,14 @@
 
 		green {
 			label = "green";
-			gpios = <&sc16is7x2_0 7 1>;
+			gpios = <&sc16is7x2_0 7 0>;
 			linux,default-trigger = "default-on";
 		};
 
 
 		red {
 			label = "red";
-			gpios = <&sc16is7x2_0 6 1>;
+			gpios = <&sc16is7x2_0 6 0>;
 			linux,default-trigger = "timer";
 		};
 
