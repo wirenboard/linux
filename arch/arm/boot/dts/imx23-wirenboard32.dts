@@ -43,7 +43,7 @@
 
 			pinctrl@80018000 {
 				pinctrl-names = "default";
-				pinctrl-0 = <&hog_pins_a &i2c0_pins_a_gpio
+				pinctrl-0 = <&hog_pins_a
 							&pin_gpio_pu_0_5
 							&pin_gpio_pu_0_6
 							&pin_gpio_pu_0_7
@@ -217,7 +217,7 @@
 				can0: mcp2515@6 {
 					compatible = "mcp2515";
 					reg = <4>;
-					spi-max-frequency = <100000>;
+					spi-max-frequency = <1000000>;
 
 					clocks = <&clk16m>;
 
@@ -301,7 +301,6 @@
 				status = "okay";
 			};
 */
-
 			duart: serial@80070000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&duart_pins_a>;
