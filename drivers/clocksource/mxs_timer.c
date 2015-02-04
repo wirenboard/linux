@@ -30,7 +30,6 @@
 #include <linux/of_irq.h>
 #include <linux/stmp_device.h>
 #include <linux/sched_clock.h>
-#include <linux/pwm.h>
 
 #include <asm/mach/time.h>
 
@@ -112,7 +111,7 @@ static void timrot_irq_acknowledge(int timer)
 
 static cycle_t timrotv1_get_cycles(struct clocksource *cs)
 {
-	//~ static u8 counter = 0xff;
+	u32 inv_val;
 
 	u16 counter_low = (__raw_readl(mxs_timrot_base + HW_TIMROT_TIMCOUNTn(1)) & 0xffff0000) >> 16;
 
@@ -121,18 +120,10 @@ static cycle_t timrotv1_get_cycles(struct clocksource *cs)
 	}
 	mxs_clocksource_counter_low = counter_low;
 
-
-	u32 inv_val =
+	inv_val =
 		((counter_low  | ( mxs_clocksource_counter_high << 16)));
 
-	cycle_t val = ~inv_val;
-
-	//~ if (!(counter--)) {
-
-
-		//~ pr_err("get_cycles high=%x timer=%x inv=%x val=%llx\n", mxs_clocksource_counter_high, raw_val, inv_val, val);
-	//~ }
-	return val;
+	return ~inv_val;
 }
 
 static int timrotv1_set_next_event(unsigned long evt,
@@ -165,9 +156,9 @@ static irqreturn_t mxs_timer_interrupt(int irq, void *dev_id)
 
 static irqreturn_t mxs_timer_interrupt_source(int irq, void *dev_id)
 {
+	u16 counter_low;
 	timrot_irq_acknowledge(1);
-
-	u16 counter_low = (__raw_readl(mxs_timrot_base + HW_TIMROT_TIMCOUNTn(1)) & 0xffff0000) >> 16;
+	counter_low = (__raw_readl(mxs_timrot_base + HW_TIMROT_TIMCOUNTn(1)) & 0xffff0000) >> 16;
 
 	if (counter_low > mxs_clocksource_counter_low) {
 		mxs_clocksource_counter_high--;
@@ -300,55 +291,24 @@ static int __init mxs_clocksource_init(struct clk *timer_clk)
 
 static void __init mxs_timer_init(struct device_node *np)
 {
-	struct clk *timer_clk;
+	struct clk *timer_clk_event;
 	struct clk *timer_clk_source;
 	int irq, irq_source;
 
 	mxs_timrot_base = of_iomap(np, 0);
 	WARN_ON(!mxs_timrot_base);
 
-	timer_clk = of_clk_get(np, 0);
-	if (IS_ERR(timer_clk)) {
-		pr_err("%s: failed to get clk\n", __func__);
+	timer_clk_event = of_clk_get(np, 0);
+	if (IS_ERR(timer_clk_event)) {
+		pr_err("%s: failed to get clk event\n", __func__);
 		return;
 	}
 
 
-	timer_clk_source = of_clk_get(np, 1);
-	if (IS_ERR(timer_clk_source)) {
-		pr_err("%s: failed to get clk\n", __func__);
-		return;
-	}
-
-
-	clk_prepare_enable(timer_clk);
-	clk_prepare_enable(timer_clk_source);
-
-	struct pwm_device * pwm;
-	pwm = of_pwm_get(np, NULL);
-	if (IS_ERR(pwm)) {
-		pr_err("pwm err: %d\n", pwm);
-	}
-
-	//~ if (IS_ERR(led_dat->pwm)) {
-		//~ dev_err(&pdev->dev, "unable to request PWM for %s\n",
-			//~ led_dat->cdev.name);
-		//~ ret = PTR_ERR(led_dat->pwm);
-		//~ goto err;
-	//~ }
-		/* Get the period from PWM core when n*/
-	//~ led_dat->period = pwm_get_period(led_dat->pwm);
+	clk_prepare_enable(timer_clk_event);
 
 
 
-
-
-
-
-
-	/*
-	 * Initialize timers to a known state
-	 */
 	stmp_reset_block(mxs_timrot_base + HW_TIMROT_ROTCTRL);
 
 	/* get timrot version */
@@ -358,11 +318,28 @@ static void __init mxs_timer_init(struct device_node *np)
 						MX28_TIMROT_VERSION_OFFSET));
 	timrot_major_version >>= BP_TIMROT_MAJOR_VERSION;
 
+
+	if (timrot_is_v1()) {
+		timer_clk_source = of_clk_get(np, 1);
+		if (IS_ERR(timer_clk_source)) {
+			pr_err("%s: failed to get clk\n", __func__);
+			return;
+		}
+		clk_prepare_enable(timer_clk_source);
+	} else {
+		timer_clk_source = timer_clk_event;
+	}
+
+
+
+	/*
+	 * Initialize timers to a known state
+	 */
+
+
 	/* one for clock_event */
 	__raw_writel((timrot_is_v1() ?
 			BV_TIMROTv1_TIMCTRLn_SELECT__32KHZ_XTAL
-			//~ BV_TIMROTv1_TIMCTRLn_SELECT__TICK_ALWAYS |
-			//~ BV_TIMROTv1_TIMCTRLn_PRESCALE__DIV_BY_8
 
 			 :
 			BV_TIMROTv2_TIMCTRLn_SELECT__TICK_ALWAYS) |
@@ -372,8 +349,6 @@ static void __init mxs_timer_init(struct device_node *np)
 
 	/* another for clocksource */
 	__raw_writel((timrot_is_v1() ?
-			//~ BV_TIMROTv1_TIMCTRLn_SELECT__32KHZ_XTAL
-
 			BV_TIMROTv1_TIMCTRLn_SELECT__TICK_ALWAYS |
 			BV_TIMROTv1_TIMCTRLn_PRESCALE__DIV_BY_8 |
 			BM_TIMROT_TIMCTRLn_IRQ_EN
@@ -394,7 +369,7 @@ static void __init mxs_timer_init(struct device_node *np)
 
 	/* init and register the timer to the framework */
 	mxs_clocksource_init(timer_clk_source);
-	mxs_clockevent_init(timer_clk);
+	mxs_clockevent_init(timer_clk_event);
 
 	/* Make irqs happen */
 	irq = irq_of_parse_and_map(np, 0);
