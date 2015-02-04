@@ -1615,31 +1615,6 @@ static int sc16is7x2_remove(struct spi_device *spi)
 
 
 
-static inline int __uart_put_char(struct uart_port *port,
-				struct circ_buf *circ, unsigned char c)
-{
-	unsigned long flags;
-	int ret = 0;
-
-	if (!circ->buf)
-		return 0;
-
-	spin_lock_irqsave(&port->lock, flags);
-	if (uart_circ_chars_free(circ) != 0) {
-		circ->buf[circ->head] = c;
-		circ->head = (circ->head + 1) & (UART_XMIT_SIZE - 1);
-		ret = 1;
-	}
-	spin_unlock_irqrestore(&port->lock, flags);
-	return ret;
-}
-
-static int uart_put_char(struct tty_struct *tty, unsigned char ch)
-{
-	struct uart_state *state = tty->driver_data;
-
-	return __uart_put_char(state->uart_port, &state->xmit, ch);
-}
 
 static void sc16is7x2_console_putchar(struct uart_port *port, int character)
 {
@@ -1672,14 +1647,14 @@ sc16is7x2_console_write(struct console *co, const char *s, unsigned int count)
 }
 static int __init sc16is7x2_console_setup(struct console *co, char *options)
 {
-	//~ printk("sc16is7x2_console_setup co=%d options=%s\n", co, options);
-	printk("sc16is7x2_console_setup\n");
 	struct sc16is7x2_channel *ch;
 	int baud = 115200;
 	int bits = 8;
 	int parity = 'n';
 	int flow = 'n';
-	int ret;
+
+	printk("sc16is7x2_console_setup\n");
+
 	/*
 	 * Check whether an invalid uart number has been specified, and
 	 * if so, search for the first available port that does have
@@ -1702,7 +1677,7 @@ static int __init sc16is7x2_console_setup(struct console *co, char *options)
 	if (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	printk("setup ch->uart=%d, co=%d\n", &ch->uart, co);
+	//~ printk("setup ch->uart=%d, co=%d\n", &ch->uart, co);
 
 	sc16is7x2_startup(&ch->uart);
 
