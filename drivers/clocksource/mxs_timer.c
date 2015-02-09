@@ -165,11 +165,6 @@ static irqreturn_t mxs_timer_interrupt_source(int irq, void *dev_id)
 	}
 	mxs_clocksource_counter_low = counter_low;
 
-
-	if (!mxs_clocksource_counter_high) {
-		pr_info("mxs_timer_interrupt source counter high=%x\n", mxs_clocksource_counter_high);
-	}
-
 	return IRQ_HANDLED;
 }
 
