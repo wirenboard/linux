@@ -1225,6 +1225,20 @@ static int serial_mxs_probe_dt(struct mxs_auart_port *s,
 	if (of_get_property(np, "fsl,uart-has-rtscts", NULL))
 		set_bit(MXS_AUART_RTSCTS, &s->flags);
 
+
+	u32 rs485_delay[2];
+
+	if (of_property_read_u32_array(np, "rs485-rts-delay",
+				    rs485_delay, 2) == 0) {
+		s->rs485.delay_rts_before_send = rs485_delay[0];
+		s->rs485.delay_rts_after_send = rs485_delay[1];
+	}
+
+	if (of_property_read_bool(np, "linux,rs485-enabled-at-boot-time"))
+		s->rs485.flags |= SER_RS485_ENABLED;
+
+
+
 	return 0;
 }
 
