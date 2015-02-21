@@ -154,6 +154,39 @@ static int mxs_spi_setup(struct spi_device *dev)
 				return err;
 			}
 
+			err = gpio_direction_output(cs->gpio, 1);
+
+			if (err) {
+				dev_err(&dev->dev,
+					"Failed to set gpio %d as output, error = %d\n", cs->gpio, err);
+
+				gpio_free(cs->gpio);
+				return err;
+		}
+
+			cs->gpio_claimed = 1;
+		}
+
+	}
+	return err;
+}
+
+static void mxs_spi_cleanup(struct spi_device *dev)
+{
+	struct spi_mxs_cs *cs = dev->controller_state;
+	dev_dbg(&dev->dev, "%s[%i] start\n", __func__, __LINE__);
+
+	if (!cs) {
+		return;
+	}
+	if (cs->gpio >= 0) {
+		if (cs->gpio_claimed) {
+			gpio_free(cs->gpio);
+		}
+	}
+	kfree(cs);
+}
+
 static u32 mxs_spi_cs_to_reg(unsigned cs)
 {
 	u32 select = 0;
@@ -419,7 +452,6 @@ static int mxs_spi_transfer_one(struct spi_master *master,
 	struct spi_transfer *t;
 	unsigned int flag;
 	int status = 0;
-	int cs = m->spi->chip_select;
 	int cs_gpio = ((struct spi_mxs_cs*) m->spi->controller_state)->gpio;
 
 	/* Program CS register bits here, it will be used for all transfers. */
