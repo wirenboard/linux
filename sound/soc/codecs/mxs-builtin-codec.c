@@ -834,7 +834,7 @@ static int mxs_pcm_hw_params(struct snd_pcm_substream *substream,
 	i = get_srr_values(params_rate(params));
 	if (i < 0)
 		dev_warn(codec->dev, "%s doesn't support rate %d\n",
-		       codec->name, params_rate(params));
+		       codec->component.name, params_rate(params));
 	else {
 		src_hold = srr_values[i].src_hold;
 
@@ -875,7 +875,7 @@ static int mxs_pcm_hw_params(struct snd_pcm_substream *substream,
 
 	default:
 		dev_warn(codec->dev, "%s doesn't support format %d\n",
-		       codec->name, params_format(params));
+		       codec->component.name, params_format(params));
 
 	}
 
