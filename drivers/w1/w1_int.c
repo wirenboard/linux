@@ -38,7 +38,7 @@ module_param_named(search_count, w1_search_count, int, 0);
 static int w1_enable_pullup = 1;
 module_param_named(enable_pullup, w1_enable_pullup, int, 0);
 
-static struct w1_master *w1_alloc_dev(u32 id, int slave_count, int slave_ttl,
+static struct w1_master * w1_alloc_dev(u32 id, int slave_count, int slave_ttl,
 				       struct device_driver *driver,
 				       struct device *device)
 {
@@ -115,9 +115,9 @@ int w1_add_master_device(struct w1_bus_master *master)
 	struct w1_netlink_msg msg;
 	int id, found;
 
-	/* validate minimum functionality */
-	if (!(master->touch_bit && master->reset_bus) &&
-	    !(master->write_bit && master->read_bit) &&
+        /* validate minimum functionality */
+        if (!(master->touch_bit && master->reset_bus) &&
+            !(master->write_bit && master->read_bit) &&
 	    !(master->write_byte && master->read_byte && master->reset_bus)) {
 		pr_err("w1_add_master_device: invalid function set\n");
 		return(-EINVAL);

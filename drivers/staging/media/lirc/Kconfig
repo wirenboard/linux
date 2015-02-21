@@ -63,4 +63,11 @@ config LIRC_ZILOG
 	help
 	  Driver for the Zilog/Hauppauge IR Transmitter, found on
 	  PVR-150/500, HVR-1200/1250/1700/1800, HD-PVR and other cards
+
+config LIRC_RPI
+	tristate "Homebrew GPIO Port Receiver/Transmitter for the RaspberryPi"
+	depends on LIRC
+	help
+	  Driver for Homebrew GPIO Port Receiver/Transmitter for the RaspberryPi
+
 endif

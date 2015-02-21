@@ -22,6 +22,10 @@
 #include <net/cfg802154.h>
 #include <net/mac802154.h>
 
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
+
 /* MRF24J40 Short Address Registers */
 #define REG_RXMCR    0x00  /* Receive MAC control */
 #define REG_PANIDL   0x01  /* PAN ID (low) */
@@ -809,11 +813,20 @@ static const struct spi_device_id mrf24j40_ids[] = {
 };
 MODULE_DEVICE_TABLE(spi, mrf24j40_ids);
 
+#if defined(CONFIG_OF)
+static const struct of_device_id mrf24j40_dt_ids[] = {
+	{ .compatible = "microchip,mrf24j40" },
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(of, mrf24j40_dt_ids);
+#endif
+
 static struct spi_driver mrf24j40_driver = {
 	.driver = {
 		.name = "mrf24j40",
 		.bus = &spi_bus_type,
 		.owner = THIS_MODULE,
+		.of_match_table = of_match_ptr(mrf24j40_dt_ids),
 	},
 	.id_table = mrf24j40_ids,
 	.probe = mrf24j40_probe,

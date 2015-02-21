@@ -444,11 +444,16 @@
 				status = "disabled";
 			};
 
-			i2c@80058000 {
+			i2c: i2c@80058000 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				compatible = "fsl,imx23-i2c";
 				reg = <0x80058000 0x2000>;
 				dmas = <&dma_apbx 3>;
 				dma-names = "rx-tx";
 				status = "disabled";
+				interrupts = <27>;
+				clock-frequency = <100000>;
 			};
 
 			rtc@8005c000 {
@@ -470,7 +475,9 @@
 				compatible = "fsl,imx23-timrot", "fsl,timrot";
 				reg = <0x80068000 0x2000>;
 				interrupts = <28 29 30 31>;
-				clocks = <&clks 28>;
+				/*clocks = <&clks 28>;*/
+				clocks = <&clks 28
+						  &clks 42>;
 			};
 
 			auart0: serial@8006c000 {

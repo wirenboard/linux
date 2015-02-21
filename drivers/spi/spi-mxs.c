@@ -67,7 +67,18 @@ struct mxs_spi {
 	struct mxs_ssp		ssp;
 	struct completion	c;
 	unsigned int		sck;	/* Rate requested (vs actual) */
+
+	unsigned		num_gpio_cs;
+	int				cs_gpios[0];
 };
+
+/* controller state */
+struct spi_mxs_cs {
+	bool gpio_claimed;
+	int gpio;
+};
+
+
 
 static int mxs_spi_setup_transfer(struct spi_device *dev,
 				  const struct spi_transfer *t)
@@ -109,6 +120,39 @@ static int mxs_spi_setup_transfer(struct spi_device *dev,
 
 	return 0;
 }
+
+static int mxs_spi_setup(struct spi_device *dev)
+{
+	int err = 0;
+	struct mxs_spi *spi = spi_master_get_devdata(dev->master);
+	struct spi_mxs_cs *cs = dev->controller_state;
+
+	//~ dev_err(&dev->dev, "%s[%i] start %d\n", __func__, __LINE__, dev->controller_state);
+
+	if (!cs) {
+		cs = kzalloc(sizeof *cs, GFP_KERNEL);
+		if (!cs)
+			return -ENOMEM;
+		dev->controller_state = cs;
+
+		cs->gpio_claimed = 0;
+		cs->gpio = -1;
+	}
+
+
+	if (dev->chip_select >= (dev->master->num_chipselect - spi->num_gpio_cs)) {
+		cs->gpio = spi->cs_gpios[dev->chip_select - dev->master->num_chipselect + spi->num_gpio_cs];
+		if (!cs->gpio_claimed) {
+			dev_err(&dev->dev,
+				"gpio index %d, gpio_cs %d\n", dev->chip_select - dev->master->num_chipselect + spi->num_gpio_cs, cs->gpio);
+
+			err = gpio_request(cs->gpio, dev_name(&dev->dev));
+
+			if (err) {
+				dev_err(&dev->dev,
+					"Failed to request gpio %d, error = %d\n", cs->gpio, err);
+				return err;
+			}
 
 static u32 mxs_spi_cs_to_reg(unsigned cs)
 {
@@ -375,12 +419,21 @@ static int mxs_spi_transfer_one(struct spi_master *master,
 	struct spi_transfer *t;
 	unsigned int flag;
 	int status = 0;
+	int cs = m->spi->chip_select;
+	int cs_gpio = ((struct spi_mxs_cs*) m->spi->controller_state)->gpio;
 
 	/* Program CS register bits here, it will be used for all transfers. */
 	writel(BM_SSP_CTRL0_WAIT_FOR_CMD | BM_SSP_CTRL0_WAIT_FOR_IRQ,
 	       ssp->base + HW_SSP_CTRL0 + STMP_OFFSET_REG_CLR);
 	writel(mxs_spi_cs_to_reg(m->spi->chip_select),
 	       ssp->base + HW_SSP_CTRL0 + STMP_OFFSET_REG_SET);
+
+
+	if (cs_gpio > -1) {
+		gpio_set_value(cs_gpio, 0);
+	}
+
+
 
 	list_for_each_entry(t, &m->transfers, transfer_list) {
 
@@ -437,6 +490,11 @@ static int mxs_spi_transfer_one(struct spi_master *master,
 		m->actual_length += t->len;
 	}
 
+	if (cs_gpio >= 0) {
+		gpio_set_value(cs_gpio, 1);
+	}
+
+
 	m->status = status;
 	spi_finalize_current_message(master);
 
@@ -464,6 +522,8 @@ static int mxs_spi_probe(struct platform_device *pdev)
 	int devid, clk_freq;
 	int ret = 0, irq_err;
 
+	int num_gpio_cs;
+
 	/*
 	 * Default clock speed for the SPI core. 160MHz seems to
 	 * work reasonably well with most SPI flashes, so use this
@@ -490,18 +550,41 @@ static int mxs_spi_probe(struct platform_device *pdev)
 	if (ret)
 		clk_freq = clk_freq_default;
 
-	master = spi_alloc_master(&pdev->dev, sizeof(*spi));
+	if (np) {
+		num_gpio_cs = of_gpio_named_count(np, "cs-gpios");
+		dev_info(&pdev->dev, "cs-gpios count: %d\n", num_gpio_cs);
+		if (num_gpio_cs < 0) {
+			num_gpio_cs = 0;
+		}
+	} else {
+		num_gpio_cs = 0;
+	}
+
+
+	master = spi_alloc_master(&pdev->dev, sizeof(*spi) + (sizeof(int) * num_gpio_cs));
 	if (!master)
 		return -ENOMEM;
 
 	master->transfer_one_message = mxs_spi_transfer_one;
+	master->setup = mxs_spi_setup;
+	master->cleanup = mxs_spi_cleanup;
 	master->bits_per_word_mask = SPI_BPW_MASK(8);
 	master->mode_bits = SPI_CPOL | SPI_CPHA;
-	master->num_chipselect = 3;
+	master->num_chipselect = 3 + num_gpio_cs;
 	master->dev.of_node = np;
 	master->flags = SPI_MASTER_HALF_DUPLEX;
+	master->rt = true;
 
 	spi = spi_master_get_devdata(master);
+
+	spi->num_gpio_cs = num_gpio_cs;
+	if (np) {
+		int i;
+		for (i = 0; i < spi->num_gpio_cs; i++)
+			spi->cs_gpios[i] =
+				of_get_named_gpio(np, "cs-gpios", i);
+	}
+
 	ssp = &spi->ssp;
 	ssp->dev = &pdev->dev;
 	ssp->clk = clk;
@@ -511,7 +594,7 @@ static int mxs_spi_probe(struct platform_device *pdev)
 	init_completion(&spi->c);
 
 	ret = devm_request_irq(&pdev->dev, irq_err, mxs_ssp_irq_handler, 0,
-			       dev_name(&pdev->dev), ssp);
+			       DRIVER_NAME, ssp);
 	if (ret)
 		goto out_master_free;
 

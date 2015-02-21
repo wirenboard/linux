@@ -2,6 +2,8 @@
 # Makefile for the Linux Wireless network device drivers.
 #
 
+#obj-$(CONFIG_RTL8192CU) += rtl8192cu/
+
 obj-$(CONFIG_IPW2100) += ipw2x00/
 obj-$(CONFIG_IPW2200) += ipw2x00/
 

@@ -37,6 +37,8 @@ struct gpio_wdt_priv {
 	struct notifier_block	notifier;
 	struct timer_list	timer;
 	struct watchdog_device	wdd;
+	bool		always_enabled;
+	bool		started;
 };
 
 static void gpio_wdt_disable(struct gpio_wdt_priv *priv)
@@ -48,10 +50,8 @@ static void gpio_wdt_disable(struct gpio_wdt_priv *priv)
 		gpio_direction_input(priv->gpio);
 }
 
-static int gpio_wdt_start(struct watchdog_device *wdd)
+static int gpio_wdt_start_hwping(struct gpio_wdt_priv *priv)
 {
-	struct gpio_wdt_priv *priv = watchdog_get_drvdata(wdd);
-
 	priv->state = priv->active_low;
 	gpio_direction_output(priv->gpio, priv->state);
 	priv->last_jiffies = jiffies;
@@ -60,12 +60,28 @@ static int gpio_wdt_start(struct watchdog_device *wdd)
 	return 0;
 }
 
+static int gpio_wdt_start(struct watchdog_device *wdd)
+{
+	struct gpio_wdt_priv *priv = watchdog_get_drvdata(wdd);
+	priv->started = true;
+	if (priv->always_enabled) {
+		/* hardware ping timer is already enabled */
+		priv->last_jiffies = jiffies;
+	} else {
+		gpio_wdt_start_hwping(priv);
+	}
+
+	return 0;
+}
+
 static int gpio_wdt_stop(struct watchdog_device *wdd)
 {
 	struct gpio_wdt_priv *priv = watchdog_get_drvdata(wdd);
-
-	mod_timer(&priv->timer, 0);
-	gpio_wdt_disable(priv);
+	priv->started = false;
+	if (!priv->always_enabled) {
+		mod_timer(&priv->timer, 0);
+		gpio_wdt_disable(priv);
+	}
 
 	return 0;
 }
@@ -91,8 +107,9 @@ static void gpio_wdt_hwping(unsigned long data)
 	struct watchdog_device *wdd = (struct watchdog_device *)data;
 	struct gpio_wdt_priv *priv = watchdog_get_drvdata(wdd);
 
-	if (time_after(jiffies, priv->last_jiffies +
-		       msecs_to_jiffies(wdd->timeout * 1000))) {
+	if (priv->started &&
+		time_after(jiffies, priv->last_jiffies +
+			       msecs_to_jiffies(wdd->timeout * 1000))) {
 		dev_crit(wdd->dev, "Timer expired. System will reboot soon!\n");
 		return;
 	}
@@ -197,6 +214,9 @@ static int gpio_wdt_probe(struct platform_device *pdev)
 	/* Use safe value (1/2 of real timeout) */
 	priv->hw_margin = msecs_to_jiffies(hw_margin / 2);
 
+	priv->always_enabled = of_property_read_bool(pdev->dev.of_node,
+						"always-enabled");
+
 	watchdog_set_drvdata(&priv->wdd, priv);
 
 	priv->wdd.info		= &gpio_wdt_ident;
@@ -207,6 +227,7 @@ static int gpio_wdt_probe(struct platform_device *pdev)
 	if (watchdog_init_timeout(&priv->wdd, 0, &pdev->dev) < 0)
 		priv->wdd.timeout = SOFT_TIMEOUT_DEF;
 
+	priv->started = false;
 	setup_timer(&priv->timer, gpio_wdt_hwping, (unsigned long)&priv->wdd);
 
 	ret = watchdog_register_device(&priv->wdd);
@@ -215,10 +236,15 @@ static int gpio_wdt_probe(struct platform_device *pdev)
 
 	priv->notifier.notifier_call = gpio_wdt_notify_sys;
 	ret = register_reboot_notifier(&priv->notifier);
-	if (ret)
+	if (ret) {
 		watchdog_unregister_device(&priv->wdd);
+		return ret;
+	}
 
-	return ret;
+	if (priv->always_enabled)
+		gpio_wdt_start_hwping(priv);
+
+	return 0;
 }
 
 static int gpio_wdt_remove(struct platform_device *pdev)

@@ -165,6 +165,13 @@ if grep -q '^CONFIG_MODULES=y' $KCONFIG_CONFIG ; then
 	fi
 fi
 
+# Copy dtbs
+mkdir -p $tmpdir/boot/dtbs
+find ./arch/arm/boot/ -iname "*.dtb" -exec cp -v '{}' "$tmpdir/boot/dtbs" \;
+
+
+$MAKE KBUILD_SRC=  INSTALL_FW_PATH="$tmpdir/lib/firmware" firmware_install
+
 if [ "$ARCH" != "um" ]; then
 	$MAKE headers_check KBUILD_SRC=
 	$MAKE headers_install KBUILD_SRC= INSTALL_HDR_PATH="$libc_headers_dir/usr"
