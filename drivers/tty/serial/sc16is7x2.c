@@ -1565,7 +1565,7 @@ static int sc16is7x2_probe(struct spi_device *spi)
 
 exit_gpio:
 #ifdef CONFIG_GPIOLIB
-	ret = gpiochip_remove(&ts->gpio);
+	gpiochip_remove(&ts->gpio);
 #endif
 
 exit_uart1:
@@ -1601,9 +1601,7 @@ static int sc16is7x2_remove(struct spi_device *spi)
 		return ret;
 
 #ifdef CONFIG_GPIOLIB
-	ret = gpiochip_remove(&ts->gpio);
-	if (ret)
-		return ret;
+	gpiochip_remove(&ts->gpio);
 #endif
 
 	kfree(ts);
