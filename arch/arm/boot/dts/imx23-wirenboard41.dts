@@ -43,11 +43,7 @@
 
 			pinctrl@80018000 {
 				pinctrl-names = "default";
-				pinctrl-0 = <&hog_pins_a &i2c0_pins_a_gpio
-							&pin_gpio_pu_0_5
-							&pin_gpio_pu_0_6
-							&pin_gpio_pu_0_7
-							&pin_gpio_pu_0_16
+				pinctrl-0 = <&hog_pins_a
 							>;
 
 
@@ -125,53 +121,6 @@
 		        };
 
 
-				pin_gpio_pu_0_5: pin_gpio_pu_0_5@0 {
-					reg = <0>;
-					fsl,pinmux-ids = <
-						0x0053 /* MX23_PAD_GPMI_D05__GPIO_0_5 */
-
-					>;
-					fsl,drive-strength = <0>;
-					fsl,voltage = <1>;
-					/* enable 47K pull-up on terminal block R4 (gpio 5) */
-					fsl,pull-up = <1>;
-				};
-
-				pin_gpio_pu_0_6: pin_gpio_pu_0_6@0 {
-					reg = <0>;
-					fsl,pinmux-ids = <
-						0x0063 /* MX23_PAD_GPMI_D06__GPIO_0_6 */
-
-					>;
-					fsl,drive-strength = <0>;
-					fsl,voltage = <1>;
-					/* enable 47K pull-up on terminal block R3 (gpio 6) */
-					fsl,pull-up = <1>;
-				};
-
-				pin_gpio_pu_0_7: pin_gpio_pu_0_7@0 {
-					reg = <0>;
-					fsl,pinmux-ids = <
-						0x0073 /* MX23_PAD_GPMI_D07__GPIO_0_7 */
-
-					>;
-					fsl,drive-strength = <0>;
-					fsl,voltage = <1>;
-					/* enable 47K pull-up on terminal block R2 (gpio 7) */
-					fsl,pull-up = <1>;
-				};
-
-				pin_gpio_pu_0_16: pin_gpio_pu_0_16@0 {
-					reg = <0>;
-					fsl,pinmux-ids = <
-						0x0103 /* MX23_PAD_GPMI_CLE__GPIO_0_16 */
-
-					>;
-					fsl,drive-strength = <0>;
-					fsl,voltage = <1>;
-					/* enable 47K pull-up on terminal block R1 (gpio 16) */
-					fsl,pull-up = <1>;
-				};
 
 
 
