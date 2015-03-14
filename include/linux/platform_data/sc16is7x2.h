@@ -9,6 +9,8 @@ struct sc16is7x2_platform_data {
 	unsigned	uart_base;
 	/* number assigned to the first GPIO */
 	unsigned	gpio_base;
+	/* number assigned to the first IRQ */
+	unsigned	irq_base;
 	char		*label;
 	/* list of GPIO names (array length = SC16IS7X2_NR_GPIOS) */
 	const char	*const *names;
