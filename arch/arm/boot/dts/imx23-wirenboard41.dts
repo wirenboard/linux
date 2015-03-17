@@ -255,7 +255,7 @@
 			linux,default-trigger = "timer";
 		};
 
-
+/*
 		green {
 			label = "green";
 			gpios = <&sc16is7x2_0 7 0>;
@@ -268,7 +268,7 @@
 			gpios = <&sc16is7x2_0 6 0>;
 			linux,default-trigger = "timer";
 		};
-
+*/
 
 	};
 
@@ -303,6 +303,7 @@
 		hw_margin_ms = <500>;
 		always-enabled;
 		timeout-sec = <30>;
+			status = "disabled";
 	};
 
 
