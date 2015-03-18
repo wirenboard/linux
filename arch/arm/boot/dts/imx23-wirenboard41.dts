@@ -179,13 +179,13 @@
 			};
 
 /* Uncomment no enable hardware i2c */
-/*
+
 			i2c0: i2c@80058000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&i2c0_pins_a>;
 				status = "okay";
 			};
-*/
+
 
 			duart: serial@80070000 {
 				pinctrl-names = "default";
@@ -303,7 +303,7 @@
 		hw_margin_ms = <500>;
 		always-enabled;
 		timeout-sec = <30>;
-			status = "disabled";
+		status = "okay";
 	};
 
 
