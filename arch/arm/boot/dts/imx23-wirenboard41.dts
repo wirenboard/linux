@@ -301,7 +301,7 @@
 		compatible = "linux,wdt-gpio";
 		gpios = <&gpio1 0 0>;
 		hw_algo = "toggle";
-		hw_margin_ms = <500>;
+		hw_margin_ms = <50>;
 		always-enabled;
 		timeout-sec = <30>;
 		status = "okay";
