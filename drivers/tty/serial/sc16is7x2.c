@@ -749,7 +749,7 @@ sc16is7x2_write_reg(struct sc16is7x2_chip *ts,
 	unsigned ch = (reg->writecmd & 0x2) == 0 ? 0 : 1;
 	struct sc16is7x2_write_message *wm = sc16is7x2_get_write_message(ts);
 	dev_dbg(&ts->spi->dev, "%s ch%d: %s = 0x%02X", __func__, ch, reg->name, val);
-
+	
 	wm->t.tx_buf = wm->data;
 	wm->t.len = 2;
 	wm->data[0] = reg->writecmd;
@@ -939,7 +939,7 @@ sc16is7x2_read_status_msr(void *data, struct sc16is7x2_read_message *rm)
 	dev_dbg(&ts->spi->dev, "%s ch%d: %02x", __func__, ch, msr);
 }
 
-static void
+static void 
 sc16is7x2_read_status_ier(void *data, struct sc16is7x2_read_message *rm)
 {
 	struct sc16is7x2_channel *chan = data;
@@ -1125,7 +1125,7 @@ static void sc16is7x2_write_tx(struct sc16is7x2_channel *chan){
 	chars_pending = (int)uart_circ_chars_pending(xmit);
 	len = min((FIFO_SIZE>>1), chars_pending);
 	chan->tx_buffer_wait = len < chars_pending;
-
+		
 	dev_dbg(&ts->spi->dev, "%s ch%i: %d bytes will be sent\n",
 			__func__, ch, len);
 
@@ -1155,7 +1155,7 @@ static void sc16is7x2_write_tx(struct sc16is7x2_channel *chan){
 *
 * @data - current channel
 */
-static void
+static void 
 sc16is7x2_read_rx_complete(void *data, struct sc16is7x2_read_message *rm){
 	struct sc16is7x2_channel *chan = data;
 	struct sc16is7x2_chip *ts = chan->chip;
@@ -1195,7 +1195,7 @@ static void sc16is7x2_read_rx(struct sc16is7x2_channel *chan, u8 rxlvl)
 								sc16is7x2_read_rxlvl_complete, chan);
 }
 
-static void
+static void 
 sc16is7x2_read_irq_complete(void *data, struct sc16is7x2_read_message *rm)
 {
 	struct sc16is7x2_channel *chan = data;
@@ -1213,8 +1213,8 @@ sc16is7x2_read_irq_complete(void *data, struct sc16is7x2_read_message *rm)
 #ifdef DEBUG
 	#define print_iir_if(iir)	case iir: \
 			dev_dbg(&ts->spi->dev, "%s: ch%d: " #iir, __func__, ch); \
-			break;
-
+			break; 
+	
 	switch(iir & SC16IS7XX_IIR_ID_MASK){
 		print_iir_if(UART_IIR_NO_INT);
 		print_iir_if(UART_IIR_MSI);
@@ -1255,14 +1255,14 @@ sc16is7x2_read_irq_complete(void *data, struct sc16is7x2_read_message *rm)
 
 /**
 * sc16is7x2_irq - handle irq
-*
+* 
 */
 static irqreturn_t sc16is7x2_irq(int irq, void *data){
 
 	struct sc16is7x2_chip *ts = data;
 	u8 i;
 
-	for(i = 0; i < 2; ++i){
+	for(i = 0; i < 2; ++i){	
 		//if(ts->channel[i].started){
 			if(ts->channel[i].iir_reading){
 				dev_dbg(&ts->spi->dev, "%s ch%d: iir already reading", __func__, i);
@@ -1503,7 +1503,7 @@ static void sc16is7x2_shutdown(struct uart_port *port)
 	//unsigned long flags;
 	unsigned ch = port->line & 0x01;
 
-	dev_dbg(&ts->spi->dev, "%s ch%d\n", __func__, ch);
+	dev_info(&ts->spi->dev, "%s ch%d\n", __func__, ch);
 
 	if (chan->console_enabled) {
 		// no need to actually shutdown port if console is enabled on this port
@@ -1574,7 +1574,7 @@ sc16is7x2_set_termios(struct uart_port *port,
 	baud = DIV_ROUND_CLOSEST(clk / 16, div);
 
 	/* debug info */
-	dev_dbg(&ts->spi->dev, "%s ch%d : baud %u", __func__, ch, baud);
+	dev_info(&ts->spi->dev, "%s ch%d : baud %u", __func__, ch, baud);
 
 	/* Mask termios capabilities we don't support */
 	termios->c_cflag &= ~CMSPAR;
