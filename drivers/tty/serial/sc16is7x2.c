@@ -464,6 +464,8 @@ struct sc16is7x2_chip {
 	unsigned		uart_base;
 	/* number assigned to the first GPIO */
 	unsigned		gpio_base;
+	/* number assigned to the first GPIO */
+	unsigned		irq_base;
 
 	char		*gpio_label;
 	/* list of GPIO names (array length = SC16IS7X2_NR_GPIOS) */
@@ -1919,7 +1921,17 @@ static int sc16is7x2_probe_dt(struct sc16is7x2_chip *ts,
 	}
 	ts->gpio_base = be32_to_cpup(iprop);
 
+	ts->irq_base = ts->gpio_base;
+
+	iprop = of_get_property(np, "irq-base", NULL);
+	if (!iprop || prop_len < sizeof(*iprop)) {
+		dev_err(&spi->dev, "Missing irq-base property in devicetree\n");
+		return -EINVAL;
+	}
+	ts->irq_base = be32_to_cpup(iprop);
+
 	dev_err(&spi->dev, "gpio-base = %d\n",ts->gpio_base);
+	//dev_err(&spi->dev, "irq-base  = %d\n",ts->irq_base);
 	dev_err(&spi->dev, "uartclk   = %d\n",ts->uartclk);
 
 	iprop = of_get_property(np, "uart-base", NULL);
@@ -1957,6 +1969,7 @@ static void sc16is7x2_probe_pdata(struct sc16is7x2_chip *ts,
 
 	ts->uart_base = pdata->uart_base;
 	ts->gpio_base = pdata->gpio_base;
+	//ts->irq_base  = pdata->irq_base;
 	ts->uartclk   = pdata->uartclk;
 	ts->gpio_label  = pdata->label;
 	ts->gpio_names  = pdata->names;
@@ -2039,6 +2052,10 @@ static int sc16is7x2_probe(struct spi_device *spi)
 
 	if (!ts->gpio_base) {
 		dev_err(&spi->dev, "incorrect gpio_base\n");
+		return -EINVAL;
+	}
+	if (!ts->irq_base) {
+		dev_err(&spi->dev, "incorrect irq_base\n");
 		return -EINVAL;
 	}
 	/* Only even uart base numbers are supported */
@@ -2228,7 +2245,7 @@ static int sc16is7x2_probe(struct spi_device *spi)
 
 	ret = gpiochip_irqchip_add(&ts->gpio,
 			&sc16is7x2_irq_chip,
-			0,
+			ts->irq_base,
 			handle_edge_irq,
 			IRQ_TYPE_NONE);
 
@@ -2246,10 +2263,10 @@ static int sc16is7x2_probe(struct spi_device *spi)
 		goto exit_gpio;
 
 	dev_info(&spi->dev, DRIVER_NAME " at CS%d (irq %d), 2 UARTs, 8 GPIOs\n"
-			"    ttyNSC%d, ttyNSC%d, gpiochip%d\n",
+			"    ttyNSC%d, ttyNSC%d, gpiochip%d, irqbase%d\n",
 			spi->chip_select, spi->irq,
 			ts->uart_base, ts->uart_base + 1,
-			ts->gpio_base);
+			ts->gpio_base, ts->irq_base);
 
 	return 0;
 
