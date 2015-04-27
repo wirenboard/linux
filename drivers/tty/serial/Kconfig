@@ -22,7 +22,6 @@ config SERIAL_SC16IS7X2
 	tristate "SC16IS7x2 chips"
 	depends on SPI_MASTER
 	select SERIAL_CORE
-	select GPIOLIB_IRQCHIP if GPIOLIB
 	help
 	  Selecting this option will add support for SC16IS7x2 SPI UARTs.
 	  The GPIOs are exported via gpiolib interface.
