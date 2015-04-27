@@ -325,6 +325,7 @@
 				reg-names = "audioout", "audioin", "rtc";
 				clocks = <&clks 31>;
 				clock-names = "filt";
+				disable-mic-bias;
 			};
 
 			platform_dai: mxs-builtin-cpu-dai {
