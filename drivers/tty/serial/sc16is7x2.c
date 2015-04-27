@@ -1099,6 +1099,7 @@ static void sc16is7x2_read_rx(struct sc16is7x2_channel *chan, u8 rxlvl)
 
 	if(!chan->started){
 		dev_dbg(&ts->spi->dev, "%s ch%d: channel is stopped", __func__, ch);
+		dump_stack();
 		return;
 	}
 
@@ -1178,6 +1179,14 @@ static irqreturn_t sc16is7x2_irq(int irq, void *data){
 
 	struct sc16is7x2_chip *ts = data;
 	u8 i;
+
+	do{
+		static bool qwe = false;
+		if(!qwe){
+			dump_stack();
+			qwe = true;
+		}
+	} while(0);
 
 	for(i = 0; i < 2; ++i){
 		if((i == 0) || ts->channel[i].started){
