@@ -137,6 +137,8 @@
 				status = "okay";
 				cs-gpios = <&gpio0 3 0 /* cs0 fixme: use hardware cs directly*/
 							&gpio0 4 0 /* rfm69 */
+							&gpio1 24 0  /* CSN @ extension (  NRF24L01 chip select )  */
+
 							>;
 
 
@@ -166,6 +168,13 @@
 					reg = <4>;
 				};
 
+
+				spidev@5 {
+					compatible = "spidev";
+					spi-max-frequency = <1000000>;
+					reg = <5>;
+				};
+
 			};
 		};
 
@@ -179,12 +188,13 @@
 			};
 
 /* Uncomment no enable hardware i2c */
-
+/*
 			i2c0: i2c@80058000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&i2c0_pins_a>;
 				status = "okay";
 			};
+*/
 
 
 			duart: serial@80070000 {
