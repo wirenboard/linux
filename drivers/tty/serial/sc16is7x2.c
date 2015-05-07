@@ -815,6 +815,7 @@ static void sc16is7x2_set_mctrl(struct uart_port *port, unsigned int mctrl)
 {
 	struct sc16is7x2_channel *chan = to_sc16is7x2_channel(port);
 	struct sc16is7x2_chip *ts = chan->chip;
+	unsigned ch = (&ts->channel[1] == chan) ? 1 : 0;
 
 	dev_dbg(&ts->spi->dev, "%s (0x%02x)\n", __func__, mctrl);
 
@@ -916,7 +917,19 @@ static int sc16is7x2_startup(struct uart_port *port)
 	chan->mcr = 0;
 	chan->fcr = 0;
 	chan->ier = UART_IER_RLSI | UART_IER_RDI;
-	chan->efcr = EFCR_RTSCON | EFCR_RTSINVER; // Enable RS-485. FIXME: user generic interface
+	chan->efcr = 0;
+
+	if (port->rs485.flags & SER_RS485_ENABLED) {
+		chan->efcr |= EFCR_RTSCON;
+	}
+
+	if (port->rs485.flags & SER_RS485_RTS_ON_SEND) {
+		chan->efcr |= EFCR_RTSINVER;
+	}
+
+
+
+
 	spin_unlock_irqrestore(&chan->uart.lock, flags);
 
 	sc16is7x2_write(ts, UART_FCR, ch, UART_FCR_ENABLE_FIFO |
@@ -1024,7 +1037,7 @@ sc16is7x2_set_termios(struct uart_port *port, struct ktermios *termios,
 		fcr |= UART_FCR_R_TRIG_01 | UART_FCR_T_TRIG_10;
 
 	chan->efr = UART_EFR_ECB;
-	chan->mcr |= UART_MCR_RTS;
+	//~ chan->mcr |= UART_MCR_RTS;   //override bug in WB (force RTS to high by default)
 	if (termios->c_cflag & CRTSCTS)
 		chan->efr |= UART_EFR_CTS | UART_EFR_RTS;
 
@@ -1381,6 +1394,38 @@ static int sc16is7x2_remove_one_port(struct sc16is7x2_chip *ts, unsigned ch)
 
 
 #ifdef CONFIG_OF
+
+
+
+
+
+/* of_property_read_bool_with_override - read bool from a property
+* @np:         device node from which the property value is to be read.
+* @propname:   name of the property to be searched.
+*
+* Search for a property in a device node.
+* Returns false if the property does not exist,
+* returns true if property value (u32) is not zero
+*/
+static inline bool of_property_read_bool_with_override(const struct device_node *np,
+                                         const char *propname)
+{
+	int val;
+	if (of_find_property(np, propname, NULL)) {
+		// found property, try to parse
+		// return true by default, false if value explicitly set to 0
+		if (0 == of_property_read_u32(np, propname, &val)) {
+			if (val == 0) {
+				return false;
+			}
+		}
+		return true;
+	} else {
+		// property not found
+		return false;
+	}
+}
+
 /*
  * This function returns 1 iff pdev isn't a device instatiated by dt, 0 iff it
  * could successfully get all information from dt or a negative errno.
@@ -1429,11 +1474,40 @@ static int sc16is7x2_probe_dt(struct sc16is7x2_chip *ts,
 
 	dev_err(&spi->dev, "uart_base=%d\n",ts->uart_base);
 
-	if (of_property_read_bool(np, "disable-modem-pins-on-startup-a"))
+	if (of_property_read_bool_with_override(np, "disable-modem-pins-on-startup-a"))
 		ts->channel[0].use_modem_pins_by_default = false;
 
-	if (of_property_read_bool(np, "disable-modem-pins-on-startup-b"))
+	if (of_property_read_bool_with_override(np, "disable-modem-pins-on-startup-b"))
 		ts->channel[1].use_modem_pins_by_default = false;
+
+
+
+	if (of_property_read_bool_with_override(np, "rs485-rts-active-high-a"))
+		ts->channel[0].uart.rs485.flags |= SER_RS485_RTS_ON_SEND;
+	else
+		ts->channel[0].uart.rs485.flags |= SER_RS485_RTS_AFTER_SEND;
+
+	if (of_property_read_bool_with_override(np, "rs485-rts-active-high-b"))
+		ts->channel[1].uart.rs485.flags |= SER_RS485_RTS_ON_SEND;
+	else
+		ts->channel[1].uart.rs485.flags |= SER_RS485_RTS_AFTER_SEND;
+
+
+	if (of_property_read_bool_with_override(np, "linux,rs485-enabled-at-boot-time")) {
+		ts->channel[0].uart.rs485.flags |= SER_RS485_ENABLED;
+		ts->channel[1].uart.rs485.flags |= SER_RS485_ENABLED;
+	}
+
+	if (of_property_read_bool_with_override(np, "rs485-enabled-at-boot-time-a")) {
+		ts->channel[0].uart.rs485.flags |= SER_RS485_ENABLED;
+	}
+
+	if (of_property_read_bool_with_override(np, "rs485-enabled-at-boot-time-b")) {
+		ts->channel[1].uart.rs485.flags |= SER_RS485_ENABLED;
+	}
+
+
+
 
 	return 0;
 }
