@@ -209,6 +209,13 @@
 					interrupt-parent = <&gpio0>;
 					interrupts = <17 0>;
 					uartclk = <14745600>;
+
+					rs485-rts-active-high-a;
+					rs485-rts-active-high-b;
+
+					rs485-enabled-at-boot-time-a;
+					rs485-enabled-at-boot-time-b;
+
 				};
 
 
