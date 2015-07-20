@@ -6819,7 +6819,10 @@ F:	drivers/block/nvme*
 F:	include/linux/nvme.h
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 5b440e9... nvmem: Add to MAINTAINERS for nvmem framework
 NVMEM FRAMEWORK
 M:	Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 M:	Maxime Ripard <maxime.ripard@free-electrons.com>
