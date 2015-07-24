@@ -70,4 +70,10 @@ config LIRC_RPI
 	help
 	  Driver for Homebrew GPIO Port Receiver/Transmitter for the RaspberryPi
 
+config LIRC_PWM
+	tristate "Generic PWM Transmitter"
+	depends on LIRC && PWM && OF
+	help
+	  Driver for IR Transmitter on generic PWM output
+
 endif
