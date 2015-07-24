@@ -280,13 +280,16 @@ dtb-$(CONFIG_ARCH_MXS) += imx23-evk.dtb \
 	imx23-wirenboard32.dtb \
 	imx23-wirenboard41.dtb \
 	imx23-wirenboard41-rs232.dtb \
+	imx23-wirenboard41-can.dtb \
 	imx23-wirenboard41-pobeda.dtb \
+	imx23-wirenboard41-mcptest.dtb \
 	imx23-wirenboard-ac1.dtb \
 	imx23-wirenboard-ac-e1.dtb \
 	imx23-wirenboard-kmon1.dtb \
 	imx23-wirenboard-cqc10.dtb \
 	imx23-wirenboard-rcterm1.dtb \
 	imx23-wb-core-test.dtb \
+	imx28-wirenboard50.dtb \
 	imx23-stmp378x_devb.dtb \
 	imx28-apf28.dtb \
 	imx28-apf28dev.dtb \
