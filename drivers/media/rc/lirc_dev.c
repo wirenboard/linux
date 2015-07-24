@@ -488,12 +488,13 @@ int lirc_dev_fop_open(struct inode *inode, struct file *file)
 		if (ir->task)
 			wake_up_process(ir->task);
 	}
-
+	
 error:
 	if (ir)
 		dev_dbg(ir->d.dev, LOGHEAD "open result = %d\n",
 			ir->d.name, ir->d.minor, retval);
-
+	
+	file->private_data = &ir->d;
 	mutex_unlock(&lirc_dev_lock);
 
 	nonseekable_open(inode, file);
