@@ -488,6 +488,8 @@ int lirc_dev_fop_open(struct inode *inode, struct file *file)
 	}
 
 error:
+	file->private_data = &ir->d;
+
 	nonseekable_open(inode, file);
 
 	return retval;
