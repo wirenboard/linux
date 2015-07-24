@@ -137,6 +137,8 @@
 				status = "okay";
 				cs-gpios = <&gpio0 3 0 /* cs0 fixme: use hardware cs directly*/
 							&gpio0 4 0 /* rfm69 */
+							&gpio1 24 0  /* CSN @ extension (  NRF24L01 chip select )  */
+
 							>;
 
 
@@ -155,6 +157,13 @@
 					disable-modem-pins-on-startup-a;
 					disable-modem-pins-on-startup-b;
 
+					rs485-rts-active-high-a;
+					rs485-rts-active-high-b;
+
+					rs485-enabled-at-boot-time-a;
+					rs485-enabled-at-boot-time-b;
+
+
 					#gpio-cells = <2>;
 					gpio-controller;
 
@@ -164,6 +173,13 @@
 					compatible = "spidev";
 					spi-max-frequency = <1000000>;
 					reg = <4>;
+				};
+
+
+				spidev@5 {
+					compatible = "spidev";
+					spi-max-frequency = <1000000>;
+					reg = <5>;
 				};
 
 			};
@@ -186,6 +202,7 @@
 				status = "okay";
 			};
 */
+
 
 			duart: serial@80070000 {
 				pinctrl-names = "default";
@@ -211,6 +228,7 @@
 				reg-names = "audioout", "audioin", "rtc";
 				clocks = <&clks 31>;
 				clock-names = "filt";
+				disable-mic-bias;
 			};
 
 			platform_dai: mxs-builtin-cpu-dai {
@@ -240,6 +258,7 @@
 		usb0: usb@80080000 {
 		    /*vbus-supply = <&reg_33v_bus>;*/
 			status = "okay";
+			dr_mode = "host";
 		};
 	};
 
@@ -256,19 +275,21 @@
 		};
 
 
+
+
 		green {
 			label = "green";
 			gpios = <&sc16is7x2_0 7 0>;
-			linux,default-trigger = "default-on";
+			linux,default-trigger = "none";
 		};
+
 
 
 		red {
 			label = "red";
 			gpios = <&sc16is7x2_0 6 0>;
-			linux,default-trigger = "timer";
+			linux,default-trigger = "default-on";
 		};
-
 
 	};
 
@@ -300,9 +321,10 @@
 		compatible = "linux,wdt-gpio";
 		gpios = <&gpio1 0 0>;
 		hw_algo = "toggle";
-		hw_margin_ms = <500>;
+		hw_margin_ms = <50>;
 		always-enabled;
 		timeout-sec = <30>;
+		status = "okay";
 	};
 
 

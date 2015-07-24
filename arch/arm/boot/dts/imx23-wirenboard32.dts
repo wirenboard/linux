@@ -209,6 +209,13 @@
 					interrupt-parent = <&gpio0>;
 					interrupts = <17 0>;
 					uartclk = <14745600>;
+
+					rs485-rts-active-high-a;
+					rs485-rts-active-high-b;
+
+					rs485-enabled-at-boot-time-a;
+					rs485-enabled-at-boot-time-b;
+
 				};
 
 
@@ -325,6 +332,7 @@
 				reg-names = "audioout", "audioin", "rtc";
 				clocks = <&clks 31>;
 				clock-names = "filt";
+				disable-mic-bias;
 			};
 
 			platform_dai: mxs-builtin-cpu-dai {
@@ -357,6 +365,7 @@
 		usb0: usb@80080000 {
 		    /*vbus-supply = <&reg_33v_bus>;*/
 			status = "okay";
+			dr_mode = "host";
 		};
 	};
 

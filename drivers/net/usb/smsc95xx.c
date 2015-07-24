@@ -1425,15 +1425,10 @@ free:
 
 static void smsc95xx_unbind(struct usbnet *dev, struct usb_interface *intf)
 {
-	int ret;
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 	if (pdata) {
 		#ifdef CONFIG_GPIOLIB
-		ret = gpiochip_remove(&pdata->gpio);
-		if (ret) {
-			netif_err(dev, ifdown, dev->net,
-				"error removing gpiochip\n");
-		}
+		gpiochip_remove(&pdata->gpio);
 		#endif
 
 		netif_dbg(dev, ifdown, dev->net, "free pdata\n");
