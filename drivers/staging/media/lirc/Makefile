@@ -12,3 +12,4 @@ obj-$(CONFIG_LIRC_SIR)		+= lirc_sir.o
 obj-$(CONFIG_LIRC_ZILOG)	+= lirc_zilog.o
 obj-$(CONFIG_LIRC_RPI)	+= lirc_rpi.o
 obj-$(CONFIG_LIRC_PWM)	+= lirc_pwm.o
+obj-$(CONFIG_LIRC_GPIO)	+= lirc_gpio.o

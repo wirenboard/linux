@@ -76,4 +76,10 @@ config LIRC_PWM
 	help
 	  Driver for IR Transmitter on generic PWM output
 
+config LIRC_GPIO
+	tristate "Generic GPIO Receiver"
+	depends on LIRC && OF_GPIO
+	help
+	  Driver for IR Receiver on generic GPIO input pin
+
 endif
