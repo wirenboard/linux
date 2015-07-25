@@ -103,6 +103,7 @@
 
 						MX28_PAD_SSP1_DATA3__GPIO_2_15 /* rs-485/CAN */
 
+						MX28_PAD_PWM2__USB0_ID  /* USB ID */
 
 
 					>;
@@ -291,7 +292,7 @@
 			vbus-supply = <&reg_usb0_vbus>;
 			status = "okay";
 			/* dr_mode = "peripheral"; */
-			dr_mode = "host";
+			dr_mode = "otg";
 		};
 
 		usb1: usb@80090000 {
