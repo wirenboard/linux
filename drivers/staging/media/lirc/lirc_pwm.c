@@ -6,13 +6,15 @@
  *
  * Author: Alexey Ignatov <lexszero@gmail.com>
  */
-
+#define DEBUG
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
+#include <linux/interrupt.h>
 #include <linux/of.h>
 #include <linux/of_platform.h>
+#include <linux/of_gpio.h>
 #include <linux/pwm.h>
 #include <media/lirc.h>
 #include <media/lirc_dev.h>
@@ -22,15 +24,39 @@
 #define DEFAULT_DUTY_CYCLE	50
 #define DEFAULT_FREQ		38000
 
+#define RBUF_LEN	4096
+
 struct lirc_pwm_priv {
 	struct lirc_driver *driver;
 
-	struct pwm_device *pwm;
-	unsigned int duty_cycle;
-	unsigned int freq;
+	/* Transmit */
+	struct lirc_pwm_send {
+		struct pwm_device *pwm;
+		int gpio;
+		bool gpio_active_low;
+		unsigned int duty_cycle;
+		unsigned int freq;
+		int (*toggle)(struct lirc_pwm_priv *, bool);
+		struct mutex lock;
+	} send;
 
-	struct mutex lock;
+	/* Receive */
+	struct lirc_pwm_recv {
+		int gpio;
+		bool gpio_active_low;
+		int irq;
+		bool enabled;
+		struct lirc_buffer rbuf;
+		ktime_t last;
+		int state;
+		int pulse, space;
+		unsigned int ptr;
+	} recv;
 };
+
+#define priv_dev(x) ((x)->driver->dev)
+#define recv_dev(x) priv_dev(container_of((x), struct lirc_pwm_priv, recv))
+#define send_dev(x) priv_dev(container_of((x), struct lirc_pwm_priv, send))
 
 #ifndef MAX_UDELAY_MS
 #define MAX_UDELAY_US 5000
@@ -47,55 +73,186 @@ static void safe_udelay(unsigned long usecs)
 	udelay(usecs);
 }
 
-static int update_pwm_config(struct lirc_pwm_priv *priv,
+static inline bool send_available(struct lirc_pwm_priv *priv)
+{
+	return (priv->send.toggle != NULL);
+}
+
+static inline bool recv_available(struct lirc_pwm_priv *priv)
+{
+	return gpio_is_valid(priv->recv.gpio);
+}
+
+static void recv_enable(struct lirc_pwm_priv *priv)
+{
+	struct lirc_pwm_recv *recv = &priv->recv;
+	if (!recv_available(priv) || recv->enabled)
+		return;
+
+	recv->last = ktime_get();
+	gpio_direction_input(recv->gpio);
+	enable_irq(recv->irq);
+	recv->enabled = true;
+}
+
+static void recv_disable(struct lirc_pwm_priv *priv)
+{
+	struct lirc_pwm_recv *recv = &priv->recv;
+	if (!recv_available(priv) || !recv->enabled)
+		return;
+
+	disable_irq(recv->irq);
+	priv->recv.enabled = false;
+}
+
+static int send_toggle_pwm(struct lirc_pwm_priv *priv, bool pulse)
+{
+	int ret = 0;
+	if (pulse)
+		ret = pwm_enable(priv->send.pwm);
+	else
+		pwm_disable(priv->send.pwm);
+	return ret;
+}
+
+static int send_toggle_gpio(struct lirc_pwm_priv *priv, bool pulse)
+{
+	gpio_set_value(priv->send.gpio, pulse);
+	return 0;
+}
+
+static int send_pwm_set_config(struct lirc_pwm_priv *priv,
 		unsigned int duty_cycle, unsigned int freq)
 {
+	struct lirc_pwm_send *send = &priv->send;
 	unsigned int duty, period, ret;
+
+	if (!send->pwm)
+		return -ENODEV;
 
 	if (duty_cycle > 100)
 		return -EINVAL;
 	if (freq < 20000 || freq > 500000)
 		return -EINVAL;
 
-	mutex_lock(&priv->lock);
+	mutex_lock(&send->lock);
 
-	priv->duty_cycle = duty_cycle;
-	priv->freq = freq;
+	send->duty_cycle = duty_cycle;
+	send->freq = freq;
 	period = 1000000000 / freq;
 	duty = period * duty_cycle / 100;
-	dev_dbg(priv->driver->dev, "period: %d ns, duty: %d ns\n",
+	dev_dbg(priv_dev(priv), "period: %d ns, duty: %d ns\n",
 			period, duty);
 
-	ret = pwm_config(priv->pwm, duty, period);
+	ret = pwm_config(send->pwm, duty, period);
 
-	mutex_unlock(&priv->lock);
+	mutex_unlock(&send->lock);
 	return ret;
 }
 
-static inline int send_pulse(struct lirc_pwm_priv *priv)
+static void recv_rbuf_write(struct lirc_pwm_recv *recv, int l)
 {
-	return pwm_enable(priv->pwm);
+	struct lirc_buffer *rbuf = &recv->rbuf;
+	if (lirc_buffer_full(rbuf)) {
+		/* no new signals will be accepted */
+		dev_warn(recv_dev(recv), "buffer overrun\n");
+		return;
+	}
+	lirc_buffer_write(rbuf, (void *)&l);
 }
 
-static inline void send_space(struct lirc_pwm_priv *priv)
+static void recv_got_space_pulse(struct lirc_pwm_recv *recv)
 {
-	pwm_disable(priv->pwm);
+	recv_rbuf_write(recv, recv->space);
+	recv_rbuf_write(recv, recv->pulse | PULSE_BIT);
+	recv->ptr = 0;
+	recv->pulse = 0;
 }
+
+static void recv_rbuf_write_filtered(struct lirc_pwm_recv *recv, int l)
+{
+	/* simple noise filter */
+	if (recv->ptr > 0 && (l & PULSE_BIT)) {
+		recv->pulse += l & PULSE_MASK;
+		if (recv->pulse > 250) {
+			recv_got_space_pulse(recv);
+		}
+		return;
+	}
+	if (!(l & PULSE_BIT)) {
+		if (!recv->ptr) {
+			if (l > 20000) {
+				recv->space = l;
+				recv->ptr++;
+				return;
+			}
+		} else {
+			if (l > 20000) {
+				recv->space += recv->pulse;
+				if (recv->space > PULSE_MASK)
+					recv->space = PULSE_MASK;
+				recv->space += l;
+				if (recv->space > PULSE_MASK)
+					recv->space = PULSE_MASK;
+				recv->pulse = 0;
+				return;
+			}
+			recv_got_space_pulse(recv);
+		}
+	}
+	recv_rbuf_write(recv, l);
+}
+
+static irqreturn_t recv_irq_handler(int irq, void *data)
+{
+	struct lirc_pwm_recv *recv = data;
+	struct device *dev = recv_dev(recv);
+	int duration, value = gpio_get_value(recv->gpio);
+	ktime_t now;
+	s64 delta;
+
+	if (recv->state != -1) {
+		now = ktime_get();
+		delta = ktime_us_delta(now, recv->last);
+		if (delta > 15000000) {
+			duration = PULSE_MASK;
+			if (value == recv->state) {
+				dev_warn(dev, "wtf? value=%d, last=%lld, now=%lld, delta=%lld",
+						value, ktime_to_us(recv->last), ktime_to_us(now), delta);
+						
+				recv->state = !recv->state;
+			}
+		}
+		else {
+			duration = (int)delta;
+		}
+		recv_rbuf_write_filtered(recv,
+				duration | ((value == recv->state) ? PULSE_BIT : 0));
+		recv->last = now;
+		wake_up_interruptible(&recv->rbuf.wait_poll);
+	}
+
+	return IRQ_HANDLED;
+}
+
 
 static int lirc_pwm_set_use_inc(void *data)
 {
 	struct lirc_pwm_priv *priv = data;
 
-	dev_dbg(priv->driver->dev, "set_use_inc");
+	dev_dbg(priv_dev(priv), "set_use_inc");
 
-	return update_pwm_config(priv, DEFAULT_DUTY_CYCLE, DEFAULT_FREQ);
+	recv_enable(priv);
+	return send_pwm_set_config(priv, DEFAULT_DUTY_CYCLE, DEFAULT_FREQ);
 }
 
 static void lirc_pwm_set_use_dec(void *data)
 {
 	struct lirc_pwm_priv *priv = (struct lirc_pwm_priv *)data;
 
-	dev_dbg(priv->driver->dev, "set_use_dec");
+	dev_dbg(priv_dev(priv), "set_use_dec");
+
+	recv_disable(priv);
 }
 
 static ssize_t lirc_pwm_write(struct file *filep, const char *buf,
@@ -103,15 +260,19 @@ static ssize_t lirc_pwm_write(struct file *filep, const char *buf,
 {
 	struct lirc_driver *driver = filep->private_data;
 	struct lirc_pwm_priv *priv = driver->data;
+	struct lirc_pwm_send *send = &priv->send;
 	int i, count, ret = 0;
 	int *wbuf;
-	ktime_t ns;
+
+	if (!send_available(priv))
+		return -EINVAL;
 
 	count = n / sizeof(int);
 	if (n % sizeof(int) || count % 2 == 0)
 		return -EINVAL;
 
-	mutex_lock(&priv->lock);
+	mutex_lock(&send->lock);
+	recv_disable(priv);
 
 	wbuf = memdup_user(buf, n);
 	if (IS_ERR(wbuf)) {
@@ -120,25 +281,17 @@ static ssize_t lirc_pwm_write(struct file *filep, const char *buf,
 	}
 
 	for (i = 0; i < count; i++) {
-		if (i & 1)
-			send_space(priv);
-		else
-			send_pulse(priv);
-
+		send->toggle(priv, !(i & 1));
 		safe_udelay(wbuf[i]);
-		/*
-		set_current_state(TASK_UNINTERRUPTIBLE);
-		ns = ns_to_ktime(wbuf[i] * 1000);
-		schedule_hrtimeout(&ns, HRTIMER_MODE_REL);
-		*/
 	}
-	send_space(priv);
+	send->toggle(priv, false);
 
 	kfree(wbuf);
 	wbuf = NULL;
 
 exit_unlock:
-	mutex_unlock(&priv->lock);
+	recv_enable(priv);
+	mutex_unlock(&send->lock);
 	return ret;
 }
 
@@ -167,18 +320,22 @@ static long lirc_pwm_ioctl(struct file *filep, unsigned int cmd,
 		return -ENOSYS;
 
 	case LIRC_SET_SEND_DUTY_CYCLE:
+		if (!(driver->features & LIRC_CAN_SET_SEND_DUTY_CYCLE))
+			return -ENOSYS;
 		ret = get_user(value, (uint32_t *) arg);
 		if (ret)
 			return ret;
 		dev_dbg(driver->dev, "SET_SEND_DUTY_CYCLE %d\n", value);
-		return update_pwm_config(priv, value, priv->freq);
+		return send_pwm_set_config(priv, value, priv->send.freq);
 
 	case LIRC_SET_SEND_CARRIER:
+		if (!(driver->features & LIRC_CAN_SET_SEND_CARRIER))
+			return -ENOSYS;
 		ret = get_user(value, (__u32 *) arg);
 		if (ret)
 			return ret;
 		dev_dbg(driver->dev, "SET_SEND_CARRIER %d\n", value);
-		return update_pwm_config(priv, priv->duty_cycle, value);
+		return send_pwm_set_config(priv, priv->send.duty_cycle, value);
 
 	default:
 		return lirc_dev_fop_ioctl(filep, cmd, arg);
@@ -197,6 +354,7 @@ static const struct file_operations lirc_pwm_fops = {
 	.llseek		= no_llseek,
 };
 
+/*
 static struct lirc_driver lirc_pwm_template = {
 	.name		= DRIVER_NAME,
 	.minor		= -1,
@@ -214,38 +372,64 @@ static struct lirc_driver lirc_pwm_template = {
 	.dev		= NULL,
 	.owner		= THIS_MODULE,
 };
+*/
 
-static int lirc_pwm_probe(struct platform_device *pdev)
+static inline int detect_recv_gpio_active_low(struct device *dev,
+		int gpio)
 {
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct lirc_driver *driver;
-	struct lirc_pwm_priv *priv;
-	int ret = -EINVAL;
+	int ret, i, nlow = 0, nhigh = 0;
 
-	priv = devm_kzalloc(dev, sizeof(struct lirc_pwm_priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
-
-	mutex_init(&priv->lock);
-
-	priv->pwm = devm_of_pwm_get(dev, np, NULL);
-
-	if (IS_ERR(priv->pwm)) {
-		ret = PTR_ERR(priv->pwm);
-		dev_err(dev, "unable to request PWM: %d\n", ret);
+	ret = devm_gpio_request_one(dev, gpio, GPIOF_DIR_IN, "lirc-rx");
+	if (ret < 0)
 		return ret;
+
+	/* wait for all transitions to settle, just for sure */
+	mdelay(10);
+
+	for (i = 0; i < 9; i++) {
+		if (gpio_get_value(gpio))
+			nlow++;
+		else
+			nhigh++;
+		msleep(40);
 	}
+	devm_gpio_free(dev, gpio);
+	return (nlow >= nhigh);
+}
+
+static inline int register_lirc_driver(struct device *dev,
+		struct lirc_pwm_priv *priv)
+{
+	struct lirc_driver *driver;
+	int ret;
 
 	driver = devm_kzalloc(dev, sizeof(struct lirc_driver), GFP_KERNEL);
 	if (!driver)
 		return -ENOMEM;
 
-	memcpy(driver, &lirc_pwm_template, sizeof(struct lirc_driver));
-
-	driver->dev = dev;
-	priv->driver = driver;
+	strncpy(driver->name, dev_name(dev), 40);
+	driver->minor = -1;
+	driver->code_length = 1;
+	driver->sample_rate = 0;
+	driver->features = 0;
 	driver->data = priv;
+	driver->rbuf = recv_available(priv) ? &priv->recv.rbuf : NULL;
+	driver->set_use_inc = lirc_pwm_set_use_inc;
+	driver->set_use_dec = lirc_pwm_set_use_dec;
+	driver->fops = &lirc_pwm_fops;
+	driver->dev = dev;
+	driver->owner = THIS_MODULE;
+
+	if (send_available(priv)) {
+		driver->features |= LIRC_CAN_SEND_PULSE;
+		if (priv->send.toggle == send_toggle_pwm)
+			driver->features |=
+				LIRC_CAN_SET_SEND_DUTY_CYCLE |
+				LIRC_CAN_SET_SEND_CARRIER;
+	}
+
+	if (recv_available(priv))
+		driver->features |= LIRC_CAN_REC_MODE2;
 
 	ret = lirc_register_driver(driver);
 	if (ret < 0) {
@@ -253,10 +437,144 @@ static int lirc_pwm_probe(struct platform_device *pdev)
 		return ret;
 	}
 	driver->minor = ret;
-	platform_set_drvdata(pdev, priv);
+	priv->driver = driver;
+
+	return ret;
+}
+
+static void recv_rbuf_free(struct lirc_pwm_recv *recv)
+{
+	if (kfifo_initialized(&recv->rbuf.fifo))
+		lirc_buffer_free(&recv->rbuf);
+}
+
+static int lirc_pwm_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *node = dev->of_node;
+	struct lirc_pwm_priv *priv;
+	struct lirc_pwm_send *send;
+	struct lirc_pwm_recv *recv;
+	const char *gpio_label;
+	int ret = -EINVAL;
+
+	priv = devm_kzalloc(dev, sizeof(struct lirc_pwm_priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
+
+	send = &priv->send;
+	recv = &priv->recv;
+
+	/* Fetch everything we need from DT */
+	send->pwm = devm_of_pwm_get(dev, node, NULL);
+	if (IS_ERR(send->pwm)) {
+		ret = PTR_ERR(send->pwm);
+		if (ret == -EPROBE_DEFER)
+			return ret;
+		dev_dbg(dev, "can't get transmit PWM: %d\n", ret);
+	}
+	else {
+		dev_info(dev, "PWM transmitter on %s\n",
+				send->pwm->label ? : "<unnamed channel>");
+		send->toggle = send_toggle_pwm;
+	}
+
+	ret = of_get_named_gpio(node, "gpio-send", 0);
+	if (!gpio_is_valid(ret)) {
+		if (ret == -EPROBE_DEFER)
+			return ret;
+		dev_dbg(dev, "can't get transmit GPIO: %d\n", ret);
+	}
+	send->gpio = ret;
+	send->gpio_active_low = !!of_find_property(node, "gpio-send-active-low", NULL);
+
+	ret = of_get_named_gpio(node, "gpio-recv", 0);
+	if (!gpio_is_valid(ret)) {
+		if (ret == -EPROBE_DEFER)
+			return ret;
+		dev_dbg(dev, "can't get receive GPIO: %d\n", ret);
+	}
+	recv->gpio = ret;
+	recv->gpio_active_low = !!of_find_property(node, "gpio-recv-active-low", NULL);
+
+	/* Request appropriate gpios, if needed */
+	if (gpio_is_valid(send->gpio)) {
+		if (!send->toggle) {
+			if (recv->gpio == send->gpio) {
+				dev_info(dev, "GPIO receiver and transmitter shares one pin\n");
+				gpio_label = "lirc-rxtx";
+			}
+			else
+				gpio_label = "lirc-tx";
+
+			ret = devm_gpio_request(dev, priv->send.gpio, gpio_label);
+			if (ret < 0) {
+				dev_err(dev, "unable to request %s GPIO %d: %d\n",
+						gpio_label, send->gpio, ret);
+				return ret;
+			}
+			send->toggle = send_toggle_gpio;
+			dev_info(dev, "GPIO transmitter on pin %d\n", send->gpio);
+		}
+		else
+			dev_warn(dev, "both PWM and GPIO transmitters are specified, will use PWM, fix your DT\n");
+	}
+
+	mutex_init(&send->lock);
+
+	if (gpio_is_valid(recv->gpio)) {
+		/* Request gpio-recv pin only when it's not requested by gpio-recvtx */
+		if (recv->gpio != send->gpio || send->toggle != send_toggle_gpio) {
+			if (of_find_property(node, "gpio-recv-detect-active-level", NULL)) {
+				ret = detect_recv_gpio_active_low(dev, recv->gpio);
+				if (ret < 0)
+					return ret;
+				recv->gpio_active_low = ret;
+			}
+
+			ret = devm_gpio_request(dev, recv->gpio, "lirc-rx");
+			if (ret < 0) {
+				dev_err(dev, "unable to request lirc-rx GPIO %d: %d\n",
+						recv->gpio, ret);
+				return ret;
+			}
+		}
+		else
+			dev_dbg(dev, "shared GPIO receiver/transmitter pin already initialized\n");
+
+		/* Initialize IRQ on recv->gpio pin */
+		recv->irq = gpio_to_irq(recv->gpio);
+		ret = devm_request_irq(dev, recv->irq, recv_irq_handler,
+				IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
+				dev_name(dev), recv);
+		if (ret < 0) {
+			dev_err(dev, "unable to request lirc-rx IRQ %d: %d\n",
+					recv->irq, ret);
+			return ret;
+		}
+		disable_irq(recv->irq);
+
+		ret = lirc_buffer_init(&recv->rbuf, sizeof(int), RBUF_LEN);
+		if (ret < 0)
+			return ret;
+
+		dev_info(dev, "GPIO receiver on pin %d\n", recv->gpio);
+	}
+
+	ret = register_lirc_driver(dev, priv);
+	if (ret < 0) {
+		dev_err(dev, "LIRC driver registration failed: %d\n", ret);
+		goto exit_rbuf_free;
+	}
+
+	dev_set_drvdata(dev, priv);
 
 	dev_info(dev, "probed\n");
 	return 0;
+
+exit_rbuf_free:
+	recv_rbuf_free(recv);
+	return ret;
 }
 
 static int lirc_pwm_remove(struct platform_device *pdev)
@@ -265,6 +583,9 @@ static int lirc_pwm_remove(struct platform_device *pdev)
 	int ret;
 
 	dev_dbg(&pdev->dev, "removing\n");
+
+	if (kfifo_initialized(&priv->recv.rbuf.fifo))
+		lirc_buffer_free(&priv->recv.rbuf);
 
 	ret = lirc_unregister_driver(priv->driver->minor);
 	if (ret)
@@ -292,6 +613,6 @@ static struct platform_driver lirc_pwm_driver = {
 
 module_platform_driver(lirc_pwm_driver);
 
-MODULE_DESCRIPTION("LIRC PWM Transmitter driver");
+MODULE_DESCRIPTION("LIRC generic GPIO/PWM Transceiver driver");
 MODULE_AUTHOR("Alexey Ignatov <lexszero@gmail.com>");
 MODULE_LICENSE("GPL");
