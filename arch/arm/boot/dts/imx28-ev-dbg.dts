@@ -398,15 +398,11 @@
 		default-brightness-level = <6>;
 	};
 
-	lirc-out {
+	lirc {
 		compatible = "lirc-pwm";
-		pwms = <&pwm 1 0>;
-	};
-
-	lirc-in {
-		compatible = "lirc-gpio";
 		pinctrl-names = "default";
 		pinctrl-0 = <&lirc_gpio_in_pins_ev>;
-		gpios = <&gpio3 4 0>;
+		pwms = <&pwm 1 0>;
+		gpio-recv = <&gpio3 4 0>;
 	};
 };
