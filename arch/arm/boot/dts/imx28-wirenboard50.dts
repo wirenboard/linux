@@ -104,9 +104,6 @@
 						MX28_PAD_SSP1_DATA3__GPIO_2_15 /* rs-485/CAN */
 
 
-						/* MX28_PAD_AUART1_RTS__GPIO_3_7 */ /* RTS AUART1 */
-
-
 
 					>;
 					fsl,drive-strength = <0>;
@@ -148,7 +145,7 @@
 					fsl,pinmux-ids = <
 						MX28_PAD_AUART2_RX__AUART2_RX
 						MX28_PAD_AUART2_TX__AUART2_TX
-						/* MX28_PAD_AUART2_RTS__AUART2_RTS */
+						MX28_PAD_AUART2_RTS__AUART2_RTS
 					>;
 					fsl,drive-strength = <MXS_DRIVE_4mA>;
 					fsl,voltage = <MXS_VOLTAGE_HIGH>;
@@ -173,7 +170,7 @@
 					fsl,pinmux-ids = <
 						MX28_PAD_AUART0_CTS__AUART4_RX
 						MX28_PAD_AUART0_RTS__AUART4_TX
-						/* MX28_PAD_SAIF0_LRCLK__AUART4_RTS */
+						MX28_PAD_SAIF0_LRCLK__AUART4_RTS
 					>;
 					fsl,drive-strength = <MXS_DRIVE_4mA>;
 					fsl,voltage = <MXS_VOLTAGE_HIGH>;
@@ -253,24 +250,28 @@
 				pinctrl-names = "default";
 				pinctrl-0 = <&auart1_3pins_a>;
 				status = "okay";
+				linux,rs485-enabled-at-boot-time;
 			};
 
 			auart2: serial@8006e000 {
 			        pinctrl-names = "default";
 			        pinctrl-0 = <&auart2_3pins_a>;
 			        status = "okay";
+			        linux,rs485-enabled-at-boot-time;
 			};
 
 			auart3: serial@80070000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&auart3_3pins_a>;
 				status = "okay";
+				linux,rs485-enabled-at-boot-time;
 			};
 
 			auart4: serial@80072000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&auart4_3pins_a>;
 				status = "okay";
+				linux,rs485-enabled-at-boot-time;
 			};
 
 
