@@ -105,6 +105,9 @@
 
 						MX28_PAD_PWM2__USB0_ID  /* USB ID */
 
+						MX28_PAD_AUART3_CTS__GPIO_3_14 /* CIR in */
+						MX28_PAD_SAIF0_BITCLK__GPIO_3_22 /* 1-wire pull-up */
+
 
 					>;
 					fsl,drive-strength = <0>;
@@ -182,20 +185,6 @@
 
 			};
 
-/*
-			lcdif@80030000 {
-				pinctrl-names = "default";
-				pinctrl-0 = <&lcdif_24bit_pins_a
-					     &lcdif_pins_evk>;
-				panel-enable-gpios = <&gpio1 31 0>;
-				status = "okay";
-			};
-*/
-			can0: can@80032000 {
-				pinctrl-names = "default";
-				pinctrl-0 = <&can0_pins_a>;
-				status = "okay";
-			};
 
 			can1: can@80034000 {
 				pinctrl-names = "default";
@@ -205,14 +194,9 @@
 		};
 
 		apbx@80040000 {
-/*			saif1: saif@80046000 {
-				pinctrl-names = "default";
-				pinctrl-0 = <&saif1_pins_a>;
-				fsl,saif-master = <&saif0>;
+			spdif: spdif@80054000 {
 				status = "okay";
 			};
-*/
-
 
 			lradc@80050000 {
 				status = "okay";
@@ -231,7 +215,8 @@
 
 			pwm: pwm@80064000 {
 				pinctrl-names = "default";
-				pinctrl-0 = <&pwm2_pins_a>;
+				pinctrl-0 = <&pwm3_pins_a
+						     &pwm4_pins_a>;
 				status = "okay";
 			};
 
@@ -275,8 +260,6 @@
 				linux,rs485-enabled-at-boot-time;
 			};
 
-
-
 			usbphy0: usbphy@8007c000 {
 				status = "okay";
 			};
@@ -291,14 +274,12 @@
 		usb0: usb@80080000 {
 			vbus-supply = <&reg_usb0_vbus>;
 			status = "okay";
-			/* dr_mode = "peripheral"; */
 			dr_mode = "otg";
 		};
 
 		usb1: usb@80090000 {
 			vbus-supply = <&reg_usb1_vbus>;
 			status = "okay";
-
 		};
 
 		mac0: ethernet@800f0000 {
@@ -341,9 +322,9 @@
 		reg_usb1_vbus: usb1_vbus {
 			compatible = "regulator-fixed";
 			regulator-name = "usb1_vbus";
-			regulator-min-microvolt = <5000000>;
-			regulator-max-microvolt = <5000000>;
-			gpio = <&gpio1 27 0>;   // ruslan
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			gpio = <&gpio1 27 0>;
 			enable-active-high;
 		};
 	};
@@ -365,6 +346,13 @@
 			gpios = <&gpio3 26 0>;
 			linux,default-trigger = "timer";
 		};
+	};
+
+
+	/* Enable 1-wire network on terminal block W1 */
+	onewire@0 {
+		compatible = "w1-gpio";
+		gpios = <&gpio3 20 0>, <&gpio3 22 0>;
 	};
 
 
