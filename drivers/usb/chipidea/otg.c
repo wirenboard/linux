@@ -77,9 +77,12 @@ static void ci_handle_id_switch(struct ci_hdrc *ci)
 			ci_role(ci)->name, ci->roles[role]->name);
 
 		ci_role_stop(ci);
-		/* wait vbus lower than OTGSC_BSV */
-		hw_wait_reg(ci, OP_OTGSC, OTGSC_BSV, 0,
-				CI_VBUS_STABLE_TIMEOUT_MS);
+
+
+		/* Ignore B session valid voltage transition because
+		 *  5V rail is not connected to chip Vbus line */
+		msleep(10);
+
 		ci_role_start(ci, role);
 	}
 }
