@@ -34,8 +34,15 @@ struct lirc_pwm_priv {
 		struct pwm_device *pwm;
 		int gpio;
 		bool gpio_active_low;
+		/* Stored values of carrier frequency and duty percent as requested
+		 * from LIRC
+		 */
 		unsigned int duty_cycle;
 		unsigned int freq;
+		/* Calculated values of PWM period and duty times in nanoseconds */
+		unsigned int pwm_period;
+		unsigned int pwm_duty;
+
 		int (*toggle)(struct lirc_pwm_priv *, bool);
 		struct mutex lock;
 	} send;
@@ -107,12 +114,13 @@ static void recv_disable(struct lirc_pwm_priv *priv)
 
 static int send_toggle_pwm(struct lirc_pwm_priv *priv, bool pulse)
 {
+	struct lirc_pwm_send *send = &priv->send;
 	int ret = 0;
-	if (pulse)
-		ret = pwm_enable(priv->send.pwm);
-	else
-		pwm_disable(priv->send.pwm);
-	return ret;
+	ret = pwm_config(send->pwm, pulse ? send->pwm_duty : 0,
+			send->pwm_period);
+	if (ret < 0)
+		return ret;
+	return pwm_enable(send->pwm);
 }
 
 static int send_toggle_gpio(struct lirc_pwm_priv *priv, bool pulse)
@@ -121,11 +129,15 @@ static int send_toggle_gpio(struct lirc_pwm_priv *priv, bool pulse)
 	return 0;
 }
 
-static int send_pwm_set_config(struct lirc_pwm_priv *priv,
+static inline bool send_using_pwm(struct lirc_pwm_priv *priv)
+{
+	return (priv->send.toggle == send_toggle_pwm);
+}
+
+static int send_pwm_update_timings(struct lirc_pwm_priv *priv,
 		unsigned int duty_cycle, unsigned int freq)
 {
 	struct lirc_pwm_send *send = &priv->send;
-	unsigned int duty, period, ret;
 
 	if (!send->pwm)
 		return -ENODEV;
@@ -139,15 +151,13 @@ static int send_pwm_set_config(struct lirc_pwm_priv *priv,
 
 	send->duty_cycle = duty_cycle;
 	send->freq = freq;
-	period = 1000000000 / freq;
-	duty = period * duty_cycle / 100;
+	send->pwm_period = 1000000000 / freq;
+	send->pwm_duty = send->pwm_period * duty_cycle / 100;
 	dev_dbg(priv_dev(priv), "period: %d ns, duty: %d ns\n",
-			period, duty);
-
-	ret = pwm_config(send->pwm, duty, period);
+			send->pwm_period, send->pwm_duty);
 
 	mutex_unlock(&send->lock);
-	return ret;
+	return 0;
 }
 
 static void recv_rbuf_write(struct lirc_pwm_recv *recv, int l)
@@ -243,7 +253,7 @@ static int lirc_pwm_set_use_inc(void *data)
 	dev_dbg(priv_dev(priv), "set_use_inc");
 
 	recv_enable(priv);
-	return send_pwm_set_config(priv, DEFAULT_DUTY_CYCLE, DEFAULT_FREQ);
+	return send_pwm_update_timings(priv, DEFAULT_DUTY_CYCLE, DEFAULT_FREQ);
 }
 
 static void lirc_pwm_set_use_dec(void *data)
@@ -285,6 +295,8 @@ static ssize_t lirc_pwm_write(struct file *filep, const char *buf,
 		safe_udelay(wbuf[i]);
 	}
 	send->toggle(priv, false);
+	if (send_using_pwm(priv))
+		pwm_disable(send->pwm);
 
 	kfree(wbuf);
 	wbuf = NULL;
@@ -326,7 +338,7 @@ static long lirc_pwm_ioctl(struct file *filep, unsigned int cmd,
 		if (ret)
 			return ret;
 		dev_dbg(driver->dev, "SET_SEND_DUTY_CYCLE %d\n", value);
-		return send_pwm_set_config(priv, value, priv->send.freq);
+		return send_pwm_update_timings(priv, value, priv->send.freq);
 
 	case LIRC_SET_SEND_CARRIER:
 		if (!(driver->features & LIRC_CAN_SET_SEND_CARRIER))
@@ -335,7 +347,7 @@ static long lirc_pwm_ioctl(struct file *filep, unsigned int cmd,
 		if (ret)
 			return ret;
 		dev_dbg(driver->dev, "SET_SEND_CARRIER %d\n", value);
-		return send_pwm_set_config(priv, priv->send.duty_cycle, value);
+		return send_pwm_update_timings(priv, priv->send.duty_cycle, value);
 
 	default:
 		return lirc_dev_fop_ioctl(filep, cmd, arg);
@@ -422,7 +434,7 @@ static inline int register_lirc_driver(struct device *dev,
 
 	if (send_available(priv)) {
 		driver->features |= LIRC_CAN_SEND_PULSE;
-		if (priv->send.toggle == send_toggle_pwm)
+		if (send_using_pwm(priv))
 			driver->features |=
 				LIRC_CAN_SET_SEND_DUTY_CYCLE |
 				LIRC_CAN_SET_SEND_CARRIER;
