@@ -403,6 +403,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&lirc_gpio_in_pins_ev>;
 		pwms = <&pwm 1 0>;
+		pwm-max-duty = <50>;
 		gpio-recv = <&gpio3 4 0>;
 	};
 };
