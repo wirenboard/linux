@@ -32,6 +32,7 @@ struct lirc_pwm_priv {
 	/* Transmit */
 	struct lirc_pwm_send {
 		struct pwm_device *pwm;
+		unsigned int pwm_max_duty;
 		int gpio;
 		bool gpio_active_low;
 		/* Stored values of carrier frequency and duty percent as requested
@@ -154,7 +155,7 @@ static int send_pwm_update_timings(struct lirc_pwm_priv *priv,
 	send->duty_cycle = duty_cycle;
 	send->freq = freq;
 	send->pwm_period = 1000000000 / freq;
-	send->pwm_duty = send->pwm_period * duty_cycle / 100;
+	send->pwm_duty = send->pwm_period * duty_cycle * send->pwm_max_duty / 100 / 100;
 	dev_dbg(priv_dev(priv), "period: %d ns, duty: %d ns\n",
 			send->pwm_period, send->pwm_duty);
 
@@ -492,8 +493,13 @@ static int lirc_pwm_probe(struct platform_device *pdev)
 		dev_dbg(dev, "can't get transmit PWM: %d\n", ret);
 	}
 	else {
-		dev_info(dev, "PWM transmitter on %s\n",
-				send->pwm->label ? : "<unnamed channel>");
+		ret = of_property_read_u32(node, "pwm-max-duty", &send->pwm_max_duty);
+		if (ret < 0 || send->pwm_max_duty > 100)
+			send->pwm_max_duty = 100;
+
+		dev_info(dev, "PWM transmitter on %s, max duty %d%\n",
+				send->pwm->label ? : "<unnamed channel>",
+				send->pwm_max_duty);
 		send->toggle = send_toggle_pwm;
 	}
 
