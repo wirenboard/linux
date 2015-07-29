@@ -125,6 +125,8 @@ static int send_toggle_pwm(struct lirc_pwm_priv *priv, bool pulse)
 
 static int send_toggle_gpio(struct lirc_pwm_priv *priv, bool pulse)
 {
+	if (priv->send.gpio_active_low)
+		pulse = !pulse;
 	gpio_set_value(priv->send.gpio, pulse);
 	return 0;
 }
@@ -220,6 +222,9 @@ static irqreturn_t recv_irq_handler(int irq, void *data)
 	int duration, value = gpio_get_value(recv->gpio);
 	ktime_t now;
 	s64 delta;
+
+	if (recv->gpio_active_low)
+		value = !value;
 
 	if (recv->state != -1) {
 		now = ktime_get();
@@ -467,6 +472,7 @@ static int lirc_pwm_probe(struct platform_device *pdev)
 	struct lirc_pwm_priv *priv;
 	struct lirc_pwm_send *send;
 	struct lirc_pwm_recv *recv;
+	enum of_gpio_flags gpio_flags;
 	const char *gpio_label;
 	int ret = -EINVAL;
 
@@ -491,23 +497,23 @@ static int lirc_pwm_probe(struct platform_device *pdev)
 		send->toggle = send_toggle_pwm;
 	}
 
-	ret = of_get_named_gpio(node, "gpio-send", 0);
+	ret = of_get_named_gpio_flags(node, "gpio-send", 0, &gpio_flags);
 	if (!gpio_is_valid(ret)) {
 		if (ret == -EPROBE_DEFER)
 			return ret;
 		dev_dbg(dev, "can't get transmit GPIO: %d\n", ret);
 	}
 	send->gpio = ret;
-	send->gpio_active_low = !!of_find_property(node, "gpio-send-active-low", NULL);
+	send->gpio_active_low = (gpio_flags & OF_GPIO_ACTIVE_LOW);
 
-	ret = of_get_named_gpio(node, "gpio-recv", 0);
+	ret = of_get_named_gpio_flags(node, "gpio-recv", 0, &gpio_flags);
 	if (!gpio_is_valid(ret)) {
 		if (ret == -EPROBE_DEFER)
 			return ret;
 		dev_dbg(dev, "can't get receive GPIO: %d\n", ret);
 	}
 	recv->gpio = ret;
-	recv->gpio_active_low = !!of_find_property(node, "gpio-recv-active-low", NULL);
+	recv->gpio_active_low = (gpio_flags & OF_GPIO_ACTIVE_LOW);
 
 	/* Request appropriate gpios, if needed */
 	if (gpio_is_valid(send->gpio)) {
