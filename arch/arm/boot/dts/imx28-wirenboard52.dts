@@ -1,0 +1,162 @@
+/*
+ * Copyright 2012 Freescale Semiconductor, Inc.
+ *
+ * Author: Fabio Estevam <fabio.estevam@freescale.com>
+ *
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
+ */
+#include <dt-bindings/interrupt-controller/irq.h>
+#include "imx28-wirenboard50.dts"
+
+/ {
+	model = "Wiren Board rev. 5.2 (i.MX28)";
+	compatible = "contactless,imx28-wirenboard52", "contactless,imx28-wirenboard50", "fsl,imx28";
+
+
+	onewire@0 {
+		compatible = "w1-gpio";
+/*		gpios = <&gpio3 20 0
+		        &gpio3 22 0>; */
+
+		 gpios = <&gpio3 20 0>;
+	};
+
+
+
+
+
+
+	apb@80000000 {
+
+		apbx@80040000 {
+			i2c0: i2c@80058000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&i2c0_pins_a>;
+				status = "okay";
+				clock-frequency = <400000>;
+
+				gpiomo1: gpio@20 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x20>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <160>;
+				};
+				gpiomo2: gpio@21 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x21>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <168>;
+				};
+				gpiomo3: gpio@22 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x22>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <176>;
+				};
+				gpiomo4: gpio@23 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x23>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <184>;
+				};
+
+
+				/* input extensions modules  */
+
+
+				gpiomi1: gpio@24 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x24>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <192>;
+				};
+				gpiomi2: gpio@25 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x25>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <200>;
+				};
+				gpiomi3: gpio@26 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x26>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <208>;
+				};
+				gpiomi4: gpio@27 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x27>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <216>;
+				};
+
+
+
+
+
+			};
+		};
+
+	};
+
+};
