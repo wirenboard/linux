@@ -11,10 +11,11 @@
 
 /dts-v1/;
 #include "imx28.dtsi"
+#include <dt-bindings/interrupt-controller/irq.h>
 
 / {
-	model = "Wiren Board rev. 5.0 (i.MX28)";
-	compatible = "contactless,imx28-wirenboard50", "fsl,imx28";
+	model = "Wiren Board rev. 5.2 (i.MX28)";
+	compatible = "contactless,imx28-wirenboard52", "contactless,imx28-wirenboard50", "fsl,imx28";
 
 	memory {
 		reg = <0x40000000 0x08000000>;
@@ -22,14 +23,51 @@
 
 	apb@80000000 {
 		apbh@80000000 {
+			ocotp: ocotp@8002c000 {
+				status = "okay";
+			};
+
 			ssp0: ssp@80010000 {
 				compatible = "fsl,imx28-mmc";
 				pinctrl-names = "default";
 				pinctrl-0 = <&mmc0_4bit_pins_a
 					&mmc0_cd_cfg &mmc0_sck_cfg>;
 				bus-width = <4>;
-//				vmmc-supply = <&reg_vddio_sd0>;
 				status = "okay";
+			};
+
+			ssp1: ssp@80012000 {
+				compatible = "fsl,imx28-spi";
+				pinctrl-0 = <&ssp1_pins_a>;
+				pinctrl-names = "default";
+
+				status = "disabled";
+
+				spidev@0 {
+					compatible = "spidev";
+					spi-max-frequency = <100000>;
+					reg = <0>;
+				};
+			};
+
+			ssp1gpio {
+				compatible = "spi-gpio";
+				pinctrl-names = "default";
+				pinctrl-0 = <&spi1_pins_a_gpio>;
+				status = "okay";
+				gpio-sck = <&gpio0 25 0>;
+				gpio-mosi = <&gpio0 21 0>;
+				gpio-miso = <&gpio0 0 0>;
+				cs-gpios = <&gpio0 3 0>;
+				num-chipselects = <1>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				spidev@0 {
+					compatible = "spidev";
+					spi-max-frequency = <10000>;
+					reg = <0>;
+				};
 			};
 
 			ssp2: ssp@80014000 {
@@ -43,11 +81,10 @@
 
 			pinctrl@80018000 {
 				pinctrl-names = "default";
-				pinctrl-0 = <&hog_pins_a
-							 &io_pin_gpio
+				pinctrl-0 = <&io_pin_gpio
 							 &mod2_pins
+							 &mod1_pins
 				>;
-
 
 				mod2_pins: mod2_pins@0 {
 					reg = <0>;
@@ -57,74 +94,71 @@
 					fsl,voltage = <MXS_VOLTAGE_HIGH>;
 					fsl,pull-up = <MXS_PULL_DISABLE>;
 				};
-								hog_pins_a: hog@0 {
+
+				mod1_pins: mod1_pins@0 {
 					reg = <0>;
 					fsl,pinmux-ids = <
-						0x40d3 /* FEC RESET  */
-
-						0x11B3 /* USB1 PWR */
-						0x1183 /* USB0 PWR */
 					>;
-					fsl,drive-strength = <0>;
-					fsl,voltage = <1>;
-					fsl,pull-up = <0>;
+					fsl,drive-strength = <MXS_DRIVE_8mA>;
+					fsl,voltage = <MXS_VOLTAGE_HIGH>;
+					fsl,pull-up = <MXS_PULL_DISABLE>;
 				};
-
 
 				leds_pin_gpio: leds_pin_gpio@0 {
 					reg = <0>;
 					fsl,pinmux-ids = <
-						MX28_PAD_SAIF0_SDATA0__GPIO_3_23
-						MX28_PAD_SAIF1_SDATA0__GPIO_3_26
+						MX28_PAD_SAIF0_SDATA0__GPIO_3_23	/* LED_2 */
+						MX28_PAD_SAIF1_SDATA0__GPIO_3_26	/* LED_1 */
 					>;
 					fsl,drive-strength = <0>;
 					fsl,voltage = <1>;
  					fsl,pull-up = <0>;
 				};
-
 
 				io_pin_gpio: io_pin_gpio@0 {
 					reg = <0>;
 					fsl,pinmux-ids = <
-						MX28_PAD_GPMI_D04__GPIO_0_4 /* A1 in */
-						MX28_PAD_GPMI_D05__GPIO_0_5 /* A2 in */
-						MX28_PAD_GPMI_D06__GPIO_0_6 /* A3 in */
-						MX28_PAD_GPMI_D07__GPIO_0_7 /* R1 in */
-						MX28_PAD_GPMI_RESETN__GPIO_0_28 /* A4 in */
-						MX28_PAD_GPMI_CLE__GPIO_0_27 /* R2 IN */
-						MX28_PAD_GPMI_ALE__GPIO_0_26 /* A1 out */
-						MX28_PAD_GPMI_CE0N__GPIO_0_16 /* A2 out */
-						MX28_PAD_GPMI_RDN__GPIO_0_24 /* A3 out */
-						MX28_PAD_GPMI_RDY0__GPIO_0_20 /* A4 out */
+						MX28_PAD_GPMI_D06__GPIO_0_6		/* A1 in */
+						MX28_PAD_GPMI_D07__GPIO_0_7		/* A2 in */
+						MX28_PAD_GPMI_RESETN__GPIO_0_28	/* A3 in */
+						MX28_PAD_GPMI_CLE__GPIO_0_27	/* A4 in */
+						MX28_PAD_GPMI_D05__GPIO_0_5		/* R1 gpio */
+						MX28_PAD_GPMI_D04__GPIO_0_4		/* R2 gpio */
 
-						MX28_PAD_SAIF0_MCLK__GPIO_3_20 /* 1-wire */
-						MX28_PAD_SAIF0_BITCLK__GPIO_3_22 /* 1-wire pull-up */
+						MX28_PAD_GPMI_ALE__GPIO_0_26	/* A1 out */
+						MX28_PAD_GPMI_CE0N__GPIO_0_16	/* A2 out */
+						MX28_PAD_GPMI_RDN__GPIO_0_24	/* A3 out */
+						MX28_PAD_GPMI_RDY0__GPIO_0_20	/* A4 out */
 
-						MX28_PAD_GPMI_D02__GPIO_0_2 /* POWER_SIM900 */
-						MX28_PAD_LCD_D07__GPIO_1_7 /* STATUS SIM900 */
-						MX28_PAD_LCD_D06__GPIO_1_6 /* IRQ_RFM69 */
-						MX28_PAD_LCD_D05__GPIO_1_5 /* RFM69 DIO2 */
-						MX28_PAD_LCD_D11__GPIO_1_11  /* STAT1 */
-						MX28_PAD_LCD_D10__GPIO_1_10  /* STAT2 */
+						MX28_PAD_GPMI_CE1N__GPIO_0_17	/* RESET_SIM900 */
+						MX28_PAD_GPMI_D02__GPIO_0_2		/* POWER_SIM900 */
+						MX28_PAD_LCD_D07__GPIO_1_7		/* STATUS_SIM900 */
 
-						MX28_PAD_SSP1_CMD__GPIO_2_13 /* watchdog out */
+						MX28_PAD_LCD_D06__GPIO_1_6		/* IRQ_RFM69 */
+						MX28_PAD_LCD_D05__GPIO_1_5		/* RFM69_DIO2 */
+						MX28_PAD_GPMI_D03__GPIO_0_3		/* RFM69_CS */
+						MX28_PAD_AUART1_CTS__GPIO_3_6	/* STAT1 */
+						MX28_PAD_LCD_DOTCLK__GPIO_1_30	/* STAT2 */
 
-						MX28_PAD_SSP1_DATA3__GPIO_2_15 /* rs-485/CAN */
+						MX28_PAD_SSP1_CMD__GPIO_2_13	/* watchdog out */
 
-						MX28_PAD_PWM2__USB0_ID  /* USB ID */
+						MX28_PAD_PWM2__USB0_ID			/* USB ID */
 
-						MX28_PAD_AUART3_CTS__GPIO_3_14 /* CIR in */
-						MX28_PAD_SAIF0_BITCLK__GPIO_3_22 /* 1-wire pull-up */
-						/* MX28_PAD_AUART1_RTS__GPIO_3_7 */ /* RTS AUART1 */
+						MX28_PAD_SAIF0_MCLK__GPIO_3_20		/* 1-wire */
+						MX28_PAD_SAIF0_BITCLK__GPIO_3_22	/* 1-wire pull-up */
+						MX28_PAD_SSP1_DATA3__GPIO_2_15		/* CIR in */
+						/* MX28_PAD_AUART1_RTS__GPIO_3_7 */	/* RTS AUART1 */
 
-						MX28_PAD_LCD_CS__GPIO_1_27 /* Wi-Fi power enable */
+						MX28_PAD_LCD_RD_E__GPIO_1_24	/* USB power enable */
+						MX28_PAD_LCD_CS__GPIO_1_27		/* Wi-Fi power enable */
+						MX28_PAD_SSP1_DATA0__GPIO_2_14	/* 5V_OUT power enable */
+
+						MX28_PAD_ENET0_RX_CLK__GPIO_4_13	/* FEC reset */
 					>;
-					fsl,drive-strength = <0>;
-					fsl,voltage = <1>;
- 					fsl,pull-up = <0>;
+					fsl,drive-strength = <MXS_DRIVE_4mA>;
+					fsl,voltage = <MXS_VOLTAGE_HIGH>;
+ 					fsl,pull-up = <MXS_PULL_DISABLE>;
 				};
-
-
 
 				ssp1_pins_a: ssp1@0 {
 					reg = <0>;
@@ -165,13 +199,6 @@
 					fsl,pull-up = <MXS_PULL_ENABLE>;
 				};
 
-
-
-
-
-
-
-
 				auart1_3pins_a: auart1-3pins-rs485@0 {
 					reg = <0>;
 					fsl,pinmux-ids = <
@@ -196,7 +223,6 @@
 					fsl,pull-up = <MXS_PULL_DISABLE>;
 				};
 
-
 				auart3_3pins_a: auart3-3pins-rs485@0 {
 					reg = <0>;
 					fsl,pinmux-ids = <
@@ -220,9 +246,6 @@
 					fsl,voltage = <MXS_VOLTAGE_HIGH>;
 					fsl,pull-up = <MXS_PULL_DISABLE>;
 				};
-
-
-
 			};
 
 
@@ -235,6 +258,8 @@
 
 		apbx@80040000 {
 			spdif: spdif@80054000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&spdif_pins>;
 				status = "okay";
 			};
 
@@ -250,7 +275,115 @@
 				pinctrl-names = "default";
 				pinctrl-0 = <&i2c0_pins_a>;
 				status = "okay";
+				clock-frequency = <400000>;
 
+				gpiomo1: gpio@20 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x20>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <160>;
+				};
+				gpiomo2: gpio@21 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x21>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <168>;
+				};
+				gpiomo3: gpio@22 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x22>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <176>;
+				};
+				gpiomo4: gpio@24 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x24>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <184>;
+				};
+
+				/* input extensions modules  */
+
+				gpiomi1: gpio@27 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x27>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <192>;
+				};
+				gpiomi2: gpio@26 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x26>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <200>;
+				};
+				gpiomi3: gpio@25 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x25>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <208>;
+				};
+				gpiomi4: gpio@23 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x23>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <216>;
+				};
 			};
 
 			pwm: pwm@80064000 {
@@ -320,6 +453,7 @@
 		usb1: usb@80090000 {
 			vbus-supply = <&reg_usb1_vbus>;
 			status = "okay";
+			dr_mode = "host";
 		};
 
 		mac0: ethernet@800f0000 {
@@ -329,13 +463,24 @@
 			phy-reset-gpios = <&gpio4 13 0>;
 			phy-reset-duration = <100>;
 			status = "okay";
+
+            phy-handle = <&ethphy0>;
+			mdio {
+                  ethphy0: ethernet-phy@0 {
+                          compatible = "ethernet-phy-ieee802.3-c22";
+                          max-speed = <100>;
+                          reg = <0>;
+                  };
+		     };
+
+
 		};
 
 		mac1: ethernet@800f4000 {
 			phy-mode = "rmii";
 			pinctrl-names = "default";
 			pinctrl-0 = <&mac1_pins_a>;
-			status = "okay";
+			status = "disabled";
 		};
 	};
 
@@ -355,7 +500,7 @@
 			regulator-name = "usb0_vbus";
 			regulator-min-microvolt = <5000000>;
 			regulator-max-microvolt = <5000000>;
-			gpio = <&gpio1 24 0>;   // ruslan
+			gpio = <&gpio1 24 0>;
 			enable-active-high;
 		};
 
@@ -365,10 +510,9 @@
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
 			gpio = <&gpio1 27 0>;
-			enable-active-high;
+			/* active low */
 		};
 	};
-
 
 	leds {
 		compatible = "gpio-leds";
@@ -378,7 +522,9 @@
 		green {
 			label = "green";
 			gpios = <&gpio3 23 0>;
-			linux,default-trigger = "none";
+			linux,default-trigger = "default-off";
+			default-state = "on";
+			open-drain;
 		};
 
 		red {
@@ -388,13 +534,12 @@
 		};
 	};
 
-
 	/* Enable 1-wire network on terminal block W1 */
 	onewire@0 {
 		compatible = "w1-gpio";
-		gpios = <&gpio3 20 0>, <&gpio3 22 0>;
+        gpios = <&gpio3 20 0>;
+        pu-gpios = <&gpio3 22 0>;
 	};
-
 
 	mcp6542: watchdog {
 		/* watchdog timer on mcp6542  */
@@ -407,4 +552,22 @@
 		status = "okay";
 	};
 
+	sound-spdif {
+		compatible = "fsl,mxs-spdif-audio";
+		model = "On-board SPDIF";
+		spdif-controller = <&spdif>;
+	};
+
+	lirc {
+		compatible = "lirc-pwm";
+		pwms = <&pwm 4 0>;
+		pwm-max-duty = <50>;
+		pwm-idle-active;
+		gpio-recv = <&gpio2 15 1>;
+	};
+
+	lirc-rfm69 {
+		compatible = "lirc-pwm";
+		gpio-recv = <&gpio1 5 0>;
+	};
 };
