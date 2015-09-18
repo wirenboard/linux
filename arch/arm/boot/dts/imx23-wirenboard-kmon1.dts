@@ -309,6 +309,7 @@
 		usb0: usb@80080000 {
 		    /*vbus-supply = <&reg_33v_bus>;*/
 			status = "okay";
+			dr_mode = "host";
 		};
 	};
 
@@ -323,7 +324,7 @@
 			linux,default-trigger = "timer";
 		};
 
-		green {
+/*		green {
 			label = "green";
 			gpios = <&sc16is7x2_0 7 1>;
 			linux,default-trigger = "default-on";
@@ -333,9 +334,9 @@
 		red {
 			label = "red";
 			gpios = <&sc16is7x2_0 6 1>;
-			linux,default-trigger = "timer";
+			linux,default-trigger = "default-on";
 		};
-
+*/
 
 	};
 
