@@ -15,7 +15,7 @@
 
 / {
 
-	model = "Wiren Board rev. 4.1 with RS-232 ext. (i.MX23)";
+	model = "Wiren Board rev. 4.1 with CAN ext. (i.MX23)";
 
 	compatible = "contactless,imx23-wirenboard41-can", "contactless,imx23-wirenboard41", "contactless,imx23-wirenboard32", "olimex,imx23-olinuxino", "fsl,imx23";
 
@@ -35,7 +35,7 @@
 					status = "disabled";
 				};
 
-				can0: mcp2515@6 {
+				can0: mcp2515@5 {
 					compatible = "mcp2515";
 					reg = <5>;
 					spi-max-frequency = <1000000>;
