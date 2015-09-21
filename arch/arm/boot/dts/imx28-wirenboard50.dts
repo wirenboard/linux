@@ -109,6 +109,8 @@
 						MX28_PAD_SAIF0_BITCLK__GPIO_3_22 /* 1-wire pull-up */
 						/* MX28_PAD_AUART1_RTS__GPIO_3_7 */ /* RTS AUART1 */
 
+						MX28_PAD_LCD_CS__GPIO_1_27 /* Wi-Fi power enable */
+
 
 
 					>;
