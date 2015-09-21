@@ -119,19 +119,6 @@
 
 
 
-				lcdif_pins_evk: lcdif-evk@0 {
-					reg = <0>;
-					fsl,pinmux-ids = <
-						0x11c0 /* MX28_PAD__LCD_VSYNC ruslan  */
-						0x11d0 /* MX28_PAD__LCD_HSYNC ruslan */
-						0x11e0 /* MX28_PAD__LCD_DOTCLK ruslan */
-						0x11f0 /* MX28_PAD__LCD_ENABLE ruslan */
-					>;
-					fsl,drive-strength = <0>;
-					fsl,voltage = <1>;
-					fsl,pull-up = <0>;
-				};
-
 
 
 				auart1_3pins_a: auart1-3pins-rs485@0 {

@@ -20,18 +20,72 @@
 
 	onewire@0 {
 		compatible = "w1-gpio";
-/*		gpios = <&gpio3 20 0
-		        &gpio3 22 0>; */
 
 		 gpios = <&gpio3 20 0>;
+		 pu-gpios = <&gpio3 22 0>;
 	};
 
 
-
-
-
-
 	apb@80000000 {
+		apbh@80000000 {
+
+			pinctrl: pinctrl@80018000 {
+
+				ssp1_pins_a: ssp1@0 {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						MX28_PAD_GPMI_RDY1__SSP1_CMD
+						MX28_PAD_GPMI_D00__SSP1_D0
+						MX28_PAD_GPMI_WRN__SSP1_SCK
+						MX28_PAD_GPMI_D03__SSP1_D3
+					>;
+					fsl,drive-strength = <MXS_DRIVE_8mA>;
+					fsl,voltage = <MXS_VOLTAGE_HIGH>;
+					fsl,pull-up = <MXS_PULL_ENABLE>;
+				};
+
+				rfm69_irq_pins: rfm69_irq_pins@0 {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						MX28_PAD_LCD_D06__GPIO_1_6
+					>;
+					fsl,drive-strength = <MXS_DRIVE_8mA>;
+					fsl,voltage = <MXS_VOLTAGE_HIGH>;
+					fsl,pull-up = <MXS_PULL_ENABLE>;
+				};
+
+
+
+
+
+			};
+
+
+
+
+			ssp1: ssp@80012000 {
+				compatible = "fsl,imx28-spi";
+				pinctrl-0 = <&ssp1_pins_a
+						    >;
+				pinctrl-names = "default";
+				status = "okay";
+
+				/*cs-gpios = <&gpio0 3 0
+							>;
+*/
+				spidev@0 {
+					compatible = "spidev";
+					spi-max-frequency = <100000>;
+					reg = <0>;
+				};
+			};
+
+
+
+
+
+
+		};
 
 		apbx@80040000 {
 			i2c0: i2c@80058000 {
@@ -149,10 +203,6 @@
 
 				        linux,gpio-base = <216>;
 				};
-
-
-
-
 
 			};
 		};
