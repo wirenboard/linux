@@ -218,7 +218,7 @@ static int w1_gpio_probe(struct platform_device *pdev)
 	if (gpio_is_valid(pdata->ext_pullup_enable_pin))
 		gpio_set_value(pdata->ext_pullup_enable_pin, 1);
 
-	if (gpio_is_valid(pdata->ext_pullup_enable_pin))
+	if (gpio_is_valid(pdata->strong_pullup_enable_pin))
 		gpio_set_value(pdata->strong_pullup_enable_pin, 0);
 
 	platform_set_drvdata(pdev, master);
