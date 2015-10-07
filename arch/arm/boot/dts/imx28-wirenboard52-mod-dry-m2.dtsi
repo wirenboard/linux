@@ -1,0 +1,39 @@
+/*
+ * Copyright 2015 Contactless Devices, LLC.
+ *
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
+ */
+
+#include <dt-bindings/gpio/gpio.h>
+#include "skeleton.dtsi"
+#include "imx28-pinfunc.h"
+
+/ {
+	apb@80000000 {
+		apbh@80000000 {
+
+			pinctrl: pinctrl@80018000 {
+				mod2_pins: mod2_pins@0 {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						MX28_PAD_GPMI_RDY2__GPIO_0_22
+						MX28_PAD_GPMI_RDY3__GPIO_0_23
+						MX28_PAD_SSP2_SS0__GPIO_2_19
+					>;
+					fsl,drive-strength = <MXS_DRIVE_8mA>;
+					fsl,voltage = <MXS_VOLTAGE_HIGH>;
+					fsl,pull-up = <MXS_PULL_DISABLE>;
+				};
+			};
+
+
+
+
+		};
+	};
+};
