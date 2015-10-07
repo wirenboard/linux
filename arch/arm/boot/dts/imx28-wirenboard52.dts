@@ -1,15 +1,4 @@
-/*
- * Copyright 2012 Freescale Semiconductor, Inc.
- *
- * Author: Fabio Estevam <fabio.estevam@freescale.com>
- *
- * The code contained herein is licensed under the GNU General Public
- * License. You may obtain a copy of the GNU General Public License
- * Version 2 or later at the following locations:
- *
- * http://www.opensource.org/licenses/gpl-license.html
- * http://www.gnu.org/copyleft/gpl.html
- */
+
 #include <dt-bindings/interrupt-controller/irq.h>
 #include "imx28-wirenboard50.dts"
 
@@ -30,19 +19,6 @@
 		apbh@80000000 {
 
 			pinctrl: pinctrl@80018000 {
-
-				ssp1_pins_a: ssp1@0 {
-					reg = <0>;
-					fsl,pinmux-ids = <
-						MX28_PAD_GPMI_RDY1__SSP1_CMD
-						MX28_PAD_GPMI_D00__SSP1_D0
-						MX28_PAD_GPMI_WRN__SSP1_SCK
-						MX28_PAD_GPMI_D03__SSP1_D3
-					>;
-					fsl,drive-strength = <MXS_DRIVE_8mA>;
-					fsl,voltage = <MXS_VOLTAGE_HIGH>;
-					fsl,pull-up = <MXS_PULL_ENABLE>;
-				};
 
 				rfm69_irq_pins: rfm69_irq_pins@0 {
 					reg = <0>;
@@ -68,20 +44,66 @@
 				pinctrl-0 = <&ssp1_pins_a
 						    >;
 				pinctrl-names = "default";
-				status = "okay";
 
-				/*cs-gpios = <&gpio0 3 0
-							>;
-*/
+				status = "disabled";
+
+				spidev@0 {
+					compatible = "spidev";
+					spi-max-frequency = <100000>;
+					reg = <0>;
+				};
+
+			};
+
+
+			ssp1gpio {
+				compatible = "spi-gpio";
+				pinctrl-names = "default";
+				pinctrl-0 = <&spi1_pins_a_gpio>;
+				status = "okay";
+				gpio-sck = <&gpio0 25 0>;
+				gpio-mosi = <&gpio0 21 0>;
+				gpio-miso = <&gpio0 0 0>;
+				cs-gpios = <&gpio0 3 0>;
+				num-chipselects = <1>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+
+				spidev@0 {
+					compatible = "spidev";
+					spi-max-frequency = <10000>;
+					reg = <0>;
+				};
+			};
+
+/*
+			spi2 {
+				compatible = "spi-gpio";
+				pinctrl-names = "default";
+				pinctrl-0 = <&spi2_pins_a_gpio>;
+				status = "okay";
+				gpio-sck = <&gpio2 16 0>;
+				gpio-mosi = <&gpio2 17 0>;
+				gpio-miso = <&gpio2 18 0>;
+				cs-gpios = <&gpio2 19 0>;
+				num-chipselects = <1>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+
 				spidev@0 {
 					compatible = "spidev";
 					spi-max-frequency = <100000>;
 					reg = <0>;
 				};
 			};
+*/
 
 
-
+			ssp2: ssp@80014000 {
+				status = "disabled";
+			};
 
 
 
