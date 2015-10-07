@@ -233,7 +233,7 @@
 		led {
 			label = "led";
 			gpios = <&gpio1 4 0>;
-			linux,default-trigger = "none";
+			linux,default-trigger = "timer";
 		};
 
 	};
@@ -296,7 +296,7 @@
 		compatible = "linux,wdt-gpio";
 		gpios = <&gpio2 27 0>;
 		hw_algo = "toggle";
-		hw_margin_ms = <1000>;
+		hw_margin_ms = <50>;
 		always-enabled;
 		timeout-sec = <30>;
 	};
