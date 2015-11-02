@@ -33,8 +33,9 @@
 			i2c0: i2c@80058000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&i2c0_pins_a>;
-				status = "okay";
-				clock-frequency = <10000>;
+				/*status = "okay";*/
+				status = "disabled";
+				clock-frequency = <20000>;
 
 				eeprom@57 {
 						compatible = "at,24c02";
@@ -44,5 +45,26 @@
 		};
 
 	};
+
+
+	i2c2@0 {
+			compatible = "i2c-gpio";
+			gpios = <&gpio1 23 0 /* sda */
+					 &gpio1 24 0 /* scl */
+					>;
+			i2c-gpio,delay-us = <50>;        /* ~20 kHz */
+			i2c-gpio,scl-output-only = <0>;
+			i2c-gpio,sda-open-drain = <1>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c0_pins_a_gpio>;
+
+			status = "okay";
+
+
+
+	};
+
+
 
 };
