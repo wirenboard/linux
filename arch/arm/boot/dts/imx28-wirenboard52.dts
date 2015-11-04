@@ -37,6 +37,9 @@
 			};
 
 
+			ocotp: ocotp@8002c000 {
+				status = "okay";
+			};
 
 
 			ssp1: ssp@80012000 {
