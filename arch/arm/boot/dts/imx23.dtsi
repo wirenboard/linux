@@ -350,9 +350,12 @@
 			};
 
 			ocotp@8002c000 {
-				compatible = "fsl,ocotp";
+				compatible = "fsl,imx23-ocotp", "fsl,ocotp";
+				#address-cells = <1>;
+				#size-cells = <1>;
 				reg = <0x8002c000 0x2000>;
-				status = "disabled";
+				clocks = <&clks 15>;
+				status = "okay";
 			};
 
 			axi-ahb@8002e000 {
