@@ -23,6 +23,9 @@ LED sub-node properties:
   property is not present.
 - retain-state-suspended: (optional) The suspend state can be retained.Such
   as charge-led gpio.
+- open-drain: (optional) Emulate open-drain output. Logic "1" correspond to
+  high-Z state (GPIO configured as input), logic "0" is output low.
+
 
 Examples:
 
