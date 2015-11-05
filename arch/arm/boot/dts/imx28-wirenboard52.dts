@@ -522,6 +522,7 @@
 			label = "green";
 			gpios = <&gpio3 23 0>;
 			linux,default-trigger = "none";
+			open-drain;
 		};
 
 		red {
