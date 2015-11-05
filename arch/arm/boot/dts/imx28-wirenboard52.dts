@@ -479,7 +479,7 @@
 			phy-mode = "rmii";
 			pinctrl-names = "default";
 			pinctrl-0 = <&mac1_pins_a>;
-			status = "okay";
+			status = "disabled";
 		};
 	};
 
