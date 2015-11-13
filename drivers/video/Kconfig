@@ -53,5 +53,3 @@ endif
 
 
 endmenu
-
-source "drivers/video/fbtft/Kconfig"

@@ -1,0 +1,9 @@
+
+#include <dt-bindings/interrupt-controller/irq.h>
+#include "imx28-wirenboard50.dts"
+#include "imx28-wirenboard52-mod-dry-m2.dtsi"
+
+/ {
+	model = "Wiren Board rev. 5.1 (test1 with MOD-DI in mod2) (i.MX28)";
+	compatible = "contactless,imx28-wirenboard50", "fsl,imx28";
+};
