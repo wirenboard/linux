@@ -555,4 +555,13 @@
 		model = "On-board SPDIF";
 		spdif-controller = <&spdif>;
 	};
+
+	lirc {
+		compatible = "lirc-pwm";
+		pwms = <&pwm 4 0>;
+		pwm-max-duty = <50>;
+		pwm-idle-active;
+		gpio-recv = <&gpio2 15 1>;
+	};
+
 };
