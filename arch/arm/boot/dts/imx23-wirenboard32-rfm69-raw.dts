@@ -11,7 +11,7 @@
  * http://www.gnu.org/copyleft/gpl.html
  */
 
-#include "imx23-wirenboard41.dts"
+#include "imx23-wirenboard32.dts"
 
 / {
 
