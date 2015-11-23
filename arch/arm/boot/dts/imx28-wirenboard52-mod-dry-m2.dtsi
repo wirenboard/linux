@@ -21,9 +21,9 @@
 				mod2_pins: mod2_pins@0 {
 					reg = <0>;
 					fsl,pinmux-ids = <
-						MX28_PAD_GPMI_RDY2__GPIO_0_22
-						MX28_PAD_GPMI_RDY3__GPIO_0_23
-						MX28_PAD_SSP2_SS0__GPIO_2_19
+						MX28_PAD_GPMI_RDY2__GPIO_0_22	/* SDA2 */
+						MX28_PAD_GPMI_RDY3__GPIO_0_23	/* SCL2 */
+						MX28_PAD_SSP2_SS0__GPIO_2_19	/* SPI2_CS */
 					>;
 					fsl,drive-strength = <MXS_DRIVE_8mA>;
 					fsl,voltage = <MXS_VOLTAGE_HIGH>;

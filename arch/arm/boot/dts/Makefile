@@ -278,12 +278,14 @@ dtb-$(CONFIG_ARCH_MXS) += imx23-evk.dtb \
 	imx23-wirenboard28.dtb \
 	imx23-wirenboard28_cin.dtb \
 	imx23-wirenboard32.dtb \
+	imx23-wirenboard32-rfm69-raw.dtb \
 	imx23-wirenboard41.dtb \
 	imx23-wirenboard41-rs232.dtb \
 	imx23-wirenboard41-rs232-extio.dtb \
 	imx23-wirenboard41-can.dtb \
 	imx23-wirenboard41-pobeda.dtb \
 	imx23-wirenboard41-extio.dtb \
+	imx23-wirenboard41-rfm69-raw.dtb \
 	imx23-wirenboard-ac1.dtb \
 	imx23-wirenboard-ac-e1.dtb \
 	imx23-wirenboard-kmon1.dtb \
@@ -309,6 +311,7 @@ dtb-$(CONFIG_ARCH_MXS) += imx23-evk.dtb \
 	imx28-eukrea-mbmx283lc.dtb \
 	imx28-eukrea-mbmx287lc.dtb \
 	imx28-evk.dtb \
+	imx28-ev-dbg.dtb \
 	imx28-m28cu3.dtb \
 	imx28-m28evk.dtb \
 	imx28-sps1.dtb \

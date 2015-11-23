@@ -315,6 +315,11 @@
 	};
 
 
+	lirc@0 {
+		compatible = "lirc-pwm";
+		pwms = <&pwm 2 0>;
+	};
+
 
 	mcp6542: watchdog {
 		/* watchdog timer on mcp6542  */
