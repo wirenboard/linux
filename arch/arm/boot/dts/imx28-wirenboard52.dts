@@ -473,6 +473,17 @@
 			phy-reset-gpios = <&gpio4 13 0>;
 			phy-reset-duration = <100>;
 			status = "okay";
+
+            phy-handle = <&ethphy0>;
+			mdio {
+                  ethphy0: ethernet-phy@0 {
+                          compatible = "ethernet-phy-ieee802.3-c22";
+                          reg = <0>;
+                          max-speed = <100>;
+                  };
+		     };
+
+
 		};
 
 		mac1: ethernet@800f4000 {
