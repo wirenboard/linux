@@ -83,9 +83,19 @@
 				pinctrl-names = "default";
 				pinctrl-0 = <&io_pin_gpio
 							 &mod2_pins
+							 &mod1_pins
 				>;
 
 				mod2_pins: mod2_pins@0 {
+					reg = <0>;
+					fsl,pinmux-ids = <
+					>;
+					fsl,drive-strength = <MXS_DRIVE_8mA>;
+					fsl,voltage = <MXS_VOLTAGE_HIGH>;
+					fsl,pull-up = <MXS_PULL_DISABLE>;
+				};
+
+				mod1_pins: mod1_pins@0 {
 					reg = <0>;
 					fsl,pinmux-ids = <
 					>;
@@ -458,7 +468,6 @@
 			mdio {
                   ethphy0: ethernet-phy@0 {
                           compatible = "ethernet-phy-ieee802.3-c22";
-                          reg = <0>;
                           max-speed = <100>;
                   };
 		     };
@@ -497,7 +506,7 @@
 		reg_usb1_vbus: usb1_vbus {
 			compatible = "regulator-fixed";
 			regulator-name = "usb1_vbus";
-			regulator-min-microvolt = <3300000>;
+			reg-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
 			gpio = <&gpio1 27 0>;
 			/* active low */
@@ -512,7 +521,8 @@
 		green {
 			label = "green";
 			gpios = <&gpio3 23 0>;
-			linux,default-trigger = "none";
+			linux,default-trigger = "default-off";
+			default-state = "on";
 			open-drain;
 		};
 
