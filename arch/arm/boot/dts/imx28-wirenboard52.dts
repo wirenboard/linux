@@ -316,11 +316,11 @@
 
 				        linux,gpio-base = <176>;
 				};
-				gpiomo4: gpio@23 {
+				gpiomo4: gpio@24 {
 				        compatible = "microchip,mcp23008";
 				        gpio-controller;
 				        #gpio-cells = <2>;
-				        reg = <0x23>;
+				        reg = <0x24>;
 
 				        interrupt-parent = <&gpio3>;
 				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
@@ -332,11 +332,11 @@
 
 				/* input extensions modules  */
 
-				gpiomi1: gpio@24 {
+				gpiomi1: gpio@27 {
 				        compatible = "microchip,mcp23008";
 				        gpio-controller;
 				        #gpio-cells = <2>;
-				        reg = <0x24>;
+				        reg = <0x27>;
 
 				        interrupt-parent = <&gpio3>;
 				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
@@ -345,20 +345,7 @@
 
 				        linux,gpio-base = <192>;
 				};
-				gpiomi2: gpio@25 {
-				        compatible = "microchip,mcp23008";
-				        gpio-controller;
-				        #gpio-cells = <2>;
-				        reg = <0x25>;
-
-				        interrupt-parent = <&gpio3>;
-				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
-				        interrupt-controller;
-				        #interrupt-cells=<2>;
-
-				        linux,gpio-base = <200>;
-				};
-				gpiomi3: gpio@26 {
+				gpiomi2: gpio@26 {
 				        compatible = "microchip,mcp23008";
 				        gpio-controller;
 				        #gpio-cells = <2>;
@@ -369,13 +356,26 @@
 				        interrupt-controller;
 				        #interrupt-cells=<2>;
 
-				        linux,gpio-base = <208>;
+				        linux,gpio-base = <200>;
 				};
-				gpiomi4: gpio@27 {
+				gpiomi3: gpio@25 {
 				        compatible = "microchip,mcp23008";
 				        gpio-controller;
 				        #gpio-cells = <2>;
-				        reg = <0x27>;
+				        reg = <0x25>;
+
+				        interrupt-parent = <&gpio3>;
+				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
+				        interrupt-controller;
+				        #interrupt-cells=<2>;
+
+				        linux,gpio-base = <208>;
+				};
+				gpiomi4: gpio@23 {
+				        compatible = "microchip,mcp23008";
+				        gpio-controller;
+				        #gpio-cells = <2>;
+				        reg = <0x23>;
 
 				        interrupt-parent = <&gpio3>;
 				        interrupts = <10 IRQ_TYPE_LEVEL_LOW>;
