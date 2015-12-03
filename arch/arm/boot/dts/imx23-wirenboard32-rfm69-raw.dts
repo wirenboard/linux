@@ -12,32 +12,3 @@
  */
 
 #include "imx23-wirenboard32.dts"
-
-/ {
-
-	model = "Wiren Board rev. 3.2 with RFM69 raw (i.MX23)";
-	compatible = "contactless,imx23-wirenboard32-rfm69-raw", "contactless,imx23-wirenboard32", "olimex,imx23-olinuxino", "fsl,imx23";
-
-	apb@80000000 {
-		apbh@80000000 {
-			pinctrl@80018000 {
-				rfm69_raw_pins: rfm69_raw_pins@0 {
-					reg = <0>;
-					fsl,pinmux-ids = <
-						MX23_PAD_LCD_CS__GPIO_1_21	/* RFM69_DIO2 */
-					>;
-					fsl,drive-strength = <0>;
-					fsl,voltage = <1>;
-					fsl,pull-up = <0>;
-				};
-			};
-		};
-	};
-
-	lirc-rfm69 {
-		compatible = "lirc-pwm";
-		pinctrl-names = "default";
-		pinctrl-0 = <&rfm69_raw_pins>;
-		gpio-recv = <&gpio1 21 0>;
-	};
-};
