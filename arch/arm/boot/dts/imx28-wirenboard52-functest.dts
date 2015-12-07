@@ -165,6 +165,11 @@
 						/* MX28_PAD_AUART1_RTS__GPIO_3_7 */ /* RTS AUART1 */
 
 						MX28_PAD_LCD_CS__GPIO_1_27 /* Wi-Fi power enable */
+
+
+						MX28_PAD_PWM4__GPIO_3_29
+
+
 					>;
 					fsl,drive-strength = <0>;
 					fsl,voltage = <1>;
@@ -302,8 +307,7 @@
 
 			pwm: pwm@80064000 {
 				pinctrl-names = "default";
-				pinctrl-0 = <&pwm3_pins_a
-						     &pwm4_pins_a>;
+				pinctrl-0 = <&pwm3_pins_a>;
 				status = "okay";
 			};
 

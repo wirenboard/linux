@@ -30,10 +30,6 @@
                     fsl,pull-up = <MXS_PULL_DISABLE>;
                 };
             };
-
-
-
-
         };
     };
 
