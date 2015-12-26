@@ -466,6 +466,9 @@
 
             phy-handle = <&ethphy0>;
 			mdio {
+                  #address-cells = <1>;
+                  #size-cells = <0>;
+
                   ethphy0: ethernet-phy@0 {
                           compatible = "ethernet-phy-ieee802.3-c22";
                           max-speed = <100>;
