@@ -25,7 +25,7 @@ LEX = flex
 
 INSTALL = /usr/bin/install
 DESTDIR =
-PREFIX = $(HOME)
+PREFIX = /usr
 BINDIR = $(PREFIX)/bin
 LIBDIR = $(PREFIX)/lib
 INCLUDEDIR = $(PREFIX)/include
@@ -110,7 +110,7 @@ BIN += fdtdump
 BIN += fdtget
 BIN += fdtput
 
-SCRIPTS = dtdiff
+SCRIPTS = 
 
 all: $(BIN) libfdt
 
@@ -157,7 +157,7 @@ endif
 # intermediate target and building them again "for real"
 .SECONDARY: $(DTC_GEN_SRCS) $(CONVERT_GEN_SRCS)
 
-install-bin: all $(SCRIPTS)
+install-bin: all
 	@$(VECHO) INSTALL-BIN
 	$(INSTALL) -d $(DESTDIR)$(BINDIR)
 	$(INSTALL) $(BIN) $(SCRIPTS) $(DESTDIR)$(BINDIR)
