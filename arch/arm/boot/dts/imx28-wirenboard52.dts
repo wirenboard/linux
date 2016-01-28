@@ -79,6 +79,15 @@
 				status = "disabled";
 			};
 
+			ssp3: ssp@80016000 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				compatible = "fsl,imx28-spi";
+				pinctrl-names = "default";
+				pinctrl-0 = <&spi3_pins_b>;
+				status = "disabled";
+			};
+
 			pinctrl@80018000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&io_pin_gpio
