@@ -257,7 +257,6 @@
 				};
 			};
 
-
 			can1: can@80034000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&can1_pins_a>;
@@ -290,7 +289,7 @@
 			pwm: pwm@80064000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&pwm3_pins_a
-						     &pwm4_pins_a>;
+							 &pwm4_pins_a>;
 				status = "okay";
 			};
 
@@ -314,10 +313,10 @@
 			};
 
 			auart2: serial@8006e000 {
-			        pinctrl-names = "default";
-			        pinctrl-0 = <&auart2_3pins_a>;
-			        status = "okay";
-			        linux,rs485-enabled-at-boot-time;
+				pinctrl-names = "default";
+				pinctrl-0 = <&auart2_3pins_a>;
+				status = "okay";
+				linux,rs485-enabled-at-boot-time;
 			};
 
 			auart3: serial@80070000 {
@@ -365,19 +364,17 @@
 			phy-reset-duration = <100>;
 			status = "okay";
 
-            phy-handle = <&ethphy0>;
+			phy-handle = <&ethphy0>;
 			mdio {
-                  #address-cells = <1>;
-                  #size-cells = <0>;
+				#address-cells = <1>;
+				#size-cells = <0>;
 
-                  ethphy0: ethernet-phy@0 {
-                          compatible = "ethernet-phy-ieee802.3-c22";
-                          max-speed = <100>;
-                          reg = <0>;
-                  };
-		     };
-
-
+				ethphy0: ethernet-phy@0 {
+					compatible = "ethernet-phy-ieee802.3-c22";
+					max-speed = <100>;
+					reg = <0>;
+				};
+			 };
 		};
 
 		mac1: ethernet@800f4000 {
@@ -441,8 +438,8 @@
 	/* Enable 1-wire network on terminal block W1 */
 	onewire@0 {
 		compatible = "w1-gpio";
-        gpios = <&gpio3 20 0>;
-        pu-gpios = <&gpio3 22 0>;
+		gpios = <&gpio3 20 0>;
+		pu-gpios = <&gpio3 22 0>;
 	};
 
 	mcp6542: watchdog {
