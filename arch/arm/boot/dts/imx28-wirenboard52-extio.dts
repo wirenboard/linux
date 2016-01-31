@@ -1,0 +1,8 @@
+
+#include <dt-bindings/interrupt-controller/irq.h>
+#include "imx28-wirenboard52.dts"
+#include "imx28-wirenboard52-mod-wbmz-ttl16-m1.dtsi"
+
+/ {
+    model = "Wiren Board rev. 5.2 (Pobeda) (i.MX28)";
+};

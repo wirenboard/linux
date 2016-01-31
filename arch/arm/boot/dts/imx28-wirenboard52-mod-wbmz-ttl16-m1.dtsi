@@ -1,13 +1,19 @@
+/*
+ * Copyright 2015 Contactless Devices, LLC.
+ *
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
+ */
 
-#include <dt-bindings/interrupt-controller/irq.h>
-#include "imx28-wirenboard52.dts"
-#include "imx28-wirenboard52-mod-w1-m2.dtsi"
 #include <dt-bindings/gpio/gpio.h>
 #include "skeleton.dtsi"
 #include "imx28-pinfunc.h"
-/ {
-    model = "Wiren Board rev. 5.2 (mod test) (i.MX28)";
 
+/ {
     apb@80000000 {
         apbh@80000000 {
 
@@ -21,7 +27,7 @@
                     >;
                     fsl,drive-strength = <MXS_DRIVE_8mA>;
                     fsl,voltage = <MXS_VOLTAGE_HIGH>;
-                    fsl,pull-up = <MXS_PULL_ENABLE>;
+                    fsl,pull-up = <MXS_PULL_DISABLE>;
                 };
             };
         };
@@ -33,12 +39,29 @@
                      &gpio2 12 0 /* scl */
                     >;
             i2c-gpio,delay-us = <20>;        /* ~100 kHz */
+            i2c-gpio,scl-output-only = <0>;
 
             pinctrl-names = "default";
             pinctrl-0 = <&mod1_pins>;
 
             status = "okay";
-    };
 
+            gpiomext1: gpio@20 {
+                    compatible = "microchip,mcp23017";
+                    gpio-controller;
+                    #gpio-cells = <2>;
+                    reg = <0x20>;
+
+                    interrupt-parent = <&gpio2>;
+                    interrupts = <27 IRQ_TYPE_LEVEL_LOW>;
+                    interrupt-controller;
+                    #interrupt-cells=<2>;
+                    microchip,irq-mirror;
+                    linux,gpio-base = <224>;
+
+            };
+
+
+    };
 
 };
