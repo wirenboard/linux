@@ -39,7 +39,6 @@
                      &gpio2 12 0 /* scl */
                     >;
             i2c-gpio,delay-us = <20>;        /* ~100 kHz */
-            i2c-gpio,scl-output-only = <0>;
 
             pinctrl-names = "default";
             pinctrl-0 = <&mod1_pins>;
