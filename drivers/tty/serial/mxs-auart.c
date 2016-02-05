@@ -48,10 +48,14 @@
 #include <linux/gpio/consumer.h>
 #include <linux/err.h>
 #include <linux/irq.h>
+#include <linux/hrtimer.h>
+#include <linux/ktime.h>
+
 #include "serial_mctrl_gpio.h"
 
 #define MXS_AUART_PORTS 5
 #define MXS_AUART_FIFO_SIZE		16
+#define MXS_AUART_FIFO_TX_INT_THRESHOLD	8
 
 #define AUART_CTRL0			0x00000000
 #define AUART_CTRL0_SET			0x00000004
@@ -170,8 +174,19 @@ struct mxs_auart_port {
 	int			gpio_irq[UART_GPIO_MAX];
 	bool			ms_irq_enabled;
 	struct serial_rs485 rs485;
-	u32 rs485_delay_rts_last_char_tx_usecs;
+	u32 rs485_delay_char_tx_nsecs;
+	struct hrtimer rs485_rts_timer;
 };
+
+enum hrtimer_restart rs485_rts_timer_callback( struct hrtimer *timer )
+{
+	struct mxs_auart_port* s = container_of(timer, struct mxs_auart_port, rs485_rts_timer);
+	
+	__raw_writel(AUART_CTRL2_RTS, s->port.membase + AUART_CTRL2_SET);
+  
+  return HRTIMER_NORESTART;
+}
+
 
 static struct platform_device_id mxs_auart_devtype[] = {
 	{ .name = "mxs-auart-imx23", .driver_data = IMX23_AUART },
@@ -205,7 +220,7 @@ static void mxs_auart_stop_tx(struct uart_port *u);
 
 #define to_auart_port(u) container_of(u, struct mxs_auart_port, port)
 
-static void mxs_auart_tx_chars(struct mxs_auart_port *s);
+static void mxs_auart_tx_chars(struct mxs_auart_port *s, int chars_in_flight);
 
 static void dma_tx_callback(void *param)
 {
@@ -222,7 +237,7 @@ static void dma_tx_callback(void *param)
 	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
 		uart_write_wakeup(&s->port);
 
-	mxs_auart_tx_chars(s);
+	mxs_auart_tx_chars(s, 0); //FIXME: what is the proper tx level here?
 }
 
 static int mxs_auart_dma_tx(struct mxs_auart_port *s, int size)
@@ -259,9 +274,10 @@ static int mxs_auart_dma_tx(struct mxs_auart_port *s, int size)
 	return 0;
 }
 
-static void mxs_auart_tx_chars(struct mxs_auart_port *s)
+static void mxs_auart_tx_chars(struct mxs_auart_port *s, int chars_in_flight)
 {
 	struct circ_buf *xmit = &s->port.state->xmit;
+	u32 nsecs;
 
 	if (auart_dma_enabled(s)) {
 		u32 i = 0;
@@ -304,7 +320,6 @@ static void mxs_auart_tx_chars(struct mxs_auart_port *s)
 		return;
 	}
 
-
 	while (!(readl(s->port.membase + AUART_STAT) &
 		 AUART_STAT_TXFF)) {
 		if (s->port.x_char) {
@@ -312,6 +327,7 @@ static void mxs_auart_tx_chars(struct mxs_auart_port *s)
 			writel(s->port.x_char,
 				     s->port.membase + AUART_DATA);
 			s->port.x_char = 0;
+			chars_in_flight += 1;
 			continue;
 		}
 		if (!uart_circ_empty(xmit) && !uart_tx_stopped(&s->port)) {
@@ -319,32 +335,60 @@ static void mxs_auart_tx_chars(struct mxs_auart_port *s)
 			writel(xmit->buf[xmit->tail],
 				     s->port.membase + AUART_DATA);
 			xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
+
+			chars_in_flight += 1;
 		} else
 			break;
 	}
 	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
 		uart_write_wakeup(&s->port);
 
-	if (uart_circ_empty(&(s->port.state->xmit)))
+	if (uart_circ_empty(&(s->port.state->xmit))) {
 		writel(AUART_INTR_TXIEN,
 			     s->port.membase + AUART_INTR_CLR);
-	else
+
+		if (s->rs485.flags & SER_RS485_ENABLED) {
+			if (unlikely(chars_in_flight > MXS_AUART_FIFO_SIZE + 1)) {
+				/* looks like we've handled the half-full TX FIFO interrupt
+				   a little bit too late so we don't know exactly how many bytes
+				   are in flight right now. 
+				   The number is FIFO_SIZE + 1 at most though. */
+
+				chars_in_flight = MXS_AUART_FIFO_SIZE + 1;
+			}
+
+			nsecs = s->rs485_delay_char_tx_nsecs * (chars_in_flight);
+
+			if ((nsecs < 10000) && !s->rs485.delay_rts_after_send) { 
+				/* 10us and less is probably too low for hrtimers to reliably perform.
+				   Falling back to polling+delay mechanism */
+				
+				while(!(__raw_readl(s->port.membase + AUART_STAT) & AUART_STAT_TXFE)) {
+					/* Just wait for TX FIFO empty state */
+				}
+
+				/* If FIFO is empty, we still need to wait the transmit of last char */
+				ndelay(s->rs485_delay_char_tx_nsecs);
+
+				__raw_writel(AUART_CTRL2_RTS, s->port.membase + AUART_CTRL2_SET);
+			} else {
+				/* RTS will be cleared in timer callback.
+				   Timer can be delayed for 1 char max
+				*/
+				hrtimer_start_range_ns(&s->rs485_rts_timer,
+							  s->rs485.delay_rts_after_send ? 
+							    ktime_add_ns(
+								  ms_to_ktime(s->rs485.delay_rts_after_send),
+								  nsecs) :
+							    ns_to_ktime(nsecs),
+							  s->rs485_delay_char_tx_nsecs,
+						      HRTIMER_MODE_REL);
+			}
+		}
+	} else
 		writel(AUART_INTR_TXIEN,
 			     s->port.membase + AUART_INTR_SET);
 
-	if (s->rs485.flags & SER_RS485_ENABLED) {
-		while(!(__raw_readl(s->port.membase + AUART_STAT) & AUART_STAT_TXFE)) {
-			/* Just wait for TX FIFO empty state */
-		}
-		if (s->rs485_delay_rts_last_char_tx_usecs)
-			/* If FIFO is empty, we still need to wait the transmit of last char */
-			udelay(s->rs485_delay_rts_last_char_tx_usecs);
-		if (s->rs485.delay_rts_after_send)
-			/* User configured extra rts delay after the transmitted packet */
-			mdelay(s->rs485.delay_rts_after_send);
-		__raw_writel(AUART_CTRL2_RTS, s->port.membase + AUART_CTRL2_SET);
-
-	}
 
 	if (uart_tx_stopped(&s->port))
 		mxs_auart_stop_tx(&s->port);
@@ -791,10 +835,13 @@ static void mxs_auart_settermios(struct uart_port *u,
 	ctrl |= AUART_LINECTRL_BAUD_DIVFRAC(div & 0x3F);
 	ctrl |= AUART_LINECTRL_BAUD_DIVINT(div >> 6);
 
-	/* set RS485 last char Tx delay in usec - worst case 12 bits */
-	div = 12000000 / baud;
-	s->rs485_delay_rts_last_char_tx_usecs = div;
-
+	/* calcualate Tx char length in bits */
+	div = 1 + /* start bit */
+		  (5 + bm) + /* data bits */
+		  ((cflag & PARENB) ? 1 : 0) + /* parity bit if any */
+	      ((cflag & CSTOPB) ? 2 : 1); /*stop bits*/
+  
+	s->rs485_delay_char_tx_nsecs = 1000000000 / baud * div;
 
 	writel(ctrl, u->membase + AUART_LINECTRL);
 	writel(ctrl2, u->membase + AUART_CTRL2);
@@ -874,7 +921,7 @@ static irqreturn_t mxs_auart_irq_handle(int irq, void *context)
 	}
 
 	if (istat & AUART_INTR_TXIS) {
-		mxs_auart_tx_chars(s);
+		mxs_auart_tx_chars(s, MXS_AUART_FIFO_TX_INT_THRESHOLD + 1);
 		istat &= ~AUART_INTR_TXIS;
 	}
 
@@ -971,7 +1018,7 @@ static void mxs_auart_start_tx(struct uart_port *u)
 	/* enable transmitter */
 	writel(AUART_CTRL2_TXE, u->membase + AUART_CTRL2_SET);
 
-	mxs_auart_tx_chars(s);
+	mxs_auart_tx_chars(s, 0);
 }
 
 static void mxs_auart_stop_tx(struct uart_port *u)
@@ -1210,7 +1257,6 @@ static int serial_mxs_probe_dt(struct mxs_auart_port *s,
 	int ret;
 	u32 rs485_delay[2];
 
-
 	if (!np)
 		/* no device tree device */
 		return 1;
@@ -1373,6 +1419,9 @@ static int mxs_auart_probe(struct platform_device *pdev)
 	ret = mxs_auart_request_gpio_irq(s);
 	if (ret)
 		return ret;
+
+	hrtimer_init(&s->rs485_rts_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	s->rs485_rts_timer.function = &rs485_rts_timer_callback;
 
 	auart_port[s->port.line] = s;
 
