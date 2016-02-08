@@ -459,16 +459,16 @@
 		spdif-controller = <&spdif>;
 	};
 
+	lirc-rfm69 {
+		compatible = "lirc-pwm";
+		gpio-recv = <&gpio1 5 0>;
+	};
+
 	lirc {
 		compatible = "lirc-pwm";
 		pwms = <&pwm 4 0>;
 		pwm-max-duty = <50>;
 		pwm-idle-active;
 		gpio-recv = <&gpio2 15 1>;
-	};
-
-	lirc-rfm69 {
-		compatible = "lirc-pwm";
-		gpio-recv = <&gpio1 5 0>;
 	};
 };
