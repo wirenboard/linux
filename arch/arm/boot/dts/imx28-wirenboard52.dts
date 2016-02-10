@@ -30,9 +30,9 @@
 			ssp0: ssp@80010000 {
 				compatible = "fsl,imx28-mmc";
 				pinctrl-names = "default";
-				pinctrl-0 = <&mmc0_4bit_pins_a
+				pinctrl-0 = <&mmc0_8bit_pins_a
 					&mmc0_cd_cfg &mmc0_sck_cfg>;
-				bus-width = <4>;
+				bus-width = <8>;
 				status = "okay";
 			};
 
@@ -464,11 +464,10 @@
 		gpio-recv = <&gpio1 5 0>;
 	};
 
-	lirc {
+	lirc-cir {
 		compatible = "lirc-pwm";
 		pwms = <&pwm 4 0>;
 		pwm-max-duty = <50>;
-		pwm-idle-active;
 		gpio-recv = <&gpio2 15 1>;
 	};
 };
