@@ -150,7 +150,7 @@
                         MX28_PAD_AUART1_CTS__GPIO_3_6   /* STAT1 */
                         MX28_PAD_LCD_DOTCLK__GPIO_1_30  /* STAT2 */
 
-                        MX28_PAD_SSP1_CMD__GPIO_2_12    /* watchdog out */
+                        MX28_PAD_SSP1_SCK__GPIO_2_12    /* watchdog out */
 
                         MX28_PAD_PWM2__USB0_ID          /* USB ID */
 
@@ -353,7 +353,7 @@
 
             auart4: serial@80072000 {
                 pinctrl-names = "default";
-                pinctrl-0 = <&auart4_3pins_a>;
+                pinctrl-0 = <&auart4_3pins_b>;
                 status = "okay";
                 linux,rs485-enabled-at-boot-time;
             };
