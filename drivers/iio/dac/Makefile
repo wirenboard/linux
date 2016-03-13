@@ -19,4 +19,5 @@ obj-$(CONFIG_AD7303) += ad7303.o
 obj-$(CONFIG_MAX517) += max517.o
 obj-$(CONFIG_MAX5821) += max5821.o
 obj-$(CONFIG_MCP4725) += mcp4725.o
+obj-$(CONFIG_MCP4728) += mcp4728.o
 obj-$(CONFIG_MCP4922) += mcp4922.o
