@@ -113,6 +113,72 @@
 					fsl,pull-up = <MXS_PULL_DISABLE>;
 				};
 
+				mmc3_4bit_pins_mod1: mmc3-4bit@0 {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						MX28_PAD_SSP3_MOSI__SSP3_CMD
+						MX28_PAD_SSP3_MISO__SSP3_D0
+						MX28_PAD_AUART2_RX__SSP3_D1
+						MX28_PAD_AUART2_TX__SSP3_D2
+						MX28_PAD_SSP3_SS0__SSP3_D3
+						MX28_PAD_SSP3_SCK__SSP3_SCK
+					>;
+					fsl,drive-strength = <MXS_DRIVE_8mA>;
+					fsl,voltage = <MXS_VOLTAGE_HIGH>;
+					fsl,pull-up = <MXS_PULL_ENABLE>;
+				};
+
+				mmc3_sck_mod1_cfg: mmc3-sck-mod1-cfg {
+					fsl,pinmux-ids = <
+						MX28_PAD_SSP3_SCK__SSP3_SCK
+					>;
+					fsl,drive-strength = <MXS_DRIVE_12mA>;
+					fsl,pull-up = <MXS_PULL_DISABLE>;
+				};
+
+				mod1_i2c_pins_gpio: mod1-i2c-pins-gpio@ {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						MX28_PAD_SSP2_SS2__GPIO_2_21
+						MX28_PAD_SSP1_SCK__GPIO_2_12
+					>;
+					fsl,drive-strength = <MXS_DRIVE_8mA>;
+					fsl,voltage = <MXS_VOLTAGE_HIGH>;
+					fsl,pull-up = <MXS_PULL_DISABLE>;
+				};
+
+				mod1_cs_pins_gpio: mod1-cs-pins-gpio@ {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						MX28_PAD_SSP3_SS0__GPIO_2_27
+					>;
+					fsl,drive-strength = <MXS_DRIVE_8mA>;
+					fsl,voltage = <MXS_VOLTAGE_HIGH>;
+					fsl,pull-up = <MXS_PULL_DISABLE>;
+				};
+
+				mod2_i2c_pins_gpio: mod2-i2c-pins-gpio@ {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						MX28_PAD_GPMI_RDY2__GPIO_0_22
+						MX28_PAD_GPMI_RDY3__GPIO_0_23
+					>;
+					fsl,drive-strength = <MXS_DRIVE_8mA>;
+					fsl,voltage = <MXS_VOLTAGE_HIGH>;
+					fsl,pull-up = <MXS_PULL_DISABLE>;
+				};
+
+				mod2_cs_pins_gpio: mod2-cs-pins-gpio@ {
+					reg = <0>;
+					fsl,pinmux-ids = <
+						MX28_PAD_SSP2_SS0__GPIO_2_19
+					>;
+					fsl,drive-strength = <MXS_DRIVE_8mA>;
+					fsl,voltage = <MXS_VOLTAGE_HIGH>;
+					fsl,pull-up = <MXS_PULL_DISABLE>;
+				};
+
+
 				leds_pin_gpio: leds_pin_gpio@0 {
 					reg = <0>;
 					fsl,pinmux-ids = <
