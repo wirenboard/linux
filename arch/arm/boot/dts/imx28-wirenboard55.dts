@@ -136,6 +136,16 @@
                     fsl,pull-up = <MXS_PULL_DISABLE>;
                 };
 
+                mod1_cs_pins_spi: mod1-cs-pins-spi@ {
+                    reg = <0>;
+                    fsl,pinmux-ids = <
+                        MX28_PAD_SSP2_SS0__SSP2_D3
+                    >;
+                    fsl,drive-strength = <MXS_DRIVE_8mA>;
+                    fsl,voltage = <MXS_VOLTAGE_HIGH>;
+                    fsl,pull-up = <MXS_PULL_ENABLE>;
+                };
+
                 mod1_uart_pins_gpio: mod1-uart-pins-gpio@ {
                     reg = <0>;
                     fsl,pinmux-ids = <
@@ -167,6 +177,16 @@
                     fsl,drive-strength = <MXS_DRIVE_8mA>;
                     fsl,voltage = <MXS_VOLTAGE_HIGH>;
                     fsl,pull-up = <MXS_PULL_DISABLE>;
+                };
+
+                mod2_cs_pins_spi: mod2-cs-pins-spi@ {
+                    reg = <0>;
+                    fsl,pinmux-ids = <
+                        MX28_PAD_SSP2_SS1__SSP2_D4
+                    >;
+                    fsl,drive-strength = <MXS_DRIVE_8mA>;
+                    fsl,voltage = <MXS_VOLTAGE_HIGH>;
+                    fsl,pull-up = <MXS_PULL_ENABLE>;
                 };
 
                 mod2_uart_pins_gpio: mod2-uart-pins-gpio@ {
