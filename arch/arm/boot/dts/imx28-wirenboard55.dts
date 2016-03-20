@@ -115,6 +115,72 @@
                     fsl,pull-up = <MXS_PULL_DISABLE>;
                 };
 
+                mod1_i2c_pins_gpio: mod1-i2c-pins-gpio@ {
+                    reg = <0>;
+                    fsl,pinmux-ids = <
+                        MX28_PAD_SSP3_SS0__GPIO_2_27
+                        MX28_PAD_SSP1_CMD__GPIO_2_13
+                    >;
+                    fsl,drive-strength = <MXS_DRIVE_8mA>;
+                    fsl,voltage = <MXS_VOLTAGE_HIGH>;
+                    fsl,pull-up = <MXS_PULL_DISABLE>;
+                };
+
+                mod1_cs_pins_gpio: mod1-cs-pins-gpio@ {
+                    reg = <0>;
+                    fsl,pinmux-ids = <
+                        MX28_PAD_SSP2_SS0__GPIO_2_19
+                    >;
+                    fsl,drive-strength = <MXS_DRIVE_8mA>;
+                    fsl,voltage = <MXS_VOLTAGE_HIGH>;
+                    fsl,pull-up = <MXS_PULL_DISABLE>;
+                };
+
+                mod1_uart_pins_gpio: mod1-uart-pins-gpio@ {
+                    reg = <0>;
+                    fsl,pinmux-ids = <
+                        MX28_PAD_AUART2_RX__GPIO_3_8
+                        MX28_PAD_AUART2_TX__GPIO_3_9
+                        MX28_PAD_AUART2_RTS__GPIO_3_11
+                    >;
+                    fsl,drive-strength = <MXS_DRIVE_8mA>;
+                    fsl,voltage = <MXS_VOLTAGE_HIGH>;
+                    fsl,pull-up = <MXS_PULL_DISABLE>;
+                };
+
+                mod2_i2c_pins_gpio: mod2-i2c-pins-gpio@ {
+                    reg = <0>;
+                    fsl,pinmux-ids = <
+                        MX28_PAD_GPMI_RDY2__GPIO_0_22
+                        MX28_PAD_GPMI_RDY3__GPIO_0_23
+                    >;
+                    fsl,drive-strength = <MXS_DRIVE_8mA>;
+                    fsl,voltage = <MXS_VOLTAGE_HIGH>;
+                    fsl,pull-up = <MXS_PULL_DISABLE>;
+                };
+
+                mod2_cs_pins_gpio: mod2-cs-pins-gpio@ {
+                    reg = <0>;
+                    fsl,pinmux-ids = <
+                        MX28_PAD_SSP2_SS1__GPIO_2_20
+                    >;
+                    fsl,drive-strength = <MXS_DRIVE_8mA>;
+                    fsl,voltage = <MXS_VOLTAGE_HIGH>;
+                    fsl,pull-up = <MXS_PULL_DISABLE>;
+                };
+
+                mod2_uart_pins_gpio: mod2-uart-pins-gpio@ {
+                    reg = <0>;
+                    fsl,pinmux-ids = <
+                        MX28_PAD_AUART3_TX__GPIO_3_13
+                        MX28_PAD_AUART3_RX__GPIO_3_12
+                        MX28_PAD_AUART3_RTS__GPIO_3_15
+                    >;
+                    fsl,drive-strength = <MXS_DRIVE_8mA>;
+                    fsl,voltage = <MXS_VOLTAGE_HIGH>;
+                    fsl,pull-up = <MXS_PULL_DISABLE>;
+                };
+
                 leds_pin_gpio: leds_pin_gpio@0 {
                     reg = <0>;
                     fsl,pinmux-ids = <
