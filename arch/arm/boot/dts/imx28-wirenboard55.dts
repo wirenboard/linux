@@ -312,7 +312,7 @@
                 pins_mod3: pins_mod3@0 {
                     reg = <0>;
                     fsl,pinmux-ids = <
-                        MX28_PAD_SSP2_SS2__SSP2_D5  
+                        MX28_PAD_SSP2_SS2__SSP2_D5
                     >;
                     fsl,drive-strength = <MXS_DRIVE_8mA>;
                     fsl,voltage = <MXS_VOLTAGE_HIGH>;
