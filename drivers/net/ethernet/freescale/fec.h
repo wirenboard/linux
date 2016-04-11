@@ -19,8 +19,7 @@
 #include <linux/timecounter.h>
 
 #if defined(CONFIG_M523x) || defined(CONFIG_M527x) || defined(CONFIG_M528x) || \
-    defined(CONFIG_M520x) || defined(CONFIG_M532x) || \
-    defined(CONFIG_ARCH_MXC) || defined(CONFIG_SOC_IMX28)
+    defined(CONFIG_M520x) || defined(CONFIG_M532x) || defined(CONFIG_ARM)
 /*
  *	Just figures, Motorola would have to change the offsets for
  *	registers in the same peripheral device on different models
@@ -190,28 +189,45 @@
 
 /*
  *	Define the buffer descriptor structure.
+ *
+ *	Evidently, ARM SoCs have the FEC block generated in a
+ *	little endian mode so adjust endianness accordingly.
  */
-#if defined(CONFIG_ARCH_MXC) || defined(CONFIG_SOC_IMX28)
+#if defined(CONFIG_ARM)
+#define fec32_to_cpu le32_to_cpu
+#define fec16_to_cpu le16_to_cpu
+#define cpu_to_fec32 cpu_to_le32
+#define cpu_to_fec16 cpu_to_le16
+#define __fec32 __le32
+#define __fec16 __le16
+
 struct bufdesc {
-	unsigned short cbd_datlen;	/* Data length */
-	unsigned short cbd_sc;	/* Control and status info */
-	unsigned long cbd_bufaddr;	/* Buffer address */
+	__fec16 cbd_datlen;	/* Data length */
+	__fec16 cbd_sc;		/* Control and status info */
+	__fec32 cbd_bufaddr;	/* Buffer address */
 };
 #else
+#define fec32_to_cpu be32_to_cpu
+#define fec16_to_cpu be16_to_cpu
+#define cpu_to_fec32 cpu_to_be32
+#define cpu_to_fec16 cpu_to_be16
+#define __fec32 __be32
+#define __fec16 __be16
+
 struct bufdesc {
-	unsigned short	cbd_sc;			/* Control and status info */
-	unsigned short	cbd_datlen;		/* Data length */
-	unsigned long	cbd_bufaddr;		/* Buffer address */
+	__fec16	cbd_sc;		/* Control and status info */
+	__fec16	cbd_datlen;	/* Data length */
+	__fec32	cbd_bufaddr;	/* Buffer address */
 };
 #endif
 
 struct bufdesc_ex {
 	struct bufdesc desc;
-	unsigned long cbd_esc;
-	unsigned long cbd_prot;
-	unsigned long cbd_bdu;
-	unsigned long ts;
-	unsigned short res0[4];
+	__fec32 cbd_esc;
+	__fec32 cbd_prot;
+	__fec32 cbd_bdu;
+	__fec32 ts;
+	__fec16 res0[4];
 };
 
 /*
@@ -428,6 +444,8 @@ struct bufdesc_ex {
 #define FEC_QUIRK_BUG_CAPTURE		(1 << 10)
 /* Controller has only one MDIO bus */
 #define FEC_QUIRK_SINGLE_MDIO		(1 << 11)
+/* Controller supports RACC register */
+#define FEC_QUIRK_HAS_RACC		(1 << 12)
 
 struct fec_enet_priv_tx_q {
 	int index;
@@ -517,6 +535,7 @@ struct fec_enet_private {
 	int	pause_flag;
 	int	wol_flag;
 	u32	quirks;
+	int	phy_reset_gpio;
 
 	struct	napi_struct napi;
 	int	csum_flags;
@@ -560,6 +579,7 @@ struct fec_enet_private {
 };
 
 void fec_ptp_init(struct platform_device *pdev);
+void fec_ptp_stop(struct platform_device *pdev);
 void fec_ptp_start_cyclecounter(struct net_device *ndev);
 int fec_ptp_set(struct net_device *ndev, struct ifreq *ifr);
 int fec_ptp_get(struct net_device *ndev, struct ifreq *ifr);
