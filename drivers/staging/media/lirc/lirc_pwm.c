@@ -55,6 +55,7 @@ struct lirc_pwm_priv {
 		bool gpio_active_low;
 		int irq;
 		bool enabled;
+		bool filter;
 		struct lirc_buffer rbuf;
 		ktime_t last;
 		int state;
@@ -243,8 +244,13 @@ static irqreturn_t recv_irq_handler(int irq, void *data)
 		else {
 			duration = (int)delta;
 		}
-		recv_rbuf_write_filtered(recv,
-				duration | ((value == recv->state) ? PULSE_BIT : 0));
+		if (recv->filter) {
+			recv_rbuf_write_filtered(recv,
+					duration | ((value == recv->state) ? PULSE_BIT : 0));
+		}
+		else {
+			recv_rbuf_write(recv, duration | (value ? 0 : PULSE_BIT));
+		}
 		recv->last = now;
 		wake_up_interruptible(&recv->rbuf.wait_poll);
 	}
@@ -590,6 +596,8 @@ static int lirc_pwm_probe(struct platform_device *pdev)
 			return ret;
 		}
 		disable_irq(recv->irq);
+
+		recv->filter = !of_find_property(node, "gpio-recv-disable-filter", NULL);
 
 		ret = lirc_buffer_init(&recv->rbuf, sizeof(int), RBUF_LEN);
 		if (ret < 0)
