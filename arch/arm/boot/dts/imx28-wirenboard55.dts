@@ -316,6 +316,19 @@
                     fsl,pull-up = <MXS_PULL_ENABLE>;
                 };
 
+                gsm_uart_pins_gpio: gsm_uart_pins_gpio@0 {
+                    reg = <0>;
+                    fsl,pinmux-ids = <
+                        MX28_PAD_AUART0_RX__GPIO_3_0
+                        MX28_PAD_AUART0_TX__GPIO_3_1
+                        MX28_PAD_AUART0_CTS__GPIO_3_2
+                        MX28_PAD_AUART0_RTS__GPIO_3_3
+                    >;
+                    fsl,drive-strength = <MXS_DRIVE_4mA>;
+                    fsl,voltage = <MXS_VOLTAGE_HIGH>;
+                    fsl,pull-up = <MXS_PULL_DISABLE>;
+                };
+
                 auart1_3pins_a: auart1-3pins-rs485@0 {
                     reg = <0>;
                     fsl,pinmux-ids = <
@@ -471,18 +484,6 @@
             phy-reset-gpios = <&gpio4 13 0>;
             phy-reset-duration = <100>;
             status = "okay";
-
-            phy-handle = <&ethphy0>;
-            mdio {
-                #address-cells = <1>;
-                #size-cells = <0>;
-
-                ethphy0: ethernet-phy@0 {
-                    compatible = "ethernet-phy-ieee802.3-c22";
-                    max-speed = <100>;
-                    reg = <0>;
-                };
-             };
         };
 
         mac1: ethernet@800f4000 {
