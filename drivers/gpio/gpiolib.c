@@ -127,7 +127,7 @@ EXPORT_SYMBOL_GPL(gpiod_to_chip);
 static int gpiochip_find_base(int ngpio)
 {
 	struct gpio_chip *chip;
-	int base = ARCH_NR_GPIOS - ngpio;
+	int base = ARCH_NR_GPIOS_DYNALLOC - ngpio;
 
 	list_for_each_entry_reverse(chip, &gpio_chips, list) {
 		/* found a free space? */
