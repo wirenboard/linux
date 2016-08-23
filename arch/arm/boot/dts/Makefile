@@ -352,6 +352,7 @@ dtb-$(CONFIG_ARCH_MXS) += \
 	imx28-wirenboard52-functest.dtb \
 	imx28-wirenboard5x-usbfw.dtb \
 	imx28-wirenboard55.dtb \
+	imx28-wirenboard58.dtb \
 	imx23-stmp378x_devb.dtb \
 	imx28-apf28.dtb \
 	imx28-apf28dev.dtb \
