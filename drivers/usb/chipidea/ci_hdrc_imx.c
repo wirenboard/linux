@@ -32,8 +32,7 @@ static const struct ci_hdrc_imx_platform_flag imx27_usb_data = {
 };
 
 static const struct ci_hdrc_imx_platform_flag imx28_usb_data = {
-	.flags = CI_HDRC_IMX28_WRITE_FIX |
-		CI_HDRC_TURN_VBUS_EARLY_ON,
+	.flags = CI_HDRC_IMX28_WRITE_FIX,
 };
 
 static const struct ci_hdrc_imx_platform_flag imx6q_usb_data = {
