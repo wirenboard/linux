@@ -231,13 +231,12 @@
                         MX28_PAD_LCD_D05__GPIO_1_5      /* RFM69_DIO2 */
                         MX28_PAD_GPMI_D03__GPIO_0_3     /* RFM69_CS */
                         MX28_PAD_LCD_RESET__GPIO_3_30   /* STAT1 */
-                        MX28_PAD_ENET0_RXD3__GPIO_4_10  /* STAT2 */
+                        MX28_PAD_LCD_WR_RWN__GPIO_1_25  /* STAT2 */
 
                         MX28_PAD_SSP1_SCK__GPIO_2_12    /* watchdog out */
 
                         MX28_PAD_PWM2__USB0_ID          /* USB ID */
 
-                        MX28_PAD_SAIF0_BITCLK__GPIO_3_22    /* PWM connected in parallel to MOD2 SCL*/
                         /* MX28_PAD_AUART1_RTS__GPIO_3_7 */ /* RTS AUART1 */
 
                         MX28_PAD_SSP1_DATA0__GPIO_2_14  /* 5V_OUT power enable */
@@ -406,6 +405,27 @@
                     fsl,voltage = <MXS_VOLTAGE_HIGH>;
                     fsl,pull-up = <MXS_PULL_DISABLE>;
                 };
+                pwm5_pins_a: pwm5@0 {
+                    reg = <0>;
+                    fsl,pinmux-ids = <
+                        MX28_PAD_SAIF0_BITCLK__PWM_5
+                    >;
+                    fsl,drive-strength = <MXS_DRIVE_4mA>;
+                    fsl,voltage = <MXS_VOLTAGE_HIGH>;
+                    fsl,pull-up = <MXS_PULL_DISABLE>;
+                };
+
+                mod2_pwm_pins_gpio: mod2_pwm_pins_gpio@0 {
+                    reg = <0>;
+                    fsl,pinmux-ids = <
+                        MX28_PAD_SAIF0_BITCLK__GPIO_3_22    /* PWM connected in parallel 
+                        to MOD2 SCL*/
+                    >;
+                    fsl,drive-strength = <MXS_DRIVE_4mA>;
+                    fsl,voltage = <MXS_VOLTAGE_HIGH>;
+                    fsl,pull-up = <MXS_PULL_DISABLE>;
+                };
+
             };
 
             can1: can@80034000 {
@@ -439,8 +459,7 @@
 
             pwm: pwm@80064000 {
                 pinctrl-names = "default";
-                pinctrl-0 = <&pwm3_pins_a
-                             &pwm4_pins_a>;
+                pinctrl-0 = <&pwm3_pins_a>;
                 status = "okay";
             };
 
@@ -613,12 +632,5 @@
         compatible = "lirc-pwm";
         gpio-recv = <&gpio1 5 0>;
         gpio-recv-disable-filter;
-    };
-
-    lirc-cir {
-        compatible = "lirc-pwm";
-        pwms = <&pwm 4 0>;
-        pwm-max-duty = <50>;
-        gpio-recv = <&gpio2 15 1>;
     };
 };
