@@ -23,6 +23,7 @@
 #include <linux/interrupt.h>
 #include <linux/of_irq.h>
 #include <linux/of_device.h>
+#include <linux/time.h>
 
 /**
  * MCP types supported by driver
@@ -52,7 +53,7 @@
 #define MCP_INTF	0x07
 #define MCP_INTCAP	0x08
 #define MCP_GPIO	0x09
-#define MCP_OLAT	0x0a
+#define MCP_OLAT	0x0a 
 
 struct mcp23s08;
 
@@ -81,6 +82,9 @@ struct mcp23s08 {
 
 	const struct mcp23s08_ops	*ops;
 	void			*data; /* ops specific data */
+    
+    /* time of the last cache rewriting to the mcp23008 */
+    struct timespec last_rewrite_time;
 };
 
 /* A given spi_device can represent up to eight mcp23sxx chips
@@ -103,18 +107,60 @@ static struct lock_class_key gpio_lock_class;
 
 #if IS_ENABLED(CONFIG_I2C)
 
+static int __mcp23008_read(struct mcp23s08 *mcp, unsigned reg)
+{
+    return i2c_smbus_read_byte_data(mcp->data, reg);
+}
+
+static int __mcp23008_write(struct mcp23s08 *mcp, unsigned reg, unsigned val)
+{
+    return i2c_smbus_write_byte_data(mcp->data, reg, val);
+}
+
+static int __mcp23008_write_regs(struct mcp23s08 *mcp, unsigned reg, u16 *vals, unsigned n)
+{
+	while (n--) {
+		int ret = __mcp23008_write(mcp, reg++, *vals++);
+		if (ret < 0)
+			return -1;
+	}
+	return 0;
+}
+
+/* Rewrite all regs but not oftener than every 0.5 sec */
+static int __mcp23008_preventively_prewrite_regs(struct mcp23s08 *mcp) {
+    const struct timespec min_delta_time = {0, 500 * 1000000};
+    
+    struct timespec current_time = current_kernel_time();
+    struct timespec delta_time = timespec_sub(current_time, mcp->last_rewrite_time);
+    
+    if (timespec_compare(&delta_time, &min_delta_time) < 0)
+        return 0;
+
+    mcp->last_rewrite_time = current_time;
+
+    return __mcp23008_write_regs(mcp, 0, mcp->cache, ARRAY_SIZE(mcp->cache));
+}
+
 static int mcp23008_read(struct mcp23s08 *mcp, unsigned reg)
 {
-	return i2c_smbus_read_byte_data(mcp->data, reg);
+    /* Just write all registers before reading (but not every time) 
+     * to adjust device in case of it has been disconnected for a while */
+    if (__mcp23008_preventively_prewrite_regs(mcp) != 0)
+        return -1;
+    return __mcp23008_read(mcp, reg);
 }
 
 static int mcp23008_write(struct mcp23s08 *mcp, unsigned reg, unsigned val)
 {
-	return i2c_smbus_write_byte_data(mcp->data, reg, val);
+    /* Just write all registers before writing (but not every time) 
+     * to adjust device in case of it has been disconnected for a while */
+    if (__mcp23008_preventively_prewrite_regs(mcp) != 0)
+        return -1;
+    return __mcp23008_write(mcp, reg, val);
 }
 
-static int
-mcp23008_read_regs(struct mcp23s08 *mcp, unsigned reg, u16 *vals, unsigned n)
+static int mcp23008_read_regs(struct mcp23s08 *mcp, unsigned reg, u16 *vals, unsigned n)
 {
 	while (n--) {
 		int ret = mcp23008_read(mcp, reg++);
@@ -267,19 +313,7 @@ static const struct mcp23s08_ops mcp23s17_ops = {
 
 /*----------------------------------------------------------------------*/
 
-static int mcp23s08_direction_input(struct gpio_chip *chip, unsigned offset)
-{
-	struct mcp23s08	*mcp = container_of(chip, struct mcp23s08, chip);
-	int status;
-
-	mutex_lock(&mcp->lock);
-	mcp->cache[MCP_IODIR] |= (1 << offset);
-	status = mcp->ops->write(mcp, MCP_IODIR, mcp->cache[MCP_IODIR]);
-	mutex_unlock(&mcp->lock);
-	return status;
-}
-
-static int mcp23s08_get(struct gpio_chip *chip, unsigned offset)
+static int __mcp23s08_get(struct gpio_chip *chip, unsigned offset, int error_val)
 {
 	struct mcp23s08	*mcp = container_of(chip, struct mcp23s08, chip);
 	int status;
@@ -289,13 +323,18 @@ static int mcp23s08_get(struct gpio_chip *chip, unsigned offset)
 	/* REVISIT reading this clears any IRQ ... */
 	status = mcp->ops->read(mcp, MCP_GPIO);
 	if (status < 0)
-		status = 0;
+		status = error_val;
 	else {
 		mcp->cache[MCP_GPIO] = status;
 		status = !!(status & (1 << offset));
 	}
 	mutex_unlock(&mcp->lock);
 	return status;
+}
+
+static int mcp23s08_get(struct gpio_chip *chip, unsigned offset)
+{
+	return __mcp23s08_get(chip, offset, 0);
 }
 
 static int __mcp23s08_set(struct mcp23s08 *mcp, unsigned mask, int value)
@@ -320,6 +359,18 @@ static void mcp23s08_set(struct gpio_chip *chip, unsigned offset, int value)
 	mutex_unlock(&mcp->lock);
 }
 
+static int mcp23s08_direction_input(struct gpio_chip *chip, unsigned offset)
+{
+	struct mcp23s08	*mcp = container_of(chip, struct mcp23s08, chip);
+	int status;
+
+	mutex_lock(&mcp->lock);
+	mcp->cache[MCP_IODIR] |= (1 << offset);
+	status = mcp->ops->write(mcp, MCP_IODIR, mcp->cache[MCP_IODIR]);
+	mutex_unlock(&mcp->lock);
+	return status;
+}
+
 static int
 mcp23s08_direction_output(struct gpio_chip *chip, unsigned offset, int value)
 {
@@ -335,6 +386,21 @@ mcp23s08_direction_output(struct gpio_chip *chip, unsigned offset, int value)
 	}
 	mutex_unlock(&mcp->lock);
 	return status;
+}
+
+
+static int mcp23s08_get_direction(struct gpio_chip *chip, unsigned offset)
+{
+    struct mcp23s08	*mcp = container_of(chip, struct mcp23s08, chip);
+	
+    mutex_lock(&mcp->lock);
+	int status = mcp->ops->read(mcp, MCP_IODIR);
+	mutex_unlock(&mcp->lock);
+    printk("\ndirection = %d\n", status);
+    if (status < 0)
+        return -ENOTCONN;
+    printk("\nret_val = %d\n", !!(status & (1 << offset)));
+	return !!(status & (1 << offset));   
 }
 
 /*----------------------------------------------------------------------*/
@@ -597,15 +663,17 @@ static int mcp23s08_probe_one(struct mcp23s08 *mcp, struct device *dev,
 	mcp->addr = addr;
 	mcp->irq_active_high = false;
 
+    mcp->chip.get_direction = mcp23s08_get_direction;
 	mcp->chip.direction_input = mcp23s08_direction_input;
-	mcp->chip.get = mcp23s08_get;
 	mcp->chip.direction_output = mcp23s08_direction_output;
+	mcp->chip.get = mcp23s08_get;
 	mcp->chip.set = mcp23s08_set;
 	mcp->chip.dbg_show = mcp23s08_dbg_show;
 #ifdef CONFIG_OF
 	mcp->chip.of_gpio_n_cells = 2;
 	mcp->chip.of_node = dev->of_node;
 #endif
+    mcp->last_rewrite_time = current_kernel_time();
 
 	switch (type) {
 #ifdef CONFIG_SPI_MASTER
