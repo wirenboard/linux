@@ -117,10 +117,12 @@ static int __mcp23008_write(struct mcp23s08 *mcp, unsigned reg, unsigned val)
     return i2c_smbus_write_byte_data(mcp->data, reg, val);
 }
 
-static int __mcp23008_write_regs(struct mcp23s08 *mcp, unsigned reg, u16 *vals, unsigned n)
+static int __mcp23008_write_regs_from_cache(struct mcp23s08 *mcp, 
+                                            const unsigned *regs, unsigned n)
 {
 	while (n--) {
-		int ret = __mcp23008_write(mcp, reg++, *vals++);
+		int ret = __mcp23008_write(mcp, *regs, mcp->cache[*regs]);
+        regs++;
 		if (ret < 0)
 			return -1;
 	}
@@ -130,16 +132,18 @@ static int __mcp23008_write_regs(struct mcp23s08 *mcp, unsigned reg, u16 *vals, 
 /* Rewrite all regs but not oftener than every 0.5 sec */
 static int __mcp23008_preventively_prewrite_regs(struct mcp23s08 *mcp) {
     const struct timespec min_delta_time = {0, 500 * 1000000};
+    const unsigned regs_to_write[] = {MCP_GPINTEN, MCP_DEFVAL, MCP_INTCON, MCP_IOCON, MCP_IODIR, MCP_OLAT};
     
     struct timespec current_time = current_kernel_time();
-    struct timespec delta_time = timespec_sub(current_time, mcp->last_rewrite_time);
-    
+    struct timespec delta_time = timespec_sub(current_time, mcp->last_rewrite_time);    
+
     if (timespec_compare(&delta_time, &min_delta_time) < 0)
         return 0;
 
     mcp->last_rewrite_time = current_time;
-
-    return __mcp23008_write_regs(mcp, 0, mcp->cache, ARRAY_SIZE(mcp->cache));
+    
+    return __mcp23008_write_regs_from_cache(mcp, 
+                    regs_to_write, sizeof(regs_to_write) / sizeof(int));
 }
 
 static int mcp23008_read(struct mcp23s08 *mcp, unsigned reg)
@@ -392,15 +396,14 @@ mcp23s08_direction_output(struct gpio_chip *chip, unsigned offset, int value)
 static int mcp23s08_get_direction(struct gpio_chip *chip, unsigned offset)
 {
     struct mcp23s08	*mcp = container_of(chip, struct mcp23s08, chip);
-	
+	int status;
+    
     mutex_lock(&mcp->lock);
-	int status = mcp->ops->read(mcp, MCP_IODIR);
+	status = mcp->ops->read(mcp, MCP_IODIR);
 	mutex_unlock(&mcp->lock);
-    printk("\ndirection = %d\n", status);
     if (status < 0)
         return -ENOTCONN;
-    printk("\nret_val = %d\n", !!(status & (1 << offset)));
-	return !!(status & (1 << offset));   
+    return !!(status & (1 << offset));   
 }
 
 /*----------------------------------------------------------------------*/
