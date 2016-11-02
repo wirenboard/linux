@@ -375,21 +375,21 @@ static int mcp23s08_direction_input(struct gpio_chip *chip, unsigned offset)
 	return status;
 }
 
-static int
-mcp23s08_direction_output(struct gpio_chip *chip, unsigned offset, int value)
+static int mcp23s08_direction_output(struct gpio_chip *chip, 
+                                     unsigned offset, int value)
 {
 	struct mcp23s08	*mcp = container_of(chip, struct mcp23s08, chip);
-	unsigned mask = 1 << offset;
-	int status;
-
-	mutex_lock(&mcp->lock);
-	status = __mcp23s08_set(mcp, mask, value);
-	if (status == 0) {
-		mcp->cache[MCP_IODIR] &= ~mask;
-		status = mcp->ops->write(mcp, MCP_IODIR, mcp->cache[MCP_IODIR]);
-	}
-	mutex_unlock(&mcp->lock);
-	return status;
+    unsigned mask = 1 << offset;
+    int status, status_2;   
+    
+    mutex_lock(&mcp->lock);
+    status = __mcp23s08_set(mcp, mask, value);
+    
+    mcp->cache[MCP_IODIR] &= ~mask;
+    status_2 = mcp->ops->write(mcp, MCP_IODIR, mcp->cache[MCP_IODIR]);
+	
+    mutex_unlock(&mcp->lock);
+    return status ? status : status_2;
 }
 
 
@@ -414,7 +414,7 @@ static irqreturn_t mcp23s08_irq(int irq, void *data)
 	unsigned int child_irq;
 
 	mutex_lock(&mcp->lock);
-	intf = mcp->ops->read(mcp, MCP_INTF);
+    intf = mcp->ops->read(mcp, MCP_INTF);
 	if (intf < 0) {
 		mutex_unlock(&mcp->lock);
 		return IRQ_HANDLED;
