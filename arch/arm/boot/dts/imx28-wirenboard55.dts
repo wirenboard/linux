@@ -580,4 +580,11 @@
         pwm-max-duty = <50>;
         gpio-recv = <&gpio2 15 1>;
     };
+
+/*
+    buzzer {
+        compatible = "pwm-beeper";
+        pwms = <&pwm 3 0>;
+    };
+*/
 };
