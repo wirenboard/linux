@@ -822,10 +822,10 @@ static void pwm_dbg_show(struct pwm_chip *chip, struct seq_file *s)
 		if (test_bit(PWMF_ENABLED, &pwm->flags))
 			seq_puts(s, " enabled");
 
-		seq_printf(s, " period: %u ns", state.period);
-		seq_printf(s, " duty: %u ns", state.duty_cycle);
+		seq_printf(s, " period: %u ns", pwm->period);
+		seq_printf(s, " duty: %u ns", pwm->duty_cycle);
 		seq_printf(s, " polarity: %s",
-			   state.polarity ? "inverse" : "normal");
+			   pwm->polarity ? "inverse" : "normal");
 
 		seq_puts(s, "\n");
 	}
