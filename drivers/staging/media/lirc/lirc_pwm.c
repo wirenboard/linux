@@ -235,8 +235,10 @@ static irqreturn_t recv_irq_handler(int irq, void *data)
 		if (delta > 15000000) {
 			duration = PULSE_MASK;
 			if (value == recv->state) {
-				dev_warn(dev, "wtf? value=%d, last=%lld, now=%lld, delta=%lld",
-						value, ktime_to_us(recv->last), ktime_to_us(now), delta);
+				dev_warn(dev, "Value on the pin #%d hasn't been changed! " \
+						"(wtf?) value=%d, last=%lld, now=%lld, delta=%lld",
+						recv->gpio, value, 
+						ktime_to_us(recv->last), ktime_to_us(now), delta);
 						
 				recv->state = !recv->state;
 			}
