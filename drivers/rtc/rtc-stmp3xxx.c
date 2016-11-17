@@ -68,6 +68,7 @@
 
 struct stmp3xxx_rtc_data {
 	struct rtc_device *rtc;
+	struct platform_device *wdt_pdev;
 	void __iomem *io;
 	int irq_alarm;
 };
@@ -111,15 +112,27 @@ static struct stmp3xxx_wdt_pdata wdt_pdata = {
 
 static void stmp3xxx_wdt_register(struct platform_device *rtc_pdev)
 {
-	struct platform_device *wdt_pdev =
+	struct stmp3xxx_rtc_data *rtc_data = platform_get_drvdata(rtc_pdev);
+
+	rtc_data->wdt_pdev =
 		platform_device_alloc("stmp3xxx_rtc_wdt", rtc_pdev->id);
 
-	if (wdt_pdev) {
-		wdt_pdev->dev.parent = &rtc_pdev->dev;
-		wdt_pdev->dev.platform_data = &wdt_pdata;
-		platform_device_add(wdt_pdev);
+	if (rtc_data->wdt_pdev) {
+		rtc_data->wdt_pdev->dev.parent = &rtc_pdev->dev;
+		rtc_data->wdt_pdev->dev.platform_data = &wdt_pdata;
+		platform_device_add(rtc_data->wdt_pdev);
 	}
 }
+
+static void stmp3xxx_wdt_unregister(struct platform_device *rtc_pdev)
+{
+	struct stmp3xxx_rtc_data *rtc_data = platform_get_drvdata(rtc_pdev);
+
+	if (rtc_data->wdt_pdev) {
+		platform_device_del(rtc_data->wdt_pdev);
+	}
+}
+
 #else
 static void stmp3xxx_wdt_register(struct platform_device *rtc_pdev)
 {
@@ -243,6 +256,8 @@ static int stmp3xxx_rtc_remove(struct platform_device *pdev)
 
 	if (!rtc_data)
 		return 0;
+
+	stmp3xxx_wdt_unregister(pdev);
 
 	writel(STMP3XXX_RTC_CTRL_ALARM_IRQ_EN,
 			rtc_data->io + STMP3XXX_RTC_CTRL_CLR);
