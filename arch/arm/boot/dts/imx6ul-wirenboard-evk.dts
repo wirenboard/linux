@@ -89,7 +89,6 @@
                 linux,default-trigger = "timer";
             };
         };
-
 	/* Enable 1-wire network on terminal block W1 */
 	onewire_w1 {
 		compatible = "w1-gpio";
