@@ -565,7 +565,8 @@ dtb-$(CONFIG_SOC_IMX6UL) += \
 	imx6ull-colibri-wifi-eval-v3.dtb \
 	imx6ulz-14x14-evk.dtb \
 	imx6ul-tx6ul-mainboard.dtb \
-	imx6ul-wirenboard-evk.dtb
+	imx6ul-wirenboard-evk.dtb \
+	imx6ul-wirenboard61.dtb
 dtb-$(CONFIG_SOC_IMX7D) += \
 	imx7d-cl-som-imx7.dtb \
 	imx7d-colibri-emmc-eval-v3.dtb \
