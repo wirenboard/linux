@@ -1428,6 +1428,12 @@ static int mxs_auart_probe(struct platform_device *pdev)
 
 	mxs_auart_reset(&s->port);
 
+        /* initialize RS485 RTS (TXEN) line (TX disabled) */
+        if (s->rs485.flags & SER_RS485_ENABLED) {
+		writel(AUART_CTRL2_RTSEN, s->port.membase + AUART_CTRL2_CLR);
+		writel(AUART_CTRL2_RTS, s->port.membase + AUART_CTRL2_SET);
+	}
+
 	ret = uart_add_one_port(&auart_driver, &s->port);
 	if (ret)
 		goto out_free_gpio_irq;
