@@ -231,7 +231,7 @@
 		i2c-gpio,delay-us = <50>;        /* ~20 kHz */
 
 		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_i2c_gpio_eeprom1>;
+		pinctrl-0 = <&pinctrl_i2c_gpio_eeprom2>;
 
 		status = "okay";
 
@@ -633,8 +633,8 @@
 
 	pinctrl_i2c_gpio_eeprom1: eeprom1grp {
 		fsl,pins = <
-			MX6UL_PAD_LCD_DATA07__GPIO3_IO12	0x1b0b0 /* EEPR_SDA-1 */
-			MX6UL_PAD_LCD_VSYNC__GPIO3_IO03	0x1b0b0 /* EEPR_SCL-1 */
+			MX6UL_PAD_LCD_VSYNC__GPIO3_IO03	0x1b0b0 /* EEPR_SDA-1 */
+			MX6UL_PAD_LCD_ENABLE__GPIO3_IO01	0x1b0b0 /* EEPR_SCL-1 */
 		>;
 	};
 
