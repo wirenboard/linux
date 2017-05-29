@@ -194,6 +194,51 @@
 		};
 	};
 
+	wirenboard {
+		adc-type = <3>;
+		pwm-buzzer = <0>;
+
+		gpios {
+			A1_OUT {
+				gpios = <&gpio3 15 0>;
+				output-low;
+			};
+
+			A2_OUT {
+				gpios = <&gpio3 16 0>;
+				output-low;
+			};
+
+			A3_OUT {
+				gpios = <&gpio3 17 0>;
+				output-low;
+			};
+
+			A4_OUT {
+				gpios = <&gpio3 18 0>;
+				output-low;
+			};
+
+			5V_OUT {
+				gpios = <&gpio2 15 0>;
+				output-low;
+			};
+		};
+
+		gsm {
+			power-type = <2>;
+			gpio-power = <&gpio3 23 0>;
+			gpio-pwrkey = <&gpio3 20 0>;
+			gpio-status = <&gpio3 19 1>;
+			gpio-simsel = <&gpio3 24 0>;
+		};
+
+		rfm {
+			gpio-irq = <&gpio3 14 0>;
+			gpio-dio2 = <&gpio3 13 0>;
+			spi-major-minor = <32765 0>;
+		};
+	};
 };
 
 &clks {
