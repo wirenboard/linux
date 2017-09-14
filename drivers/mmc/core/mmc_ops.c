@@ -575,6 +575,12 @@ int __mmc_switch(struct mmc_card *card, u8 set, u8 index, u8 value,
 		mmc_host_is_spi(host))
 		goto out_tim;
 
+	/*
+	* WORKAROUND: for Sandisk eMMC cards, it might need certain delay
+	* before sending CMD13 after CMD6
+	*/
+	mmc_delay(1);
+
 	/* Let's try to poll to find out when the command is completed. */
 	err = mmc_poll_for_busy(card, timeout_ms, send_status, retry_crc_err);
 	if (err)
