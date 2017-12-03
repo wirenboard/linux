@@ -70,6 +70,16 @@
 			reg = <0x02200000 0x100000>;
 			ranges;
 
+			dcp: dcp@02280000 {
+				compatible = "fsl,imx6sl-dcp", "fsl,imx28-dcp";
+				reg = <0x02280000 0x4000>;
+				interrupts = <GIC_SPI 46 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
+				clocks = <&clks IMX6ULL_CLK_DCP_CLK>; 
+				clock-names = "dcp";
+			};
+
 			rngb: rngb@02284000 {
 				compatible = "fsl,imx6sl-rng", "fsl,imx-rng", "imx-rng", "fsl,imx25-rngb";
 				reg = <0x02284000 0x4000>;
