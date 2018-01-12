@@ -221,7 +221,6 @@ static int mxs_dcp_run_aes(struct dcp_async_ctx *actx,
 
 	/* Use OTP key. */
 	if (rctx->otp) {
-		printk("mxs-dcp run AES using OTP key");
 		desc->control0 |= MXS_DCP_CONTROL0_OTP_KEY;
 	} else {
 		desc->control0 |= MXS_DCP_CONTROL0_PAYLOAD_KEY;
@@ -233,6 +232,10 @@ static int mxs_dcp_run_aes(struct dcp_async_ctx *actx,
 		desc->control0 |= MXS_DCP_CONTROL0_CIPHER_INIT;
 
 	desc->control1 = MXS_DCP_CONTROL1_CIPHER_SELECT_AES128;
+
+	if (rctx->otp) {
+		desc->control1 |= MXS_DCP_CONTROL1_KEY_SELECT_OTP;
+	}
 
 	if (rctx->ecb)
 		desc->control1 |= MXS_DCP_CONTROL1_CIPHER_MODE_ECB;
@@ -1012,18 +1015,18 @@ static int mxs_dcp_probe(struct platform_device *pdev)
 	if (IS_ERR(sdcp->dcp_clk)) {
 		ret = PTR_ERR(sdcp->dcp_clk);
 		dev_err(dev, "can't identify DCP clk: %d\n", ret);
-		return -ENODEV;
 	}
-
-	ret = clk_prepare(sdcp->dcp_clk);
-	if (ret < 0) {
-		dev_err(&pdev->dev, "can't prepare DCP clock: %d\n", ret);
-		return -ENODEV;
-	}
-	ret = clk_enable(sdcp->dcp_clk);
-	if (ret < 0) {
-		dev_err(&pdev->dev, "can't enable DCP clock: %d\n", ret);
-		return -ENODEV;
+	else {
+		ret = clk_prepare(sdcp->dcp_clk);
+		if (ret < 0) {
+			dev_err(&pdev->dev, "can't prepare DCP clock: %d\n", ret);
+			return -ENODEV;
+		}
+		ret = clk_enable(sdcp->dcp_clk);
+		if (ret < 0) {
+			dev_err(&pdev->dev, "can't enable DCP clock: %d\n", ret);
+			return -ENODEV;
+		}
 	}
 
 	ret = devm_request_irq(dev, dcp_vmi_irq, mxs_dcp_irq, 0,
