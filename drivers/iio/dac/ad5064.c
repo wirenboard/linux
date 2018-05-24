@@ -45,6 +45,9 @@
 #define AD5064_CMD_RESET_V2			0x5
 #define AD5064_CMD_CONFIG_V2			0x7
 
+#define LTC2631_CMD_SELECT_INTERNAL_REF		0x6
+#define LTC2631_CMD_SELECT_EXTERNAL_REF		0x7
+
 #define AD5064_CONFIG_DAISY_CHAIN_ENABLE	BIT(1)
 #define AD5064_CONFIG_INT_VREF_ENABLE		BIT(0)
 
@@ -819,6 +822,21 @@ static int ad5064_set_config(struct ad5064_state *st, unsigned int val)
 	return ad5064_write(st, cmd, 0, val, 0);
 }
 
+static int ad5064_set_reference(struct ad5064_state *st, unsigned int use_internal)
+{
+	unsigned int cmd, val;
+	switch (st->chip_info->regmap_type) {
+	case AD5064_REGMAP_LTC:
+		cmd = use_internal ?
+			LTC2631_CMD_SELECT_INTERNAL_REF :
+			LTC2631_CMD_SELECT_EXTERNAL_REF;
+		return ad5064_write(st, cmd, 0, 0, 0);
+	default:
+		val = use_internal ? AD5064_CONFIG_INT_VREF_ENABLE : 0;
+		return ad5064_set_config(st, val);
+	}
+}
+
 static int ad5064_request_vref(struct ad5064_state *st, struct device *dev)
 {
 	unsigned int i;
@@ -837,8 +855,16 @@ static int ad5064_request_vref(struct ad5064_state *st, struct device *dev)
 	 * currently the case for all supported devices.
 	 */
 	st->vref_reg[0].consumer = devm_regulator_get_optional(dev, "vref");
-	if (!IS_ERR(st->vref_reg[0].consumer))
+	if (!IS_ERR(st->vref_reg[0].consumer)) {
+		/* Internal reference should be disabled */
+		ret = ad5064_set_reference(st, 0);
+		if (ret) {
+			dev_err(dev, "Failed to disable internal vref: %d\n",
+				ret);
+			return ret;
+		}
 		return 0;
+	}
 
 	ret = PTR_ERR(st->vref_reg[0].consumer);
 	if (ret != -ENODEV)
@@ -846,7 +872,7 @@ static int ad5064_request_vref(struct ad5064_state *st, struct device *dev)
 
 	/* If no external regulator was supplied use the internal VREF */
 	st->use_internal_vref = true;
-	ret = ad5064_set_config(st, AD5064_CONFIG_INT_VREF_ENABLE);
+	ret = ad5064_set_reference(st, 1);
 	if (ret)
 		dev_err(dev, "Failed to enable internal vref: %d\n", ret);
 
