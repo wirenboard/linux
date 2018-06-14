@@ -252,6 +252,17 @@
 		};
 	};
 
+	led_jtag_mod: led_jtag_mod {
+		compatible = "gpio-leds";
+
+		jtag_mod_out: jtag_mod_out {
+			label = "mod2_sda_pullup";
+			gpios = <&gpio1 10 1>;
+			linux,default-trigger = "default-on";
+			open-drain;
+		};
+	};
+
 	wirenboard {
 		adc-type = <3>;
 		pwm-buzzer = <0>;
@@ -420,7 +431,6 @@
 			};
 		};
 	};
-
 };
 
 &clks {
