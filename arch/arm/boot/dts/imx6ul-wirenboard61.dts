@@ -312,12 +312,13 @@
 			gpio-power = <&gpio4 24 0>;
 			gpio-pwrkey = <&gpio3 20 0>;
 			gpio-status = <&gpio3 19 1>;
+			gpio-simselect = <&gpio3 24 0>;
 		};
 
 		rfm {
 			gpio-irq = <&gpio3 14 0>;
 			gpio-dio2 = <&gpio3 13 0>;
-			spi-major-minor = <32765 0>;
+			spi-major-minor = <9 0>;
 		};
 	};
 
