@@ -669,7 +669,7 @@
 			power-type = <2>;
 			gpio-power = <&gpio0 17 0>;
 			gpio-pwrkey = <&gpio0 2 0>;
-			gpio-status = <&gpio1 7 1>;
+			gpio-status = <&gpio1 7 0>;
 		};
 
 		rfm {
