@@ -309,7 +309,7 @@
 			gpio-simselect = <&gpio3 24 0>;
 		};
 
-		rfm {
+		radio {
 			gpio-irq = <&gpio3 14 0>;
 			gpio-dio2 = <&gpio3 13 0>;
 			spi-major-minor = <9 0>;
