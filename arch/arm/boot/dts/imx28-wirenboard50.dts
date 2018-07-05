@@ -506,7 +506,7 @@
 			gpio-status = <&gpio1 7 0>;
 		};
 
-		rfm {
+		radio {
 			gpio-irq = <&gpio1 6 0>;
 			gpio-dio2 = <&gpio1 5 0>;
 			spi-major-minor = <32765 0>;
