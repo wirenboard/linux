@@ -552,7 +552,7 @@
             pinctrl-names = "default";
             pinctrl-0 = <&mac1_pins_a>;
             phy-handle = <&ethphy1>;
-            status = "disabled";
+            status = "okay";
         };
     };
 
