@@ -157,6 +157,17 @@
                                         fsl,voltage = <MXS_VOLTAGE_HIGH>;
                                         fsl,pull-up = <MXS_PULL_DISABLE>;
                                 };
+
+                                pins_rtc_wb59: pins_rtc_wb59@0 {
+                                    reg = <0>;
+                                    fsl,pinmux-ids = <
+                                        MX28_PAD_SSP2_SS2__GPIO_2_21  /* 5.9: RTC SDA */
+                                        MX28_PAD_SSP3_MISO__GPIO_2_26 /* 5.9: RTC SCL */
+                                    >;
+                                    fsl,drive-strength = <MXS_DRIVE_8mA>;
+                                    fsl,voltage = <MXS_VOLTAGE_HIGH>;
+                                    fsl,pull-up = <MXS_PULL_ENABLE>;
+                                };
                         };
 
                         can1: can@80034000 {
@@ -186,6 +197,30 @@
                                 pinctrl-0 = <&i2c0_pins_a>;
                                 status = "okay";
                                 clock-frequency = <400000>;
+                        };
+
+                        i2c_rtc_wb59: i2c_rtc_wb59@0 {
+                            pinctrl-names = "default";
+                            pinctrl-0 = <&pins_rtc_wb59>;
+
+                            compatible = "i2c-gpio";
+
+                            #address-cells = <1>;
+                            #size-cells = <0>;
+
+                            gpios = <
+                                &gpio2 21 0 /* sda */
+                                &gpio2 26 0 /* scl */
+                            >;
+
+                            i2c-gpio,delay-us = <10>;        /* ~100 kHz */
+
+                            status = "okay";
+
+                            rtc@51 {
+                                compatible = "nxp,pcf8563";
+                                reg = <0x51>;
+                            };
                         };
 
                         pwm: pwm@80064000 {
@@ -249,7 +284,7 @@
                 usb0: usb@80080000 {
                         vbus-supply = <&reg_usb0_vbus>;
                         status = "okay";
-                        dr_mode = "otg";
+                        dr_mode = "peripheral";
                 };
 
                 usb1: usb@80090000 {
