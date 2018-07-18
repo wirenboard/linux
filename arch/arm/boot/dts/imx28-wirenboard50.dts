@@ -269,7 +269,7 @@
 			auart0: serial@8006a000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&auart0_2pins_a>;
-				status = "okay";
+				status = "disabled";
 			};
 
 			auart1: serial@8006c000 {
@@ -431,6 +431,86 @@
 		always-running;
 		timeout-sec = <30>;
 		status = "okay";
+	};
+
+	wirenboard {
+		adc-type = <3>;
+		pwm-buzzer = <3>;
+
+		gpios {
+			A1_OUT {
+				gpios = <&gpio0 26 0>;
+				output-low;
+			};
+
+			A2_OUT {
+				gpios = <&gpio0 16 0>;
+				output-low;
+			};
+
+			A3_OUT {
+				gpios = <&gpio0 24 0>;
+				output-low;
+			};
+
+			A4_OUT {
+				gpios = <&gpio0 20 0>;
+				output-low;
+			};
+
+			A1_IN {
+				gpios = <&gpio0 4 0>;
+				input;
+			};
+
+			A2_IN {
+				gpios = <&gpio0 5 0>;
+				input;
+			};
+
+			A3_IN {
+				gpios = <&gpio0 6 0>;
+				input;
+			};
+
+			A4_IN {
+				gpios = <&gpio0 28 0>;
+				input;
+			};
+
+			R1_IN {
+				gpios = <&gpio3 28 0>;
+				input;
+			};
+
+			R2_IN {
+				gpios = <&gpio3 10 0>;
+				input;
+			};
+
+			CHARGER_STAT_1 {
+				gpios = <&gpio1 11 0>;
+				input;
+			};
+
+			CHARGER_STAT_2 {
+				gpios = <&gpio1 10 0>;
+				input;
+			};
+		};
+
+		gsm {
+			power-type = <2>;
+			gpio-power = <&gpio0 17 0>;
+			gpio-pwrkey = <&gpio0 2 0>;
+			gpio-status = <&gpio1 7 0>;
+		};
+
+		radio {
+			gpio-irq = <&gpio1 6 0>;
+			gpio-dio2 = <&gpio1 5 0>;
+			spi-major-minor = <32765 0>;
+		};
 	};
 
 };

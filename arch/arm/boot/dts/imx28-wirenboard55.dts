@@ -50,11 +50,11 @@
                 };
             };
 
-            ssp1gpio {
+            ssp1gpio: ssp1gpio {
                 compatible = "spi-gpio";
                 pinctrl-names = "default";
                 pinctrl-0 = <&spi1_pins_a_gpio>;
-                status = "okay";
+                status = "disabled";
                 gpio-sck = <&gpio0 25 0>;
                 gpio-mosi = <&gpio0 21 0>;
                 gpio-miso = <&gpio0 0 0>;
@@ -62,12 +62,6 @@
                 num-chipselects = <1>;
                 #address-cells = <1>;
                 #size-cells = <0>;
-
-                spidev@0 {
-                    compatible = "hoperf,rfm69w";
-                    spi-max-frequency = <10000>;
-                    reg = <0>;
-                };
             };
 
             ssp2: ssp@80014000 {
@@ -422,7 +416,7 @@
             auart0: serial@8006a000 {
                 pinctrl-names = "default";
                 pinctrl-0 = <&auart0_pins_a>;
-                status = "okay";
+                status = "disabled";
             };
 
             auart1: serial@8006c000 {
@@ -592,4 +586,91 @@
         pwm-max-duty = <50>;
         gpio-recv = <&gpio2 15 1>;
     };
+
+	wirenboard {
+		adc-type = <3>;
+		pwm-buzzer = <3>;
+
+		gpios {
+			A1_OUT {
+				gpios = <&gpio0 26 0>;
+				output-low;
+			};
+
+			A2_OUT {
+				gpios = <&gpio0 16 0>;
+				output-low;
+			};
+
+			A3_OUT {
+				gpios = <&gpio0 24 0>;
+				output-low;
+			};
+
+			A4_OUT {
+				gpios = <&gpio0 20 0>;
+				output-low;
+			};
+
+			A1_IN {
+				gpios = <&gpio0 6 1>;
+				input;
+			};
+
+			A2_IN {
+				gpios = <&gpio0 7 1>;
+				input;
+			};
+
+			A3_IN {
+				gpios = <&gpio0 28 1>;
+				input;
+			};
+
+			A4_IN {
+				gpios = <&gpio0 27 1>;
+				input;
+			};
+
+			R1_IN {
+				gpios = <&gpio0 5 1>;
+				input;
+			};
+
+			BATTERY_PRESENT {
+				gpios = <&gpio1 30 1>;
+				input;
+			};
+
+			BATTERY_CHARGING {
+				gpios = <&gpio3 6 1>;
+				input;
+			};
+
+			5V_OUT {
+				gpios = <&gpio2 14 0>;
+				output-low;
+			};
+
+			MOD3_OFF {
+				gpios = <&gpio2 26 0>;
+				output-low;
+				internal;
+			};
+		};
+
+		gsm {
+			power-type = <2>;
+			gpio-power = <&gpio0 17 0>;
+			gpio-pwrkey = <&gpio0 2 0>;
+			gpio-status = <&gpio1 7 0>;
+		};
+
+		radio {
+			gpio-irq = <&gpio1 6 0>;
+			gpio-dio2 = <&gpio1 5 0>;
+			spi-major-minor = <32765 0>;
+		};
+	};
+
 };

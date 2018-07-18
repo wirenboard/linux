@@ -155,7 +155,7 @@
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_rfm69_spi_irq>;
-		status = "okay";
+		status = "disabled";
 
 		gpio-sck = <&gpio3 25 0>;
 		gpio-mosi = <&gpio3 27 0>;
@@ -164,12 +164,6 @@
 		num-chipselects = <1>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-
-		spidev@0 {
-			compatible = "hoperf,rfm69w";
-			spi-max-frequency = <10000>;
-			reg = <0>;
-		};
 	};
 
 	mcp6542: watchdog {
@@ -276,6 +270,62 @@
 			open-drain;
 		};
 	};
+
+	wirenboard {
+		adc-type = <3>;
+		pwm-buzzer = <0>;
+
+		gpios {
+			A1_OUT {
+				gpios = <&gpio3 15 0>;
+				output-low;
+			};
+
+			A2_OUT {
+				gpios = <&gpio3 16 0>;
+				output-low;
+			};
+
+			A3_OUT {
+				gpios = <&gpio3 17 0>;
+				output-low;
+			};
+
+			A4_OUT {
+				gpios = <&gpio3 18 0>;
+				output-low;
+			};
+
+			5V_OUT {
+				gpios = <&gpio1 27 0>;
+				output-low;
+			};
+
+			V_OUT {
+				gpios = <&gpio3 9 0>;
+				output-low;
+			};
+
+			V_OUT_OK {
+				gpios = <&gpio3 8 0>;
+				input;
+			};
+		};
+
+		gsm {
+			power-type = <2>;
+			gpio-power = <&gpio4 24 0>;
+			gpio-pwrkey = <&gpio3 20 0>;
+			gpio-status = <&gpio3 19 1>;
+			gpio-simselect = <&gpio3 24 0>;
+		};
+
+		radio {
+			gpio-irq = <&gpio3 14 0>;
+			gpio-dio2 = <&gpio3 13 0>;
+			spi-major-minor = <9 0>;
+		};
+	};
 };
 
 &clks {
@@ -327,7 +377,7 @@
 	pinctrl-0 = <&pinctrl_enet2>;
 	phy-mode = "rmii";
 	phy-handle = <&ethphy3>;
-	status = "okay";
+	status = "disabled";
 
 };
 
@@ -386,7 +436,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart6>;
 	uart-has-rtscts;
-	status = "okay";
+	status = "disabled";
 };
 
 // uart on mod3
