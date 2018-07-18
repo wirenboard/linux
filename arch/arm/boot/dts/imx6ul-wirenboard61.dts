@@ -260,6 +260,17 @@
 		};
 	};
 
+	led_jtag_mod: led_jtag_mod {
+		compatible = "gpio-leds";
+
+		jtag_mod_out: jtag_mod_out {
+			label = "mod2_sda_pullup";
+			gpios = <&gpio1 10 1>;
+			linux,default-trigger = "default-on";
+			open-drain;
+		};
+	};
+
 	wirenboard {
 		adc-type = <3>;
 		pwm-buzzer = <0>;
@@ -315,7 +326,6 @@
 			spi-major-minor = <9 0>;
 		};
 	};
-
 };
 
 &clks {
@@ -448,6 +458,9 @@
 
 	cs-gpios = <&gpio4 26 GPIO_ACTIVE_LOW>;
 
+	dmas = <&sdma 3 7 1>, <&sdma 4 7 2>;
+	dma-names = "rx", "tx";
+	
 	status = "disabled";
 };
 
@@ -680,6 +693,8 @@
 			MX6UL_PAD_NAND_CLE__GPIO4_IO15 	0x30b0 /* IN2 */
 			MX6UL_PAD_NAND_CE1_B__GPIO4_IO14 	0x30b0 /* IN3 */
 			MX6UL_PAD_GPIO1_IO00__GPIO1_IO00 	0x30b0 /* IN4 */
+
+			MX6UL_PAD_JTAG_MOD__GPIO1_IO10		0x80000000 /* SPDIF_OUT connected to MODULE 2 TX PIN via 3K, must be high when i2c*/
 		>;
 	};
 
