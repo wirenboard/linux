@@ -55,11 +55,11 @@
                 };
             };
 
-            ssp1gpio: ssp1gpio {
+            ssp1gpio {
                 compatible = "spi-gpio";
                 pinctrl-names = "default";
                 pinctrl-0 = <&spi1_pins_a_gpio>;
-                status = "disabled";
+                status = "okay";
                 gpio-sck = <&gpio0 25 0>;
                 gpio-mosi = <&gpio0 21 0>;
                 gpio-miso = <&gpio0 0 0>;
@@ -67,6 +67,12 @@
                 num-chipselects = <1>;
                 #address-cells = <1>;
                 #size-cells = <0>;
+
+                spidev@0 {
+                    compatible = "hoperf,rfm69w";
+                    spi-max-frequency = <10000>;
+                    reg = <0>;
+                };
             };
 
             ssp2: ssp@80014000 {
@@ -464,7 +470,7 @@
             auart0: serial@8006a000 {
                 pinctrl-names = "default";
                 pinctrl-0 = <&auart0_pins_a>;
-                status = "disabled";
+                status = "okay";
             };
 
             auart1: serial@8006c000 {

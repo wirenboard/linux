@@ -155,7 +155,7 @@
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_rfm69_spi_irq>;
-		status = "disabled";
+		status = "okay";
 
 		gpio-sck = <&gpio3 25 0>;
 		gpio-mosi = <&gpio3 27 0>;
@@ -164,6 +164,12 @@
 		num-chipselects = <1>;
 		#address-cells = <1>;
 		#size-cells = <0>;
+
+		spidev@0 {
+			compatible = "hoperf,rfm69w";
+			spi-max-frequency = <10000>;
+			reg = <0>;
+		};
 	};
 
 	mcp6542: watchdog {
@@ -377,7 +383,7 @@
 	pinctrl-0 = <&pinctrl_enet2>;
 	phy-mode = "rmii";
 	phy-handle = <&ethphy3>;
-	status = "disabled";
+	status = "okay";
 
 };
 
@@ -436,7 +442,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart6>;
 	uart-has-rtscts;
-	status = "disabled";
+	status = "okay";
 };
 
 // uart on mod3

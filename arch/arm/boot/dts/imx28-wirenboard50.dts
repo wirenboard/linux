@@ -269,7 +269,7 @@
 			auart0: serial@8006a000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&auart0_2pins_a>;
-				status = "disabled";
+				status = "okay";
 			};
 
 			auart1: serial@8006c000 {
