@@ -210,7 +210,7 @@
 			reg = <0x51>;
 		};
 
-		lm75@48 {
+		pcb-temp@48 {
 			/* NXP LM75AD has 11 bits of resolution, just like
 			   standard LM75B. */
 			compatible = "lm75b";
@@ -330,6 +330,20 @@
 			gpio-irq = <&gpio3 14 0>;
 			gpio-dio2 = <&gpio3 13 0>;
 			spi-major-minor = <9 0>;
+		};
+
+		hwmon-nodes {
+			cputemp {
+				title = "CPU Temperature";
+				hwmon-node-name = "imx_thermal_zone";
+				hwmon-channel = "temp1";
+			};
+
+			pcbtemp {
+				title = "Board Temperature";
+				hwmon-node-name = "pcb-temp";
+				hwmon-channel = "temp1";
+			};
 		};
 	};
 };
