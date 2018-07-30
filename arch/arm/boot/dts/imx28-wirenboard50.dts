@@ -439,76 +439,76 @@
 
 		gpios {
 			A1_OUT {
-				gpios = <&gpio0 26 0>;
+				io-gpios = <&gpio0 26 0>;
 				output-low;
 			};
 
 			A2_OUT {
-				gpios = <&gpio0 16 0>;
+				io-gpios = <&gpio0 16 0>;
 				output-low;
 			};
 
 			A3_OUT {
-				gpios = <&gpio0 24 0>;
+				io-gpios = <&gpio0 24 0>;
 				output-low;
 			};
 
 			A4_OUT {
-				gpios = <&gpio0 20 0>;
+				io-gpios = <&gpio0 20 0>;
 				output-low;
 			};
 
 			A1_IN {
-				gpios = <&gpio0 4 0>;
+				io-gpios = <&gpio0 4 0>;
 				input;
 			};
 
 			A2_IN {
-				gpios = <&gpio0 5 0>;
+				io-gpios = <&gpio0 5 0>;
 				input;
 			};
 
 			A3_IN {
-				gpios = <&gpio0 6 0>;
+				io-gpios = <&gpio0 6 0>;
 				input;
 			};
 
 			A4_IN {
-				gpios = <&gpio0 28 0>;
+				io-gpios = <&gpio0 28 0>;
 				input;
 			};
 
 			R1_IN {
-				gpios = <&gpio3 28 0>;
+				io-gpios = <&gpio3 28 0>;
 				input;
 			};
 
 			R2_IN {
-				gpios = <&gpio3 10 0>;
+				io-gpios = <&gpio3 10 0>;
 				input;
 			};
 
 			CHARGER_STAT_1 {
-				gpios = <&gpio1 11 0>;
+				io-gpios = <&gpio1 11 0>;
 				input;
 			};
 
 			CHARGER_STAT_2 {
-				gpios = <&gpio1 10 0>;
+				io-gpios = <&gpio1 10 0>;
 				input;
 			};
 		};
 
 		gsm {
 			power-type = <2>;
-			gpio-power = <&gpio0 17 0>;
-			gpio-pwrkey = <&gpio0 2 0>;
-			gpio-status = <&gpio1 7 0>;
+			power-gpios = <&gpio0 17 0>;
+			pwrkey-gpios = <&gpio0 2 0>;
+			status-gpios = <&gpio1 7 0>;
 		};
 
 		radio {
-			gpio-irq = <&gpio1 6 0>;
-			gpio-dio2 = <&gpio1 5 0>;
+			irq-gpios = <&gpio1 6 0>;
+			dio2-gpios = <&gpio1 5 0>;
 			spi-major-minor = <32765 0>;
 		};
 	};

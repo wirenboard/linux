@@ -283,52 +283,52 @@
 
 		gpios {
 			A1_OUT {
-				gpios = <&gpio3 15 0>;
+				io-gpios = <&gpio3 15 0>;
 				output-low;
 			};
 
 			A2_OUT {
-				gpios = <&gpio3 16 0>;
+				io-gpios = <&gpio3 16 0>;
 				output-low;
 			};
 
 			A3_OUT {
-				gpios = <&gpio3 17 0>;
+				io-gpios = <&gpio3 17 0>;
 				output-low;
 			};
 
 			A4_OUT {
-				gpios = <&gpio3 18 0>;
+				io-gpios = <&gpio3 18 0>;
 				output-low;
 			};
 
 			5V_OUT {
-				gpios = <&gpio1 27 0>;
+				io-gpios = <&gpio1 27 0>;
 				output-low;
 			};
 
 			V_OUT {
-				gpios = <&gpio3 9 0>;
+				io-gpios = <&gpio3 9 0>;
 				output-low;
 			};
 
 			V_OUT_OK {
-				gpios = <&gpio3 8 0>;
+				io-gpios = <&gpio3 8 0>;
 				input;
 			};
 		};
 
 		gsm {
 			power-type = <2>;
-			gpio-power = <&gpio4 24 0>;
-			gpio-pwrkey = <&gpio3 20 0>;
-			gpio-status = <&gpio3 19 1>;
-			gpio-simselect = <&gpio3 24 0>;
+			power-gpios = <&gpio4 24 0>;
+			pwrkey-gpios = <&gpio3 20 0>;
+			status-gpios = <&gpio3 19 1>;
+			simselect-gpios = <&gpio3 24 0>;
 		};
 
 		radio {
-			gpio-irq = <&gpio3 14 0>;
-			gpio-dio2 = <&gpio3 13 0>;
+			irq-gpios = <&gpio3 14 0>;
+			dio2-gpios = <&gpio3 13 0>;
 			spi-major-minor = <9 0>;
 		};
 	};
