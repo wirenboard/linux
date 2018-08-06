@@ -62,7 +62,7 @@
 				};
 			};
 
-			ssp1gpio {
+			ssp1gpio: ssp1gpio {
 				compatible = "spi-gpio";
 				pinctrl-names = "default";
 				pinctrl-0 = <&spi1_pins_a_gpio>;
