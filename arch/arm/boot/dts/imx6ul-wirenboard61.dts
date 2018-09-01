@@ -362,6 +362,9 @@
 	phy-handle = <&ethphy0>;
 	status = "okay";
 
+	phy-reset-gpios = <&gpio5 1 0>;
+	phy-reset-duration = <100>;
+
 	mdio {
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -526,6 +529,7 @@
 			MX6UL_PAD_ENET1_TX_CLK__ENET1_REF_CLK1	0x4001b031
 			MX6UL_PAD_GPIO1_IO07__ENET1_MDC		0x1b0b0
 			MX6UL_PAD_GPIO1_IO06__ENET1_MDIO	0x1b0b0
+			MX6UL_PAD_SNVS_TAMPER1__GPIO5_IO01 0x70b0 /*pulled up*/
 		>;
 	};
 
