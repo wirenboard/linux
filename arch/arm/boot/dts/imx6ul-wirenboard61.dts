@@ -70,20 +70,6 @@
 			gpio = <&gpio3 10 0>;
 			/* active low */
 		};
-
-		reg_can_xceiver: regulator@3 {
-			reg = <3>;
-			compatible = "regulator-fixed";
-			regulator-name = "can_xceiver";
-			regulator-min-microvolt = <5000000>;
-			regulator-max-microvolt = <5000000>;
-
-			pinctrl-names = "default";
-			pinctrl-0 = <&pinctrl_can_xceiver>;
-
-			gpio = <&gpio1 23 0>;
-			enable-active-high;
-		};
 	};
 
 	leds {
@@ -471,7 +457,6 @@
 &can2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_flexcan2>;
-	xceiver-supply = <&reg_can_xceiver>;
 	status = "disabled";
 };
 
@@ -719,12 +704,7 @@
 			MX6UL_PAD_GPIO1_IO00__GPIO1_IO00 	0x30b0 /* IN4 */
 
 			MX6UL_PAD_JTAG_MOD__GPIO1_IO10		0x80000000 /* SPDIF_OUT connected to MODULE 2 TX PIN via 3K, must be high when i2c*/
-		>;
-	};
 
-
-	pinctrl_can_xceiver: canxceivergrp {
-		fsl,pins = <
 			MX6UL_PAD_UART2_RTS_B__GPIO1_IO23	0xf0b0 /* 22k pullup */
 		>;
 	};
