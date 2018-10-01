@@ -429,10 +429,9 @@
 
 &uart4 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_uart4_rs485>;
 	uart-has-rtscts;
 	linux,rs485-enabled-at-boot-time;
-	status = "okay";
+	status = "disabled";
 };
 
 // uart on mod2
