@@ -335,6 +335,72 @@
 			};
 		};
 
+		analog-inputs {
+			/* we don't use standard 'io-channels = <&adc1 N>' here because
+			   there is seemingly no way to assiciate iio channel index (N
+			   in above example) with channel name as in sysfs path
+			*/
+			A1 {
+				iio-device = <&adc1>; 
+				iio-channel-name = "voltage4";
+				divider-r1-ohms = <88700>;
+				divider-r2-ohms = <12000>;
+				averaging-window = <1>;
+				decimal-places = <2>;
+				sort-order = <0>;
+			};
+
+			A2 {
+				iio-device = <&adc1>; 
+				iio-channel-name = "voltage2";
+				divider-r1-ohms = <88700>;
+				divider-r2-ohms = <12000>;
+				averaging-window = <1>;
+				decimal-places = <2>;
+				sort-order = <1>;
+			};
+
+			A3 {
+				iio-device = <&adc1>; 
+				iio-channel-name = "voltage1";
+				divider-r1-ohms = <88700>;
+				divider-r2-ohms = <12000>;
+				averaging-window = <1>;
+				decimal-places = <2>;
+				sort-order = <2>;
+			};
+
+			A4 {
+				iio-device = <&adc1>; 
+				iio-channel-name = "voltage3";
+				divider-r1-ohms = <88700>;
+				divider-r2-ohms = <12000>;
+				averaging-window = <1>;
+				decimal-places = <2>;
+				sort-order = <3>;
+			};
+
+			Vin {
+				iio-device = <&adc1>; 
+				iio-channel-name = "voltage8";
+				divider-r1-ohms = <88700>;
+				divider-r2-ohms = <12000>;
+				averaging-window = <1>;
+				decimal-places = <2>;
+				sort-order = <4>;
+			};
+
+			5Vout {
+				iio-device = <&adc1>; 
+				iio-channel-name = "voltage5";
+				divider-r1-ohms = <33000>;
+				divider-r2-ohms = <12000>;
+				averaging-window = <1>;
+				decimal-places = <2>;
+				sort-order = <5>;
+			};
+		};
+
 		gsm {
 			power-type = <2>;
 			power-gpios = <&gpio4 24 0>;
