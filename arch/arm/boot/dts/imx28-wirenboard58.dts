@@ -685,67 +685,73 @@
 			A1_OUT {
 				io-gpios = <&gpio0 26 0>;
 				output-low;
+				sort-order = <0>;
 			};
 
 			A2_OUT {
 				io-gpios = <&gpio0 16 0>;
 				output-low;
+				sort-order = <1>;
 			};
 
 			A3_OUT {
 				io-gpios = <&gpio0 24 0>;
 				output-low;
+				sort-order = <2>;
 			};
 
 			A4_OUT {
 				io-gpios = <&gpio0 20 0>;
 				output-low;
+				sort-order = <3>;
 			};
 
 			A1_IN {
 				io-gpios = <&gpio0 6 1>;
 				input;
+				sort-order = <4>;
 			};
 
 			A2_IN {
 				io-gpios = <&gpio0 7 1>;
 				input;
+				sort-order = <5>;
 			};
 
 			A3_IN {
 				io-gpios = <&gpio0 28 1>;
 				input;
+				sort-order = <6>;
 			};
 
 			A4_IN {
 				io-gpios = <&gpio0 27 1>;
 				input;
+				sort-order = <7>;
 			};
 
 			R1_IN {
 				io-gpios = <&gpio0 5 1>;
 				input;
+				sort-order = <8>;
 			};
 
 			BATTERY_PRESENT {
 				io-gpios = <&gpio1 25 1>;
 				input;
+				sort-order = <9>;
 			};
 
 			BATTERY_CHARGING {
 				io-gpios = <&gpio3 30 1>;
 				input;
+				sort-order = <10>;
 			};
 
 			5V_OUT {
 				io-gpios = <&gpio2 14 0>;
-				output-low;
-			};
-
-			MOD3_OFF {
-				io-gpios = <&gpio2 26 0>;
-				output-low;
-				internal;
+				output-high;
+				sort-order = <11>;
 			};
 		};
 
