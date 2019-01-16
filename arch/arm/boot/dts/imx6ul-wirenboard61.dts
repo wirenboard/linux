@@ -151,7 +151,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		spidev@0 {
+		spi_dev_rfm69: spidev@0 {
 			compatible = "hoperf,rfm69w";
 			spi-max-frequency = <10000>;
 			reg = <0>;
@@ -402,6 +402,7 @@
 			irq-gpios = <&gpio3 14 0>;
 			dio2-gpios = <&gpio3 13 0>;
 			spi-major-minor = <9 0>;
+			spi-device-phandle = <&spi_dev_rfm69>;
 		};
 
 		hwmon-nodes {
