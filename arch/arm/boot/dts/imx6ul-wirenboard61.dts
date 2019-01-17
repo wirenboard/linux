@@ -401,8 +401,8 @@
 		radio {
 			irq-gpios = <&gpio3 14 0>;
 			dio2-gpios = <&gpio3 13 0>;
-			spi-major-minor = <9 0>;
-			spi-device-phandle = <&spi_dev_rfm69>;
+			spi-major-minor = <9 0>;				// deprecated. use spi-device to define rfm69 spi port
+			spi-device = <&spi_dev_rfm69>;
 		};
 
 		hwmon-nodes {

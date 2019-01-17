@@ -655,8 +655,8 @@
 		radio {
 			irq-gpios = <&gpio1 6 0>;
 			dio2-gpios = <&gpio1 5 0>;
-			spi-major-minor = <32765 0>;
-			spi-device-phandle = <&spi_dev_rfm69>;
+			spi-major-minor = <32765 0>;				// deprecated. use spi-device to define rfm69 spi port
+			spi-device = <&spi_dev_rfm69>;
 		};
 	};
 };
