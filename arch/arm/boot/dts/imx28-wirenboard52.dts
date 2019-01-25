@@ -63,7 +63,7 @@
 				#address-cells = <1>;
 				#size-cells = <0>;
 
-				spidev@0 {
+				spi_dev_rfm69: spidev@0 {
 					compatible = "hoperf,rfm69w";
 					spi-max-frequency = <10000>;
 					reg = <0>;
@@ -548,7 +548,7 @@
 		spdif-controller = <&spdif>;
 	};
 
-	lirc-rfm69 {
+	lirc_dev_rfm69: lirc-rfm69 {
 		compatible = "lirc-pwm";
 		gpio-recv = <&gpio1 5 0>;
 		gpio-recv-disable-filter;
@@ -655,7 +655,9 @@
 		radio {
 			irq-gpios = <&gpio1 6 0>;
 			dio2-gpios = <&gpio1 5 0>;
-			spi-major-minor = <32765 0>;
+			spi-major-minor = <32765 0>;				// deprecated. use spi-device to define rfm69 spi port
+			spi-device = <&spi_dev_rfm69>;
+			lirc-device = <&lirc_dev_rfm69>;
 		};
 	};
 };
