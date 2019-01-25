@@ -126,7 +126,7 @@
 		pu-gpios = <&gpio4 16 0>;
 	};
 
-	lirc-rfm69 {
+	lirc_dev_rfm69: lirc-rfm69 {
 		compatible = "lirc-pwm";
 
 		pinctrl-names = "default";
@@ -403,6 +403,7 @@
 			dio2-gpios = <&gpio3 13 0>;
 			spi-major-minor = <9 0>;				// deprecated. use spi-device to define rfm69 spi port
 			spi-device = <&spi_dev_rfm69>;
+			lirc-device = <&lirc_dev_rfm69>;
 		};
 
 		hwmon-nodes {
