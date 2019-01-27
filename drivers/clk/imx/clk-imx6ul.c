@@ -505,6 +505,10 @@ static void __init imx6ul_clocks_init(struct device_node *ccm_node)
 		clk_prepare_enable(clks[IMX6UL_CLK_USBPHY2_GATE]);
 	}
 
+	/* Set up CLKO2 with OSC24M */
+	clk_set_parent(clks[IMX6UL_CLK_CKO2_SEL], clks[IMX6UL_CLK_OSC]);
+	clk_prepare_enable(clks[IMX6UL_CLK_CKO2]);
+
 	clk_set_parent(clks[IMX6UL_CLK_CAN_SEL], clks[IMX6UL_CLK_PLL3_60M]);
 	if (clk_on_imx6ul())
 		clk_set_parent(clks[IMX6UL_CLK_SIM_PRE_SEL], clks[IMX6UL_CLK_PLL3_USB_OTG]);
