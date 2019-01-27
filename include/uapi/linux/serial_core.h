@@ -281,4 +281,7 @@
 /* MediaTek BTIF */
 #define PORT_MTK_BTIF	117
 
+/* SC16IS7x2 SPI UART */
+#define PORT_SC16IS7X2	118
+
 #endif /* _UAPILINUX_SERIAL_CORE_H */
