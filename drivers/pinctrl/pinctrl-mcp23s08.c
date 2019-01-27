@@ -1030,6 +1030,7 @@ static int mcp230xx_probe(struct i2c_client *client,
 	struct mcp23s08_platform_data *pdata, local_pdata;
 	struct mcp23s08 *mcp;
 	int status;
+	int val;
 
 	pdata = dev_get_platdata(&client->dev);
 	if (!pdata) {
@@ -1042,6 +1043,13 @@ static int mcp230xx_probe(struct i2c_client *client,
 		return -ENOMEM;
 
 	mcp->irq = client->irq;
+
+	status = of_property_read_u32(client->dev.of_node,
+				"linux,gpio-base", &val);
+	if (!status) {
+		pdata->base = val;
+	}
+
 	status = mcp23s08_probe_one(mcp, &client->dev, client, client->addr,
 				    id->driver_data, pdata->base, 0);
 	if (status)
