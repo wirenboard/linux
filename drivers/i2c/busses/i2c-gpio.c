@@ -43,8 +43,7 @@ static void i2c_gpio_setsda_dir(void *data, int state)
 static void i2c_gpio_setsda_val(void *data, int state)
 {
 	struct i2c_gpio_platform_data *pdata = data;
-
-	gpio_set_value(pdata->sda_pin, state);
+	gpio_set_value(pdata->sda_pin, !state);
 }
 
 /* Toggle SCL by changing the direction of the pin. */
@@ -78,6 +77,13 @@ static int i2c_gpio_getsda(void *data)
 	return gpio_get_value(pdata->sda_pin);
 }
 
+static int i2c_gpio_getsda_in(void *data)
+{
+	struct i2c_gpio_platform_data *pdata = data;
+
+	return gpio_get_value(pdata->sda_in_pin);
+}
+
 static int i2c_gpio_getscl(void *data)
 {
 	struct i2c_gpio_platform_data *pdata = data;
@@ -86,15 +92,16 @@ static int i2c_gpio_getscl(void *data)
 }
 
 static int of_i2c_gpio_get_pins(struct device_node *np,
-				unsigned int *sda_pin, unsigned int *scl_pin)
+				int *sda_pin, int *sda_in_pin, int *scl_pin)
 {
 	if (of_gpio_count(np) < 2)
 		return -ENODEV;
 
 	*sda_pin = of_get_gpio(np, 0);
 	*scl_pin = of_get_gpio(np, 1);
+	*sda_in_pin = of_get_gpio(np, 2);
 
-	if (*sda_pin == -EPROBE_DEFER || *scl_pin == -EPROBE_DEFER)
+	if (*sda_pin == -EPROBE_DEFER || *scl_pin == -EPROBE_DEFER || *sda_in_pin == -EPROBE_DEFER)
 		return -EPROBE_DEFER;
 
 	if (!gpio_is_valid(*sda_pin) || !gpio_is_valid(*scl_pin)) {
@@ -130,13 +137,13 @@ static int i2c_gpio_probe(struct platform_device *pdev)
 	struct i2c_gpio_platform_data *pdata;
 	struct i2c_algo_bit_data *bit_data;
 	struct i2c_adapter *adap;
-	unsigned int sda_pin, scl_pin;
+	int sda_pin, scl_pin, sda_in_pin;
 	int ret;
 
 	/* First get the GPIO pins; if it fails, we'll defer the probe. */
 	if (pdev->dev.of_node) {
 		ret = of_i2c_gpio_get_pins(pdev->dev.of_node,
-					   &sda_pin, &scl_pin);
+					   &sda_pin, &sda_in_pin, &scl_pin);
 		if (ret)
 			return ret;
 	} else {
@@ -144,6 +151,11 @@ static int i2c_gpio_probe(struct platform_device *pdev)
 			return -ENXIO;
 		pdata = dev_get_platdata(&pdev->dev);
 		sda_pin = pdata->sda_pin;
+		if (pdata->sda_is_output_only) {
+			sda_in_pin = pdata->sda_in_pin;
+		} else {
+			sda_in_pin = -EINVAL;
+		}
 		scl_pin = pdata->scl_pin;
 	}
 
@@ -160,6 +172,15 @@ static int i2c_gpio_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+	if (gpio_is_valid(sda_in_pin)) {
+		ret = devm_gpio_request(&pdev->dev, sda_in_pin, "sda-in");
+		if (ret) {
+			if (ret == -EINVAL)
+				ret = -EPROBE_DEFER;	/* Try again later */
+			return ret;
+		}
+	}
+
 	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
 	if (!priv)
 		return -ENOMEM;
@@ -170,13 +191,19 @@ static int i2c_gpio_probe(struct platform_device *pdev)
 	if (pdev->dev.of_node) {
 		pdata->sda_pin = sda_pin;
 		pdata->scl_pin = scl_pin;
+		if (gpio_is_valid(sda_in_pin)) {
+			pdata->sda_in_pin = sda_in_pin;
+			pdata->sda_is_output_only = 1;
+		} else {
+			pdata->sda_is_output_only = 0;
+		}
 		of_i2c_gpio_get_props(pdev->dev.of_node, pdata);
 	} else {
 		memcpy(pdata, dev_get_platdata(&pdev->dev), sizeof(*pdata));
 	}
 
-	if (pdata->sda_is_open_drain) {
-		gpio_direction_output(pdata->sda_pin, 1);
+	if (pdata->sda_is_open_drain || pdata->sda_is_output_only) {
+		gpio_direction_output(pdata->sda_pin, 0);
 		bit_data->setsda = i2c_gpio_setsda_val;
 	} else {
 		gpio_direction_input(pdata->sda_pin);
@@ -193,7 +220,14 @@ static int i2c_gpio_probe(struct platform_device *pdev)
 
 	if (!pdata->scl_is_output_only)
 		bit_data->getscl = i2c_gpio_getscl;
-	bit_data->getsda = i2c_gpio_getsda;
+
+	if (!pdata->sda_is_output_only) {
+		bit_data->getsda = i2c_gpio_getsda;
+	} else {
+		gpio_direction_input(pdata->sda_in_pin);
+		bit_data->getsda = i2c_gpio_getsda_in;
+	}
+		
 
 	if (pdata->udelay)
 		bit_data->udelay = pdata->udelay;
@@ -227,10 +261,17 @@ static int i2c_gpio_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, priv);
 
-	dev_info(&pdev->dev, "using pins %u (SDA) and %u (SCL%s)\n",
-		 pdata->sda_pin, pdata->scl_pin,
-		 pdata->scl_is_output_only
-		 ? ", no clock stretching" : "");
+	if (!pdata->sda_is_output_only) {
+		dev_info(&pdev->dev, "using pins %u (SDA) and %u (SCL%s)\n",
+			pdata->sda_pin, pdata->scl_pin,
+			pdata->scl_is_output_only
+			? ", no clock stretching" : "");
+	} else {
+		dev_info(&pdev->dev, "using pins %u (SDA out), %u (SDA in) and %u (SCL%s)\n",
+			pdata->sda_pin, pdata->sda_in_pin, pdata->scl_pin,
+			pdata->scl_is_output_only
+			? ", no clock stretching" : "");
+	}
 
 	return 0;
 }

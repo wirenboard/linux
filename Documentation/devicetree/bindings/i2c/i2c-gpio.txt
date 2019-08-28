@@ -2,7 +2,8 @@ Device-Tree bindings for i2c gpio driver
 
 Required properties:
 	- compatible = "i2c-gpio";
-	- gpios: sda and scl gpio
+	- gpios: sda and scl gpio, also optional third sda-in gpio
+		when sda input and output are two separate push-pull lines
 
 
 Optional properties:
@@ -18,6 +19,7 @@ i2c@0 {
 	compatible = "i2c-gpio";
 	gpios = <&pioA 23 0 /* sda */
 		 &pioA 24 0 /* scl */
+		 &pioA 25 0 /* sda input, optional */
 		>;
 	i2c-gpio,sda-open-drain;
 	i2c-gpio,scl-open-drain;
