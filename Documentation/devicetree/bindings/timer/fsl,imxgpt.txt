@@ -7,6 +7,13 @@ Required properties:
 - interrupts : A list of 4 interrupts; one per timer channel.
 - clocks : The clocks provided by the SoC to drive the timer.
 
+Optional properties:
+
+- pinctrl-0: For the i.MX GPT to support the Input Capture function,
+  	     the input capture channel pin groups must be listed here.
+- pinctrl-names: must be "default".
+
+
 Example:
 
 gpt1: timer@10003000 {
@@ -15,4 +22,25 @@ gpt1: timer@10003000 {
 	interrupts = <26>;
 	clocks = <&clks 46>, <&clks 61>;
 	clock-names = "ipg", "per";
+};
+
+
+Example with input capture channel 0 support:
+
+pinctrl_gpt_input_capture0: gptinputcapture0grp {
+	fsl,pins = <
+		MX6QDL_PAD_SD1_DAT0__GPT_CAPTURE1 0x1b0b0
+	>;
+};
+
+gpt: gpt@2098000 {
+	compatible = "fsl,imx6q-gpt", "fsl,imx31-gpt";
+	reg = <0x02098000 0x4000>;
+	interrupts = <0 55 IRQ_TYPE_LEVEL_HIGH>;
+	clocks = <&clks IMX6QDL_CLK_GPT_IPG>,
+		<&clks IMX6QDL_CLK_GPT_IPG_PER>,
+		<&clks IMX6QDL_CLK_GPT_3M>;
+	clock-names = "ipg", "per", "osc_per";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_gpt_input_capture0>;
 };
