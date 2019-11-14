@@ -434,7 +434,7 @@ dtb-$(CONFIG_SOC_IMX6UL) += \
 	imx6ul-wirenboard-evk.dtb \
 	imx6ul-wirenboard61.dtb \
 	imx6ul-wirenboard65.dtb \
-	imx6ul-wirenboard652.dtb
+	imx6ul-wirenboard660.dtb
 dtb-$(CONFIG_SOC_IMX7D) += \
 	imx7d-cl-som-imx7.dtb \
 	imx7d-colibri-eval-v3.dtb \
