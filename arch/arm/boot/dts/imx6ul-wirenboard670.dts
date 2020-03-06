@@ -1,0 +1,76 @@
+/dts-v1/;
+
+#include "imx6ul-wirenboard660.dts"
+
+/ {
+	model = "Wiren Board rev. 6.7.0 (i.MX6UL/ULL)";
+	compatible = "contactless,imx6ul-wirenboard670", "contactless,imx6ul-wirenboard660", "contactless,imx6ul-wirenboard65", "contactless,imx6ul-wirenboard61", "contactless,imx6ul-wirenboard60", "contactless,imx6ul-wirenboard-evk", "fsl,imx6ul-14x14-evk", "fsl,imx6ul";
+
+	
+};
+
+&pinctrl_w2_gpio {
+	fsl,pins = <
+		MX6UL_PAD_LCD_RESET__GPIO3_IO04	0x30b0
+		MX6UL_PAD_NAND_DQS__GPIO4_IO16	0x30b0
+	>;
+};
+
+&onewire_w2 {
+	gpios = <&gpio3 4 0>;
+};
+
+&pinctrl_uart4_rs485 {
+	fsl,pins = <
+		MX6UL_PAD_UART4_TX_DATA__UART4_DCE_TX   0x1b0b1
+		MX6UL_PAD_UART4_RX_DATA__UART4_DCE_RX   0x1b0b1
+		MX6UL_PAD_LCD_HSYNC__UART4_DCE_CTS   0x1b0b1
+		MX6UL_PAD_LCD_ENABLE__GPIO3_IO01   0xb0b0
+		MX6UL_PAD_SD1_DATA3__GPIO2_IO21   0xb0b0
+		MX6UL_PAD_SD1_DATA2__GPIO2_IO20   0xb0b0
+		MX6UL_PAD_UART2_RTS_B__GPIO1_IO23   0x30b0 /* CAN transceiver power, 100K Ohm Pull Down */
+		MX6UL_PAD_CSI_HSYNC__GPIO4_IO20    0x70b0 /* RS-485-2 failsafe bias, 47K Ohm Pull Up */
+	>;
+};
+
+&pinctrl_uart4_can {
+	fsl,pins = <
+		MX6UL_PAD_UART4_TX_DATA__UART4_DCE_TX   0x1b0b1
+		MX6UL_PAD_LCD_ENABLE__UART4_DCE_RX   0x1b0b1
+		MX6UL_PAD_UART4_RX_DATA__GPIO1_IO29   0xb0b0
+		MX6UL_PAD_SD1_DATA3__GPIO2_IO21   0xb0b0
+		MX6UL_PAD_SD1_DATA2__GPIO2_IO20   0xb0b0
+		MX6UL_PAD_LCD_HSYNC__GPIO3_IO02     0x30b0 /* RTS, 100K Ohm Pull Down */
+		MX6UL_PAD_UART2_RTS_B__GPIO1_IO23   0xf0b0 /* CAN transceiver power, 22K Ohm Pull Up */
+		MX6UL_PAD_CSI_HSYNC__GPIO4_IO20    0x30b0 /* RS-485-2 failsafe bias, 100K Ohm Pull Down  */
+	>;
+};
+
+&pinctrl_flexcan2{
+	fsl,pins = <
+		MX6UL_PAD_SD1_DATA3__FLEXCAN2_RX	0x1b020
+		MX6UL_PAD_SD1_DATA2__FLEXCAN2_TX	0x1b020
+		MX6UL_PAD_UART4_TX_DATA__GPIO1_IO28	0xb0b0
+		MX6UL_PAD_UART4_RX_DATA__GPIO1_IO29	0xb0b0
+		MX6UL_PAD_LCD_ENABLE__GPIO3_IO01	0xb0b0
+		MX6UL_PAD_LCD_HSYNC__GPIO3_IO02     0x30b0 /* RTS, 100K Ohm Pull Down */
+		MX6UL_PAD_UART2_RTS_B__GPIO1_IO23   0xf0b0 /* CAN transceiver power, 22K Ohm Pull Up */
+		MX6UL_PAD_CSI_HSYNC__GPIO4_IO20    0x30b0 /* RS-485-2 failsafe bias, 100K Ohm Pull Down  */
+	>;
+};
+
+&pinctrl_mod3_de_gpio  {
+	fsl,pins = <
+		MX6UL_PAD_LCD_CLK__GPIO3_IO00	0x30b0
+	>;
+};
+&pinctrl_uart7_ctsb {
+	fsl,pins = <
+		MX6UL_PAD_LCD_CLK__GPIO3_IO00  0x1b0b1
+	>;
+};
+
+// uart on mod3
+&uart7 {
+	rts-gpios = <&gpio3 0 GPIO_ACTIVE_HIGH>;
+};
