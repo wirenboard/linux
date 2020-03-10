@@ -74,3 +74,18 @@
 &uart7 {
 	rts-gpios = <&gpio3 0 GPIO_ACTIVE_HIGH>;
 };
+
+&iomuxc {
+	pinctrl_uart8: uart8grp {
+		fsl,pins = <
+			MX6UL_PAD_LCD_DATA21__UART8_DCE_RX   0x1b0b1
+			MX6UL_PAD_LCD_DATA20__UART8_DCE_TX   0x1b0b1
+		>;
+	};
+};
+
+
+&uart8 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart8>;
+};
