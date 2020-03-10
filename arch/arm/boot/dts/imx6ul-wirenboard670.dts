@@ -6,7 +6,7 @@
 	model = "Wiren Board rev. 6.7.0 (i.MX6UL/ULL)";
 	compatible = "contactless,imx6ul-wirenboard670", "contactless,imx6ul-wirenboard660", "contactless,imx6ul-wirenboard65", "contactless,imx6ul-wirenboard61", "contactless,imx6ul-wirenboard60", "contactless,imx6ul-wirenboard-evk", "fsl,imx6ul-14x14-evk", "fsl,imx6ul";
 
-	
+	/delete-node/ leds;
 };
 
 &pinctrl_w2_gpio {
