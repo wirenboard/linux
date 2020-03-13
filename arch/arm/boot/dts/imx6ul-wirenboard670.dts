@@ -9,6 +9,52 @@
 	/delete-node/ leds;
 };
 
+&iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_io_gpio>;
+
+	// uart6 is now on mod4 => should be disabled at boot
+	/delete-node/ pinctrl_uart6;
+
+	pinctrl_uart6_txrx: uart6txrxgrp {
+		fsl,pins = <
+			MX6UL_PAD_CSI_MCLK__UART6_DCE_TX	0x1b0b1
+			MX6UL_PAD_CSI_PIXCLK__UART6_DCE_RX	0x1b0b1
+		>;
+	};
+
+	pinctrl_uart6_ctsb: uart6ctsbgrp {
+		fsl,pins = <
+			MX6UL_PAD_CSI_VSYNC__GPIO4_IO19	0x1b0b1
+		>;
+	};
+
+	pinctrl_mod4_txrx_gpio: mod4gpiogrp-1 {
+		fsl,pins = <
+			MX6UL_PAD_CSI_MCLK__GPIO4_IO17		0x30b0
+			MX6UL_PAD_CSI_PIXCLK__GPIO4_IO18	0x30b0
+		>;
+	};
+
+	pinctrl_mod4_de_gpio: mod4gpiogrp-2 {
+		fsl,pins = <
+			MX6UL_PAD_CSI_VSYNC__GPIO4_IO19	0x30b0
+		>;
+	};
+
+	pinctrl_uart8: uart8grp {
+		fsl,pins = <
+			MX6UL_PAD_LCD_DATA21__UART8_DCE_RX   0x1b0b1
+			MX6UL_PAD_LCD_DATA20__UART8_DCE_TX   0x1b0b1
+		>;
+	};
+};
+
+&uart6 {
+	rts-gpios = <&gpio4 19 GPIO_ACTIVE_LOW>;
+	status = "disabled";
+};
+
 &pinctrl_w2_gpio {
 	fsl,pins = <
 		MX6UL_PAD_LCD_RESET__GPIO3_IO04	0x30b0
@@ -64,6 +110,7 @@
 		MX6UL_PAD_LCD_CLK__GPIO3_IO00	0x30b0
 	>;
 };
+
 &pinctrl_uart7_ctsb {
 	fsl,pins = <
 		MX6UL_PAD_LCD_CLK__GPIO3_IO00  0x1b0b1
@@ -72,18 +119,8 @@
 
 // uart on mod3
 &uart7 {
-	rts-gpios = <&gpio3 0 GPIO_ACTIVE_HIGH>;
+	rts-gpios = <&gpio3 0 GPIO_ACTIVE_LOW>;
 };
-
-&iomuxc {
-	pinctrl_uart8: uart8grp {
-		fsl,pins = <
-			MX6UL_PAD_LCD_DATA21__UART8_DCE_RX   0x1b0b1
-			MX6UL_PAD_LCD_DATA20__UART8_DCE_TX   0x1b0b1
-		>;
-	};
-};
-
 
 &uart8 {
 	pinctrl-names = "default";
