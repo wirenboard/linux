@@ -6,7 +6,27 @@
 	model = "Wiren Board rev. 6.7.0 (i.MX6UL/ULL)";
 	compatible = "contactless,imx6ul-wirenboard670", "contactless,imx6ul-wirenboard660", "contactless,imx6ul-wirenboard65", "contactless,imx6ul-wirenboard61", "contactless,imx6ul-wirenboard60", "contactless,imx6ul-wirenboard-evk", "fsl,imx6ul-14x14-evk", "fsl,imx6ul";
 
-	/delete-node/ leds;
+	/delete-node/ leds; // Removing led from Eth1
+
+	wirenboard {
+		gpios {
+			A1_IN {
+				io-gpios = <&gpio3 14 1>; /* inverted */
+			};
+
+			A2_IN {
+				io-gpios = <&gpio3 13 1>; /* inverted */
+			};
+
+			A3_IN {
+				io-gpios = <&gpio3 28 1>; /* inverted */
+			};
+
+			A4_IN {
+				io-gpios = <&gpio3 27 1>; /* inverted */
+			};
+		};
+    };
 };
 
 &iomuxc {
@@ -48,6 +68,34 @@
 			MX6UL_PAD_LCD_DATA20__UART8_DCE_TX   0x1b0b1
 		>;
 	};
+
+};
+
+&pinctrl_io_gpio	{	/* GPIOs for IN1 - IN4 have changed */
+	fsl,pins = <
+		MX6UL_PAD_LCD_DATA10__GPIO3_IO15	0x30b0 /* FET1 */
+		MX6UL_PAD_LCD_DATA11__GPIO3_IO16	0x30b0 /* FET2 */
+		MX6UL_PAD_LCD_DATA12__GPIO3_IO17	0x30b0 /* FET3 */
+		MX6UL_PAD_LCD_DATA13__GPIO3_IO18	0x30b0 /* FET4 */
+		/* MX6UL_PAD_CSI_DATA03__GPIO4_IO24	0x30b0 /* RESET_SIM900 */
+		MX6UL_PAD_LCD_DATA15__GPIO3_IO20	0x30b0 /* POWER_SIM900 */
+		/* MX6UL_PAD_LCD_DATA14__GPIO3_IO19	0x30b0 /* STATUS SIM900 */
+		MX6UL_PAD_LCD_DATA19__GPIO3_IO24	0x30b0 /* SIM select */
+		MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x70b0 /* Battery STAT1, pulled up */
+		MX6UL_PAD_UART1_RTS_B__GPIO1_IO19	0x70b0 /* Battery STAT2, pulled up */
+		MX6UL_PAD_JTAG_TDO__CCM_CLKO2	0xb0 /* 24MHz clock output */
+		MX6UL_PAD_UART3_RTS_B__GPIO1_IO27	0x30b0 /* 5V enable */
+		MX6UL_PAD_LCD_DATA04__GPIO3_IO09	0x30b0 /* V_OUT_ON */
+		MX6UL_PAD_LCD_DATA03__GPIO3_IO08	0x30b0 /* V_OUT_ST */
+		MX6UL_PAD_CSI_DATA02__GPIO4_IO23	0x70b0 /* RS-485-1 failsafe bias, pulled up */
+
+		MX6UL_PAD_LCD_DATA09__GPIO3_IO14 	0x30b0 /* IN1 */
+		MX6UL_PAD_LCD_DATA08__GPIO3_IO13 	0x30b0 /* IN2 */
+		MX6UL_PAD_LCD_DATA23__GPIO3_IO28 	0x30b0 /* IN3 */
+		MX6UL_PAD_LCD_DATA22__GPIO3_IO27 	0x30b0 /* IN4 */
+
+		MX6UL_PAD_JTAG_MOD__GPIO1_IO10		0x80000000 /* SPDIF_OUT connected to MODULE 2 TX PIN via 3K, must be high when i2c*/
+	>;
 };
 
 &uart6 {
