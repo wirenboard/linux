@@ -29,6 +29,34 @@
     };
 };
 
+&ecspi3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi3>;
+
+	cs-gpios = <&gpio4 12 GPIO_ACTIVE_LOW>;
+
+	dmas = <&sdma 7 7 1>, <&sdma 8 7 2>;
+	dma-names = "rx", "tx";
+	
+	status = "okay";
+
+	lcdspidev:	lcd-display@0{
+		compatible = "ilitek,ili9341";
+		reg = <0>;
+		status = "okay";
+
+		spi-max-frequency = <32000000>;
+		rotate = <270>;
+		bgr;
+		fps = <30>;
+		buswidth = <8>;
+		reset-gpios = <&gpio5 9 0>;
+		dc-gpios = <&gpio5 8 0>;
+		led-gpios = <&gpio3 23 1>;
+		debug = <0>;
+	};
+};
+
 &iomuxc {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_io_gpio>;
@@ -69,6 +97,23 @@
 		>;
 	};
 
+	pinctrl_ecspi3: ecspi3grp {
+		fsl,pins = <
+			MX6UL_PAD_NAND_CE1_B__ECSPI3_MOSI	0x100b1
+			MX6UL_PAD_NAND_CLE__ECSPI3_MISO	0x100b1
+			MX6UL_PAD_NAND_CE0_B__ECSPI3_SCLK	0x100b1
+			MX6UL_PAD_NAND_READY_B__GPIO4_IO12	0x1b0b1 /* SSO */
+		>;
+	};
+
+	pinctrl_spilcd: spilcdgrp {
+	fsl,pins = <
+		MX6UL_PAD_LCD_DATA18__GPIO3_IO23	0x30b0
+		MX6UL_PAD_SNVS_TAMPER7__GPIO5_IO07	0x30b0
+		MX6UL_PAD_SNVS_TAMPER8__GPIO5_IO08	0x30b0
+		MX6UL_PAD_SNVS_TAMPER9__GPIO5_IO09	0x30b0
+	>;
+	};
 };
 
 &pinctrl_io_gpio	{	/* GPIOs for IN1 - IN4 have changed */
@@ -152,6 +197,7 @@
 		MX6UL_PAD_CSI_HSYNC__GPIO4_IO20    0x30b0 /* RS-485-2 failsafe bias, 100K Ohm Pull Down  */
 	>;
 };
+
 
 &pinctrl_mod3_de_gpio  {
 	fsl,pins = <
