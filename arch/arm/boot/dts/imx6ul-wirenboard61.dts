@@ -909,6 +909,13 @@
 		>;
 	};
 
+	pinctrl_mod1_i2c_gpio: mod1i2cgpiogrp-1 {
+		fsl,pins = <
+			MX6UL_PAD_UART3_TX_DATA__GPIO1_IO24	0x70b0 /* SDA, 47K PU */
+			MX6UL_PAD_UART3_RX_DATA__GPIO1_IO25	0x70b0 /* SCL, 47K PU */
+		>;
+	};
+
 	pinctrl_mod2_txrx_gpio: mod2gpiogrp-1 {
 		fsl,pins = <
 			MX6UL_PAD_CSI_DATA00__GPIO4_IO21	0x30b0
@@ -922,6 +929,12 @@
 		>;
 	};
 
+	pinctrl_mod2_i2c_gpio: mod2i2cgpiogrp-1 {
+		fsl,pins = <
+			MX6UL_PAD_CSI_DATA00__GPIO4_IO21	0x70b0 /* SDA, 47K PU */
+			MX6UL_PAD_CSI_DATA01__GPIO4_IO22	0x70b0 /* SCL, 47K PU */
+		>;
+	};
 
 	pinctrl_mod3_txrx_gpio: mod3uartgpiogrp-1 {
 		fsl,pins = <
@@ -933,6 +946,13 @@
 	pinctrl_mod3_de_gpio: mod3uartgpiogrp-2 {
 		fsl,pins = <
 			MX6UL_PAD_LCD_DATA06__GPIO3_IO11	0x30b0
+		>;
+	};
+
+	pinctrl_mod3_i2c_gpio: mod3i2cgpiogrp-1 {
+		fsl,pins = <
+			MX6UL_PAD_LCD_DATA16__GPIO3_IO21	0x70b0 /* SDA, 47K PU */
+			MX6UL_PAD_LCD_DATA17__GPIO3_IO22	0x70b0 /* SCL, 47K PU */
 		>;
 	};
 
