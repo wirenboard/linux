@@ -15,6 +15,7 @@
 #include <linux/moduleparam.h>
 #include <linux/ioport.h>
 #include <linux/init.h>
+#include <linux/iopoll.h>
 #include <linux/console.h>
 #include <linux/gpio/consumer.h>
 #include <linux/sysrq.h>
@@ -1466,11 +1467,26 @@ void serial8250_em485_stop_tx(struct uart_8250_port *p)
 }
 EXPORT_SYMBOL_GPL(serial8250_em485_stop_tx);
 
+static inline int __get_lsr(struct uart_8250_port *p)
+{
+	return serial_in(p, UART_LSR);
+}
+
+static inline int __wait_for_empty(struct uart_8250_port *p, u64 timeout_us)
+{
+	int lsr;
+
+	return readx_poll_timeout(__get_lsr, p, lsr,
+				  (lsr & BOTH_EMPTY) == BOTH_EMPTY,
+				  0, timeout_us);
+}
+
 static enum hrtimer_restart serial8250_em485_handle_stop_tx(struct hrtimer *t)
 {
 	struct uart_8250_em485 *em485;
 	struct uart_8250_port *p;
 	unsigned long flags;
+	enum hrtimer_restart restart = HRTIMER_NORESTART;
 
 	em485 = container_of(t, struct uart_8250_em485, stop_tx_timer);
 	p = em485->port;
@@ -1478,13 +1494,27 @@ static enum hrtimer_restart serial8250_em485_handle_stop_tx(struct hrtimer *t)
 	serial8250_rpm_get(p);
 	spin_lock_irqsave(&p->port.lock, flags);
 	if (em485->active_timer == &em485->stop_tx_timer) {
+		/*
+		 * On 8250 without TEMT interrupt, check LSR state and
+		 * restart timer if not empty yet.
+		 */
+		if (!(p->capabilities & UART_CAP_TEMT)) {
+			int ret = __wait_for_empty(p, 100);
+
+			if (ret < 0) {
+				restart = HRTIMER_RESTART;
+				goto out;
+			}
+		}
+
 		p->rs485_stop_tx(p);
 		em485->active_timer = NULL;
 		em485->tx_stopped = true;
 	}
+out:
 	spin_unlock_irqrestore(&p->port.lock, flags);
 	serial8250_rpm_put(p);
-	return HRTIMER_NORESTART;
+	return restart;
 }
 
 static void start_hrtimer_ms(struct hrtimer *hrt, unsigned long msec)
@@ -1508,6 +1538,13 @@ static void __stop_tx_rs485(struct uart_8250_port *p)
 		em485->active_timer = &em485->stop_tx_timer;
 		start_hrtimer_ms(&em485->stop_tx_timer,
 				   p->port.rs485.delay_rts_after_send);
+	} else if (!(p->capabilities & UART_CAP_TEMT) &&
+		   __wait_for_empty(p, 100)) {
+		/* Short timer of 1us to check for clear fifos */
+		ktime_t tim = ktime_set(0, 1000);
+
+		em485->active_timer = &em485->stop_tx_timer;
+		hrtimer_start(&em485->stop_tx_timer, tim, HRTIMER_MODE_REL);
 	} else {
 		p->rs485_stop_tx(p);
 		em485->active_timer = NULL;
@@ -1530,11 +1567,15 @@ static inline void __stop_tx(struct uart_8250_port *p)
 		/*
 		 * To provide required timeing and allow FIFO transfer,
 		 * __stop_tx_rs485() must be called only when both FIFO and
-		 * shift register are empty. It is for device driver to enable
-		 * interrupt on TEMT.
+		 * shift register are empty. If 8250 port supports it,
+		 * it is for device driver to enable interrupt on TEMT.
+		 * Otherwise must loop-read until TEMT and THRE flags are set,
+		 * which happens in __stop_tx_rs485()
 		 */
-		if ((lsr & BOTH_EMPTY) != BOTH_EMPTY)
-			return;
+		if (p->capabilities & UART_CAP_TEMT) {
+			if ((lsr & BOTH_EMPTY) != BOTH_EMPTY)
+				return;
+		}
 
 		__stop_tx_rs485(p);
 	}
