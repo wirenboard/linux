@@ -91,7 +91,7 @@ static int bcm2835aux_serial_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	/* initialize data */
-	up.capabilities = UART_CAP_FIFO | UART_CAP_MINI;
+	up.capabilities = UART_CAP_FIFO | UART_CAP_MINI | UART_CAP_TEMT;
 	up.port.dev = &pdev->dev;
 	up.port.regshift = 2;
 	up.port.type = PORT_16550;
