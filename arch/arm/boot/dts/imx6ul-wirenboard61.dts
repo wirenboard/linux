@@ -341,7 +341,7 @@
 			   in above example) with channel name as in sysfs path
 			*/
 			A1 {
-				iio-device = <&adc1>; 
+				iio-device = <&adc1>;
 				iio-channel-name = "voltage4";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -351,7 +351,7 @@
 			};
 
 			A2 {
-				iio-device = <&adc1>; 
+				iio-device = <&adc1>;
 				iio-channel-name = "voltage2";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -361,7 +361,7 @@
 			};
 
 			A3 {
-				iio-device = <&adc1>; 
+				iio-device = <&adc1>;
 				iio-channel-name = "voltage1";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -371,7 +371,7 @@
 			};
 
 			A4 {
-				iio-device = <&adc1>; 
+				iio-device = <&adc1>;
 				iio-channel-name = "voltage3";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -381,7 +381,7 @@
 			};
 
 			Vin {
-				iio-device = <&adc1>; 
+				iio-device = <&adc1>;
 				iio-channel-name = "voltage8";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -391,7 +391,7 @@
 			};
 
 			5Vout {
-				iio-device = <&adc1>; 
+				iio-device = <&adc1>;
 				iio-channel-name = "voltage5";
 				divider-r1-ohms = <33000>;
 				divider-r2-ohms = <12000>;
@@ -566,7 +566,7 @@
 
 	dmas = <&sdma 3 7 1>, <&sdma 4 7 2>;
 	dma-names = "rx", "tx";
-	
+
 	status = "disabled";
 };
 
@@ -798,7 +798,7 @@
 			MX6UL_PAD_JTAG_TDO__CCM_CLKO2	0xb0 /* 24MHz clock output */
 			MX6UL_PAD_UART3_RTS_B__GPIO1_IO27	0x30b0 /* 5V enable */
 			MX6UL_PAD_LCD_DATA04__GPIO3_IO09	0x30b0 /* V_OUT_ON */
-			MX6UL_PAD_LCD_DATA03__GPIO3_IO08	0x30b0 /* V_OUT_ST */
+			MX6UL_PAD_LCD_DATA03__GPIO3_IO08	0xb0b0 /* V_OUT_ST, 100K Ohm PU */
 			MX6UL_PAD_CSI_DATA02__GPIO4_IO23        0x70b0 /* RS-485-1 failsafe bias, pulled up */
 
 			MX6UL_PAD_NAND_CE0_B__GPIO4_IO13 	0x30b0 /* IN1 */
