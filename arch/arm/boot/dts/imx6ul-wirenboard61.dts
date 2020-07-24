@@ -57,10 +57,12 @@
 			enable-active-high;
 		};
 
-		reg_usb2_vbus: regulator@2 {
+		/* WIFI_EN should be always 3.3V so Wi-Fi power control 
+		   is handled by USB hub PRTCTL pins */
+		reg_wifi_en_pullup: regulator@2 {
 			reg = <2>;
 			compatible = "regulator-fixed";
-			regulator-name = "usb2_vbus";
+			regulator-name = "wifi_en_pullup";
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
 
@@ -68,7 +70,8 @@
 			pinctrl-0 = <&pinctrl_usb2vbus_gpio>;
 
 			gpio = <&gpio3 10 0>;
-			/* active low */
+			enable-active-high;
+			regulator-always-on;
 		};
 	};
 
@@ -577,7 +580,6 @@
 };
 
 &usbotg2 {
-	vbus-supply = <&reg_usb2_vbus>;
 	dr_mode = "host";
 	disable-over-current;
 	status = "okay";
