@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb169) stable; urgency=medium
+
+  * i2c-wbio: add i2c bus recovery
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Wed, 07 Aug 2024 14:22:21 +0300
+
 linux-wb (5.10.35-wb168) stable; urgency=medium
 
   * add CAN SAE J1939 support built-in
