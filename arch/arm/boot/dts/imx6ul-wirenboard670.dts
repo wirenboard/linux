@@ -27,8 +27,10 @@
 			};
 		};
 
-		gsm {
+		gsm { /* WB6.7.x have gsm modem as a wbc-module => info at 'wirenboard' node and corresponding uart should be disabled at boot */
 			power-gpios = <&gpio5 4 0>;
+			status = "disabled";
+			model = "none";
 		};
 
     };
@@ -221,6 +223,7 @@
 	rts-gpios = <&gpio3 0 GPIO_ACTIVE_LOW>;
 };
 
+// uart on wbc-slot (modem)
 &uart8 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart8>;
