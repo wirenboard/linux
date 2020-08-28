@@ -344,7 +344,7 @@
 			   in above example) with channel name as in sysfs path
 			*/
 			A1 {
-				iio-device = <&adc1>;
+				iio-device = <&adc1>; 
 				iio-channel-name = "voltage4";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -354,7 +354,7 @@
 			};
 
 			A2 {
-				iio-device = <&adc1>;
+				iio-device = <&adc1>; 
 				iio-channel-name = "voltage2";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -364,7 +364,7 @@
 			};
 
 			A3 {
-				iio-device = <&adc1>;
+				iio-device = <&adc1>; 
 				iio-channel-name = "voltage1";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -374,7 +374,7 @@
 			};
 
 			A4 {
-				iio-device = <&adc1>;
+				iio-device = <&adc1>; 
 				iio-channel-name = "voltage3";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -384,7 +384,7 @@
 			};
 
 			Vin {
-				iio-device = <&adc1>;
+				iio-device = <&adc1>; 
 				iio-channel-name = "voltage8";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -394,7 +394,7 @@
 			};
 
 			5Vout {
-				iio-device = <&adc1>;
+				iio-device = <&adc1>; 
 				iio-channel-name = "voltage5";
 				divider-r1-ohms = <33000>;
 				divider-r2-ohms = <12000>;
@@ -569,7 +569,7 @@
 
 	dmas = <&sdma 3 7 1>, <&sdma 4 7 2>;
 	dma-names = "rx", "tx";
-
+	
 	status = "disabled";
 };
 
