@@ -61,6 +61,9 @@
 	>;
 };
 
+/* According to imx6ull Reference Manual, uart8 is in aips-3 on reg 0x02288000 */
+/delete-node/ &uart8;
+
 / {
 	soc {
 		aips3: aips-bus@02200000 {
@@ -69,6 +72,17 @@
 			#size-cells = <1>;
 			reg = <0x02200000 0x100000>;
 			ranges;
+
+			uart8: serial@02288000 {
+					compatible = "fsl,imx6ul-uart",
+								"fsl,imx6q-uart";
+					reg = <0x02288000 0x4000>;
+					interrupts = <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>;
+					clocks = <&clks IMX6UL_CLK_UART8_IPG>,
+						 <&clks IMX6UL_CLK_UART8_SERIAL>;
+					clock-names = "ipg", "per";
+					status = "disabled";
+				};
 
 			rngb: rngb@02284000 {
 				compatible = "fsl,imx6sl-rng", "fsl,imx-rng", "imx-rng", "fsl,imx25-rngb";
