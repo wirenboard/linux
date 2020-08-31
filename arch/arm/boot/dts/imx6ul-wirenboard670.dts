@@ -216,11 +216,6 @@
 	>;
 };
 
-// uart on mod3
-&uart7 {
-	rts-gpios = <&gpio3 0 GPIO_ACTIVE_LOW>;
-};
-
 &uart8 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart8>;
