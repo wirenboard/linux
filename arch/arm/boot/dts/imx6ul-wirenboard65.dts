@@ -4,14 +4,15 @@
 
 /* cleanup deprecated radio bindings */
 /delete-node/ &spi_rfm69;
-/delete-node/ &pinctrl_rfm69_spi_irq;
+/delete-node/ &pinctrl_rfm69_spi_irq; /* pins from radio are using in wb6.7.x */
 
 / {
 	model = "Wiren Board rev. 6.5 (i.MX6UL/ULL)";
 	compatible = "contactless,imx6ul-wirenboard65", "contactless,imx6ul-wirenboard61", "contactless,imx6ul-wirenboard60", "contactless,imx6ul-wirenboard-evk", "fsl,imx6ul-14x14-evk", "fsl,imx6ul";
 
-	aliases { /* radio has moved to wb-hwconf-manager & another spi bus */
-		/delete-property/ spi10;
+	spi_rfm69: spi-rfm69 {
+		/* Wb-dt-overlays's wb6-noradio overlay is looking into spi_rfm69 node.
+		Empty node here is to prevent overlay-applying conflicts. */
 	};
 
 	wirenboard {
@@ -20,8 +21,8 @@
 		/delete-node/ radio;
 
 		radio {
-			status = "disabled";
-			model = "none";
+			/* Wb-dt-overlays's wb6-noradio overlay is looking into radio node.
+			Empty node here is to prevent overlay-applying conflicts. */
 		};
 
 		gpios {
@@ -50,5 +51,3 @@
 		};
     };
 };
-
-
