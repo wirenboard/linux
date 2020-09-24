@@ -152,5 +152,7 @@ x509.genkey
 # Clang's compilation database file
 /compile_commands.json
 
+zImage-*
+initramfs_usbgadget
 _mod/
 
