@@ -417,3 +417,15 @@ dtb-$(CONFIG_SOC_IMX7ULP) += \
 	imx7ulp-evk.dtb
 dtb-$(CONFIG_SOC_IMXRT) += \
 	imxrt1050-evk.dtb
+
+# Wiren Board
+dtb-$(CONFIG_SOC_IMX6UL) += imx6ul-wirenboard-evk.dtb
+DTC_FLAGS_imx6ul-wirenboard-evk := -@
+dtb-$(CONFIG_SOC_IMX6UL) += imx6ul-wirenboard61.dtb
+DTC_FLAGS_imx6ul-wirenboard61 := -@
+dtb-$(CONFIG_SOC_IMX6UL) += imx6ul-wirenboard65.dtb
+DTC_FLAGS_imx6ul-wirenboard65 := -@
+dtb-$(CONFIG_SOC_IMX6UL) += imx6ul-wirenboard660.dtb
+DTC_FLAGS_imx6ul-wirenboard660 := -@
+dtb-$(CONFIG_SOC_IMX6UL) += imx6ul-wirenboard670.dtb
+DTC_FLAGS_imx6ul-wirenboard670 := -@
