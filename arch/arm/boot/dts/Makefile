@@ -626,6 +626,11 @@ dtb-$(CONFIG_SOC_IMX6UL) += \
 	imx6ul-tx6ul-0010.dtb \
 	imx6ul-tx6ul-0011.dtb \
 	imx6ul-tx6ul-mainboard.dtb \
+	imx6ul-wirenboard-evk.dtb \
+	imx6ul-wirenboard61.dtb \
+	imx6ul-wirenboard65.dtb \
+	imx6ul-wirenboard660.dtb \
+	imx6ul-wirenboard670.dtb \
 	imx6ull-14x14-evk.dtb \
 	imx6ull-colibri-eval-v3.dtb \
 	imx6ull-colibri-wifi-eval-v3.dtb \
@@ -705,11 +710,18 @@ dtb-$(CONFIG_ARCH_MXS) += \
 	imx28-eukrea-mbmx283lc.dtb \
 	imx28-eukrea-mbmx287lc.dtb \
 	imx28-evk.dtb \
+	imx28-ev-dbg.dtb \
 	imx28-m28cu3.dtb \
 	imx28-m28evk.dtb \
 	imx28-sps1.dtb \
 	imx28-ts4600.dtb \
-	imx28-tx28.dtb
+	imx28-tx28.dtb \
+	imx28-wirenboard50.dtb \
+	imx28-wirenboard52.dtb \
+	imx28-wirenboard52-functest.dtb \
+	imx28-wirenboard55.dtb \
+	imx28-wirenboard58.dtb \
+	imx28-wirenboard5x-usbfw.dtb
 dtb-$(CONFIG_ARCH_NOMADIK) += \
 	ste-nomadik-s8815.dtb \
 	ste-nomadik-nhk15.dtb
