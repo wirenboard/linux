@@ -40,6 +40,11 @@ static int imx6sx_enter_wait(struct cpuidle_device *dev,
 		cpu_do_idle();
 		break;
 	case 2:
+		if (cpu_is_imx6ull()) {
+			cpu_do_idle();
+			break;
+		}
+
 		imx6_enable_rbc(true);
 		imx_gpc_set_arm_power_in_lpm(true);
 		imx_set_cpu_jump(0, v7_cpu_resume);
@@ -93,7 +98,7 @@ static struct cpuidle_driver imx6sx_cpuidle_driver = {
 			.desc = "ARM power off",
 		},
 	},
-	.state_count = 3,
+	.state_count = 2,
 	.safe_state_index = 0,
 };
 
