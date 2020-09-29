@@ -38,4 +38,8 @@ config PPS_CLIENT_GPIO
 	  specifying the GPIO pin and other options, usually in your board
 	  setup.
 
+config PPS_CLIENT_IMX_GPT
+	tristate "PPS client using i.MX GPT"
+	depends on PPS
+
 endif

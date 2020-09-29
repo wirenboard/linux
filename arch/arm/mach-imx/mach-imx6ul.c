@@ -14,9 +14,12 @@
 #include <linux/phy.h>
 #include <linux/pm_opp.h>
 #include <linux/regmap.h>
+#include <linux/mxc_icap.h>
+#include <linux/interrupt.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/system_info.h>
+#include <linux/math64.h>
 
 #include "common.h"
 #include "cpuidle.h"
@@ -198,6 +201,30 @@ static void __init imx6ul_init_irq(void)
 	imx6_pm_ccm_init("fsl,imx6ul-ccm");
 }
 
+static void gpt_handler(int chan, void * dev_id, ktime_t event)
+{
+	static s64 prev_ns = 0;
+	static s64 start_ns = 0;
+	static int cnt = 0;
+	s64 curr_ns = ktime_to_ns(event);
+	if (curr_ns - prev_ns > 1000000000) {
+		// reset
+		cnt = 0;
+		start_ns = curr_ns;
+	} else {
+		cnt += 1;
+		if (cnt % 10 == 0) {
+			printk("got %d events, period: %lld ns\n", cnt,  
+				div64_long((curr_ns - start_ns), cnt)
+			);
+			cnt = 0;
+			start_ns = curr_ns;
+		}
+	}
+
+	prev_ns = curr_ns;
+}
+
 static void __init imx6ul_init_late(void)
 {
 	imx6sx_cpuidle_init();
@@ -206,6 +233,8 @@ static void __init imx6ul_init_late(void)
 		imx6ul_opp_init();
 		platform_device_register_simple("imx6q-cpufreq", -1, NULL, 0);
 	}
+
+	// mxc_request_input_capture(0, gpt_handler, IRQF_TRIGGER_RISING, 0);
 }
 
 static const char * const imx6ul_dt_compat[] __initconst = {
