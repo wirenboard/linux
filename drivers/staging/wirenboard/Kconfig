@@ -1,0 +1,3 @@
+config IMX_GPT_FREQ
+    depends on CLKSRC_IMX_GPT
+	tristate "Frequency measurement using IMX GPT Timer capture/compare"

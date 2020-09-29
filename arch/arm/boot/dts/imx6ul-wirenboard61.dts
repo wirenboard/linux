@@ -608,6 +608,17 @@
 	vref-supply = <&reg_vref_3v3>;
 };
 
+/* Only one GPT is supported by kernel. Use the second one since we use GPT_CAPTURE pin connected to it */
+&gpt1 {
+	status = "disabled";
+	compatible = "fsl,imx6ul-gpt", "fsl,imx6sx-gpt", "simple-bus";
+};
+
+&gpt2 {
+	status = "okay";
+	compatible = "fsl,imx6ul-gpt", "fsl,imx6sx-gpt", "simple-bus";
+};
+
 &iomuxc {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_io_gpio>;
@@ -841,6 +852,13 @@
 			MX6UL_PAD_JTAG_TDI__GPIO1_IO13	0x30b0
 		>;
 	};
+
+	pinctrl_w1_gpt_capture: w1grp {
+		fsl,pins = <
+			MX6UL_PAD_JTAG_TMS__GPT2_CAPTURE1 0x1b0b0
+		>;
+	};
+
 
 	pinctrl_w2_gpio: w2grp {
 		fsl,pins = <
