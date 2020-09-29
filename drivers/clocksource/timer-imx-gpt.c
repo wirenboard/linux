@@ -665,7 +665,7 @@ int mxc_request_input_capture(unsigned int chan, mxc_icap_handler_t handler,
 
 	/* initialize a timecounter for the input capture */
 	start_cycles = mxc_read_sched_clock();
-	timecounter_init(&ic->tc, &ic->cc, ktime_get_ns());
+	timecounter_init(&ic->tc, &ic->cc, ktime_get_raw_ns());
 	/*
 	 * timecounter_init() read the last captured timer count, but
 	 * that's not the start cycle counter, so update it with the
@@ -799,6 +799,7 @@ static int mxc_timer_probe(struct platform_device *pdev)
 	struct icap_channel *ic;
 	int i;
 
+	printk("mxc_timer_probe\n");
 	/* setup the input capture channels */
 	for (i = 0; i < 2; i++) {
 		ic = &icap_channel[i];
