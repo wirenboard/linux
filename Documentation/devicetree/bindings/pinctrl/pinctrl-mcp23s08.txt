@@ -47,8 +47,12 @@ Optional properties:
   - first cell is the pin number
   - second cell is used to specify flags.
 - interrupt-controller: Marks the device node as a interrupt controller.
-- drive-open-drain: Sets the ODR flag in the IOCON register. This configures
+- drive-open-drain: 
+- microchip,irq-open-drain:
+	Sets the ODR flag in the IOCON register. This configures
         the IRQ output as open drain active low.
+- linux,gpio-base:
+	If set, assign to gpio_chip::base.
 
 Optional device specific properties:
 - microchip,irq-mirror: Sets the mirror flag in the IOCON register. Devices
