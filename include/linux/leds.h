@@ -519,6 +519,7 @@ struct gpio_led {
 	unsigned	panic_indicator : 1;
 	unsigned	default_state : 2;
 	unsigned	retain_state_shutdown : 1;
+	unsigned	open_drain : 1;
 	/* default_state should be one of LEDS_GPIO_DEFSTATE_(ON|OFF|KEEP) */
 	struct gpio_desc *gpiod;
 };
