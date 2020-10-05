@@ -19,6 +19,8 @@
 #define TOG	0xc
 
 #define PWM_CTRL		0x0
+#define PWM_CTRL_OUTPUT_CUTOFF_EN	(1 << 9)
+
 #define PWM_ACTIVE0		0x10
 #define PWM_PERIOD0		0x20
 #define  PERIOD_PERIOD(p)	((p) & 0xffff)
@@ -152,6 +154,8 @@ static int mxs_pwm_probe(struct platform_device *pdev)
 	ret = stmp_reset_block(mxs->base);
 	if (ret)
 		return dev_err_probe(&pdev->dev, ret, "failed to reset PWM\n");
+
+	writel(PWM_CTRL_OUTPUT_CUTOFF_EN, mxs->base + PWM_CTRL + SET);
 
 	ret = pwmchip_add(&mxs->chip);
 	if (ret < 0) {
