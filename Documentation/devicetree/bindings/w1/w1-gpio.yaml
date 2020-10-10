@@ -19,6 +19,13 @@ properties:
       - description: Data I/O pin
       - description: Enable pin for an external pull-up resistor
 
+  pu-gpios:
+    minItems: 1
+    maxItems: 1
+    items:
+      - description: External strong pull-up enable pin
+      - description: Enable pin for an external strong pull-up FET. if not specified, data I/O pin will be used in output mode to emulate strong pull-up.
+
   linux,open-drain:
     type: boolean
     description: >
