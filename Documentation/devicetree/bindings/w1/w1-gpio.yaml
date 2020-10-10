@@ -24,6 +24,14 @@ properties:
     description: >
       If specified, the data pin is considered in open-drain mode.
 
+  pu-gpios:
+    minItems: 1
+    items:
+      - description: |
+          optional GPIO to control external "strong pull-up" FET.
+          If not specified, data I/O pin will be used in output mode to
+          emulate strong pull-up.
+
 required:
   - compatible
   - gpios
@@ -38,6 +46,7 @@ examples:
     onewire {
         compatible = "w1-gpio";
         gpios = <&gpio 0 GPIO_ACTIVE_HIGH>;
+        pu-gpios = <&gpio 123 0>;
     };
 
 ...
