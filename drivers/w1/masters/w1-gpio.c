@@ -20,6 +20,7 @@
 struct w1_gpio_ddata {
 	struct gpio_desc *gpiod;
 	struct gpio_desc *pullup_gpiod;
+	struct gpio_desc *strong_pullup_gpiod;
 	unsigned int pullup_duration;
 };
 
@@ -42,6 +43,25 @@ static u8 w1_gpio_set_pullup(void *data, int delay)
 			 * open drain emulation in the GPIO library.
 			 */
 			gpiod_set_value(ddata->gpiod, 1);
+		}
+		ddata->pullup_duration = 0;
+	}
+
+	return 0;
+}
+
+static u8 w1_gpio_set_strong_pullup(void *data, int delay)
+{
+	struct w1_gpio_ddata *ddata = data;
+
+	if (delay) {
+		ddata->pullup_duration = delay;
+	} else {
+		if (ddata->pullup_duration) {
+			/* Strong pull-up is supported as a push-pull, active high. */
+			gpiod_set_value(ddata->strong_pullup_gpiod, 1);	/* activate pull-up */
+			msleep(ddata->pullup_duration);
+			gpiod_set_value(ddata->strong_pullup_gpiod, 0);  /* deactivate */
 		}
 		ddata->pullup_duration = 0;
 	}
@@ -113,6 +133,15 @@ static int w1_gpio_probe(struct platform_device *pdev)
 		return PTR_ERR(ddata->pullup_gpiod);
 	}
 
+	/* IS_ERR if error, NULL if not specified */
+	ddata->strong_pullup_gpiod =
+		devm_gpiod_get_optional(dev, "pu", GPIOD_OUT_LOW);
+
+	if (IS_ERR(ddata->strong_pullup_gpiod)) {
+		dev_err(dev, "devm_gpiod_get_optional (strong pullup) failed\n");
+		return PTR_ERR(ddata->strong_pullup_gpiod);
+	}
+
 	master->data = ddata;
 	master->read_bit = w1_gpio_read_bit;
 	gpiod_direction_output(ddata->gpiod, 1);
@@ -124,7 +153,9 @@ static int w1_gpio_probe(struct platform_device *pdev)
 	 * high using a raw accessor to provide pull-up for the w1
 	 * line.
 	 */
-	if (gflags == GPIOD_OUT_LOW_OPEN_DRAIN)
+	if (ddata->strong_pullup_gpiod)
+		master->set_pullup = w1_gpio_set_strong_pullup;
+	else if (gflags == GPIOD_OUT_LOW_OPEN_DRAIN)
 		master->set_pullup = w1_gpio_set_pullup;
 
 	err = w1_add_master_device(master);
@@ -135,6 +166,9 @@ static int w1_gpio_probe(struct platform_device *pdev)
 
 	if (ddata->pullup_gpiod)
 		gpiod_set_value(ddata->pullup_gpiod, 1);
+
+	if (ddata->strong_pullup_gpiod)
+		gpiod_set_value(ddata->strong_pullup_gpiod, 0);
 
 	platform_set_drvdata(pdev, master);
 
