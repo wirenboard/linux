@@ -15,11 +15,15 @@ Optional properties:
 
 Also refer to the generic w1.txt document.
 
+ - pu-gpios: optional GPIO to control external "strong pull-up" FET.
+			 if not specified, data I/O pin will be used in output mode to
+			 emulate strong pull-up.
 Examples:
 
 	onewire {
 		compatible = "w1-gpio";
 		gpios = <&gpio 0 GPIO_ACTIVE_HIGH>;
+		pu-gpios = <&gpio 123 0>;
 
 		battery {
 			// ...
