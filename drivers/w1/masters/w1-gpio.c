@@ -44,6 +44,32 @@ static u8 w1_gpio_set_pullup(void *data, int delay)
 	return 0;
 }
 
+static u8 w1_gpio_set_strong_pullup(void *data, int delay)
+{
+	struct w1_gpio_platform_data *pdata = data;
+
+	if (delay) {
+		pdata->pullup_duration = delay;
+	} else {
+		if (pdata->pullup_duration) {
+			/*
+			 * This will OVERRIDE open drain emulation and force-pull
+			 * the line high for some time.
+			 */
+			gpiod_set_raw_value(pdata->strong_pullup_gpiod, 1);
+			msleep(pdata->pullup_duration);
+			/*
+			 * This will simply set the line as input since we are doing
+			 * open drain emulation in the GPIO library.
+			 */
+			gpiod_set_value(pdata->strong_pullup_gpiod, 1);
+		}
+		pdata->pullup_duration = 0;
+	}
+
+	return 0;
+}
+
 static void w1_gpio_write_bit(void *data, u8 bit)
 {
 	struct w1_gpio_platform_data *pdata = data;
@@ -120,6 +146,15 @@ static int w1_gpio_probe(struct platform_device *pdev)
 		return PTR_ERR(pdata->pullup_gpiod);
 	}
 
+	/* IS_ERR if error, NULL if not specified */
+	pdata->strong_pullup_gpiod =
+		devm_gpiod_get_optional(dev, "pu", GPIOD_OUT_LOW);
+
+	if (IS_ERR(pdata->strong_pullup_gpiod)) {
+		dev_err(dev, "devm_gpiod_get_optional (strong pullup) failed\n");
+		return PTR_ERR(pdata->strong_pullup_gpiod);
+	}
+
 	master->data = pdata;
 	master->read_bit = w1_gpio_read_bit;
 	gpiod_direction_output(pdata->gpiod, 1);
@@ -131,7 +166,9 @@ static int w1_gpio_probe(struct platform_device *pdev)
 	 * high using a raw accessor to provide pull-up for the w1
 	 * line.
 	 */
-	if (gflags == GPIOD_OUT_LOW_OPEN_DRAIN)
+	if (pdata->strong_pullup_gpiod)
+		master->set_pullup = w1_gpio_set_strong_pullup;
+	else if (gflags == GPIOD_OUT_LOW_OPEN_DRAIN)
 		master->set_pullup = w1_gpio_set_pullup;
 
 	err = w1_add_master_device(master);
@@ -140,11 +177,16 @@ static int w1_gpio_probe(struct platform_device *pdev)
 		return err;
 	}
 
+	/* Three different pullups. Why so many? */
+
 	if (pdata->enable_external_pullup)
 		pdata->enable_external_pullup(1);
 
 	if (pdata->pullup_gpiod)
 		gpiod_set_value(pdata->pullup_gpiod, 1);
+
+	if (pdata->strong_pullup_gpiod)
+		gpiod_set_value(pdata->strong_pullup_gpiod, 0);
 
 	platform_set_drvdata(pdev, master);
 
