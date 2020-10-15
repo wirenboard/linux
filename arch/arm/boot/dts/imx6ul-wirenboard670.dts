@@ -153,15 +153,29 @@
 	status = "disabled";
 };
 
-&pinctrl_w2_gpio {
+// w1 and w2 have changed places
+&pinctrl_w1_gpio {
 	fsl,pins = <
 		MX6UL_PAD_LCD_RESET__GPIO3_IO04	0x30b0
 		MX6UL_PAD_NAND_DQS__GPIO4_IO16	0x30b0
 	>;
 };
 
-&onewire_w2 {
+&pinctrl_w2_gpio {
+	fsl,pins = <
+		MX6UL_PAD_JTAG_TMS__GPIO1_IO11	0x30b0
+		MX6UL_PAD_JTAG_TDI__GPIO1_IO13	0x30b0
+	>;
+};
+
+&onewire_w1 {
 	gpios = <&gpio3 4 0>;
+	pu-gpios = <&gpio4 16 0>;
+};
+
+&onewire_w2 {
+	gpios = <&gpio1 11 0>;
+	pu-gpios = <&gpio1 13 0>;
 };
 
 &pinctrl_uart4_rs485 {
