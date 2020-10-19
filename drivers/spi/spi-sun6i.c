@@ -21,6 +21,8 @@
 
 #include <linux/spi/spi.h>
 
+#define SUN6I_AUTOSUSPEND_TIMEOUT	2000
+
 #define SUN6I_FIFO_DEPTH		128
 #define SUN8I_FIFO_DEPTH		64
 
@@ -504,9 +506,10 @@ static int sun6i_spi_probe(struct platform_device *pdev)
 		goto err_free_master;
 	}
 
+	pm_runtime_set_autosuspend_delay(&pdev->dev, SUN6I_AUTOSUSPEND_TIMEOUT);
+	pm_runtime_use_autosuspend(&pdev->dev);
 	pm_runtime_set_active(&pdev->dev);
 	pm_runtime_enable(&pdev->dev);
-	pm_runtime_idle(&pdev->dev);
 
 	ret = devm_spi_register_master(&pdev->dev, master);
 	if (ret) {
