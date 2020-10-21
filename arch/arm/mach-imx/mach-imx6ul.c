@@ -25,28 +25,20 @@ static void imx6ul_get_serial(void)
 	struct device_node *np;
 	void __iomem *base;
 
-	/* imx6ull.dtsi overrides imx6ul.dtsi compatible, changing it to "fsl,imx6ull-ocotp" */
-	if (of_machine_is_compatible("fsl,imx6ul"))
-		np = of_find_compatible_node(NULL, NULL, "fsl,imx6ul-ocotp");
-	else if (of_machine_is_compatible("fsl,imx6ull"))
-		np = of_find_compatible_node(NULL, NULL, "fsl,imx6ull-ocotp");
-	else
-		pr_err("mach-imx6ul: unknown machine compatibility\n");
-	if (!np)
-	{
-		pr_warn("mach-imx6ul: failed to find ocotp node\n");
+	np = of_find_compatible_node(NULL, NULL, "fsl,imx6ul-ocotp");
+	if (!np) {
+		pr_warn("failed to find ocotp node\n");
 		return;
 	}
 
 	base = of_iomap(np, 0);
 	if (!base) {
-		pr_warn("mach-imx6ul: failed to map ocotp\n");
+		pr_warn("failed to map ocotp\n");
 		goto put_node;
 	}
 
 	system_serial_high = readl_relaxed(base + OCOTP_CFG0);
 	system_serial_low = readl_relaxed(base + OCOTP_CFG1);
-        pr_info("mach-imx6ul: system_serial_high=0x%X system_serial_low=0x%X", system_serial_high, system_serial_low);
 
 	iounmap(base);
 
