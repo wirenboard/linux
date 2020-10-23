@@ -9,6 +9,7 @@
 #include <linux/regmap.h>
 #include <linux/slab.h>
 #include <linux/sys_soc.h>
+#include <asm/system_info.h>
 
 #include <soc/imx/cpu.h>
 #include <soc/imx/revision.h>
@@ -156,7 +157,10 @@ static int __init imx_soc_device_init(void)
 		} else {
 			regmap_read(ocotp, OCOTP_UID_H, &val);
 			soc_uid = val;
+			/* Wirenboard and mainline commits conflict in order of high and low words. Keep Wirenboard order for system_serial_high, low */
+			system_serial_low = val;
 			regmap_read(ocotp, OCOTP_UID_L, &val);
+			system_serial_high = val;
 			soc_uid <<= 32;
 			soc_uid |= val;
 		}
