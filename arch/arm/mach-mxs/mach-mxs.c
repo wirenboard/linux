@@ -383,6 +383,7 @@ static void __init mxs_machine_init(void)
 	struct device *parent;
 	struct soc_device *soc_dev;
 	struct soc_device_attribute *soc_dev_attr;
+	u64 soc_uid = 0;
 	const u32 *ocotp = mxs_get_ocotp();
 	int ret;
 
@@ -400,14 +401,22 @@ static void __init mxs_machine_init(void)
 	soc_dev_attr->revision = mxs_get_revision();
 
 	if (socid == HW_DIGCTL_CHIPID_MX23) {
-		system_serial_low = ocotp[HW_OCOTP_OPS3];
+		soc_uid = system_serial_low = ocotp[HW_OCOTP_OPS3];
 	} else if (socid == HW_DIGCTL_CHIPID_MX28) {
-		system_serial_high = ocotp[HW_OCOTP_OPS2];
+		soc_uid = system_serial_high = ocotp[HW_OCOTP_OPS2];
+		soc_uid <<= 32;
 		system_serial_low = ocotp[HW_OCOTP_OPS3];
+		soc_uid |= system_serial_low;
 	}
 
+	soc_dev_attr->serial_number = kasprintf(GFP_KERNEL, "%016llX", soc_uid);
+	if (!soc_dev_attr->serial_number)
+		return;
+
 	soc_dev = soc_device_register(soc_dev_attr);
+
 	if (IS_ERR(soc_dev)) {
+		kfree(soc_dev_attr->serial_number);
 		kfree(soc_dev_attr->revision);
 		kfree(soc_dev_attr);
 		return;
