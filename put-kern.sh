@@ -4,7 +4,8 @@
 #Модули берутся из каталога _mod - make modules_install должен быть уже сделан.
 #KERN получаем из include/generated/uts_release.h после успешной сборки.
 
-DTB=imx6ul-wirenboard660.dtb
+DTB1=imx6ul-wirenboard660.dtb
+DTB2=imx28-wirenboard52.dtb
 TAR=mod.tgz
 TARPATH=_mod/lib/modules
 TARFULL=$TARPATH/$TAR
@@ -26,7 +27,8 @@ tar -czf $TARFULL -C $TARPATH --exclude=build --exclude=source --exclude=./$TAR 
 try ./sftp2.sh "\
 mkdir /boot/$KERN\n
 put arch/arm/boot/zImage /boot/$KERN/zImage \n
-put arch/arm/boot/dts/$DTB /boot/$KERN/$DTB \n
+put arch/arm/boot/dts/$DTB1 /boot/$KERN/$DTB1 \n
+put arch/arm/boot/dts/$DTB2 /boot/$KERN/$DTB2 \n
 put $TARFULL /lib/modules/$TAR \n
 "
 #Распаковываем архив с модулями.

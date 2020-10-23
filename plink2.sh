@@ -5,7 +5,8 @@
 
 set -x
 
+[ -z "$TARGET"] && TARGET="wb5"
 [ -z "$BKEY" ] && BKEY="/home/ivan/my/sshkeys/zynq_root/id_rsa.ppk"
 
-plink wb6 -l root -i $BKEY -batch $1
+plink $TARGET -l root -i $BKEY -batch $1
 

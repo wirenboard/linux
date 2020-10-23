@@ -10,10 +10,11 @@ set -x
 
 TMPF=_sftp2.cmd
 
+[ -z "$TARGET"] && TARGET="wb5"
 [ -z "$BKEY" ] && BKEY="/home/ivan/my/sshkeys/zynq_root/id_rsa.ppk"
 
 echo $1 > $TMPF
 
-psftp wb6 -l root -i $BKEY -be -b $TMPF
+psftp $TARGET -l root -i $BKEY -be -b $TMPF
 
 rm $TMPF
