@@ -5,6 +5,8 @@
 # ./sftp2.sh "
 # put a.a \n
 # "
+#Переменная TARGET задает имя хоста.
+#Переменная TPORT="-P 2222" задает имя порта, или пусто, если порт по умолчанию.
 
 set -x
 
@@ -15,6 +17,6 @@ TMPF=_sftp2.cmd
 
 echo $1 > $TMPF
 
-psftp $TARGET -l root -i $BKEY -be -b $TMPF
+psftp $TARGET $PORT -l root -i $BKEY -be -b $TMPF
 
 rm $TMPF

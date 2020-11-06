@@ -5,7 +5,7 @@
 #KERN получаем из include/generated/uts_release.h после успешной сборки.
 
 DTB1=imx6ul-wirenboard660.dtb
-DTB2=imx28-wirenboard52.dtb
+DTB2=imx28-wirenboard58.dtb
 TAR=mod.tgz
 TARPATH=_mod/lib/modules
 TARFULL=$TARPATH/$TAR
