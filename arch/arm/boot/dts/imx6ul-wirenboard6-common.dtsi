@@ -105,7 +105,7 @@
     };
 
 	spi_rfm69: spi-rfm69 {
-		status = "disabled"
+		status = "disabled";
 	};
 
     mcp6542: watchdog {
