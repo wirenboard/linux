@@ -20,6 +20,8 @@
 		spi10 = &spi_rfm69;
 		usb0 = &usbotg1;
 		usb1 = &usbotg2;
+		mmc0 = &usdhc2;
+		mmc1 = &usdhc1;
 	};
 
 	chosen {
