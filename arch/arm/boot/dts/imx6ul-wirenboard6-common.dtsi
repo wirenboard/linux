@@ -115,6 +115,10 @@
         gpio-recv-disable-filter;
     };
 
+	spi_rfm69: spi-rfm69 {
+		status = "disabled"
+	};
+
     mcp6542: watchdog {
         /* external watchdog timer using mcp6542  */
         compatible = "linux,wdt-gpio";
