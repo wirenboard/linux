@@ -31,6 +31,18 @@
 		gpios = <&gpio4 12 0>;
 		pu-gpios = <&gpio4 16 0>;
 	};
+
+    leds {
+        compatible = "gpio-leds";
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_eth_led_pin_gpio>;
+
+        eth2_yellow {
+            label = "eth2_yellow";
+            gpios = <&gpio3 4 1>;
+            linux,default-trigger = "default-off";
+        };
+    };
 };
 
 &spi_rfm69 {

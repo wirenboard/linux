@@ -71,17 +71,6 @@
 		};
 	};
 
-    leds {
-        compatible = "gpio-leds";
-        pinctrl-names = "default";
-        pinctrl-0 = <&pinctrl_eth_led_pin_gpio>;
-
-        eth2_yellow {
-            label = "eth2_yellow";
-            gpios = <&gpio3 4 1>;
-            linux,default-trigger = "default-off";
-        };
-    };
 
     leds-pwm {
         compatible = "pwm-leds";
@@ -779,13 +768,6 @@
 		fsl,pins = <
 			MX6UL_PAD_CSI_DATA00__GPIO4_IO21	0x70b0 /* SDA, 47K PU */
 			MX6UL_PAD_CSI_DATA01__GPIO4_IO22	0x70b0 /* SCL, 47K PU */
-		>;
-	};
-
-	pinctrl_mod3_txrx_gpio: mod3uartgpiogrp-1 {
-		fsl,pins = <
-			MX6UL_PAD_LCD_DATA16__GPIO3_IO21	0x30b0
-			MX6UL_PAD_LCD_DATA17__GPIO3_IO22	0x30b0
 		>;
 	};
 };
