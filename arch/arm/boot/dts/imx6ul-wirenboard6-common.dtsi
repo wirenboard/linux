@@ -12,13 +12,13 @@
 #include "imx6ull.dtsi"
 
 / {
-    aliases {
+	aliases {
 		spi10 = &spi_rfm69;
 		usb0 = &usbotg1;
 		usb1 = &usbotg2;
 	};
 
-    chosen {
+	chosen {
 		stdout-path = &uart1;
 	};
 
@@ -26,7 +26,7 @@
 		reg = <0x80000000 0x20000000>;
 	};
 
-    regulators {
+	regulators {
 		compatible = "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -53,7 +53,7 @@
 			enable-active-high;
 		};
 
-        /* WIFI_EN should be always 3.3V so Wi-Fi power control
+		/* WIFI_EN should be always 3.3V so Wi-Fi power control
 		   is handled by USB hub PRTCTL pins */
 		reg_wifi_en_pullup: regulator@2 {
 			reg = <2>;
@@ -71,59 +71,70 @@
 		};
 	};
 
+	/* Enable 1-wire network on terminal block W1 */
+	onewire_w1: onewire_w1 {
+		compatible = "w1-gpio";
+		pinctrl-names = "default";
+	};
 
-    leds-pwm {
-        compatible = "pwm-leds";
-        pinctrl-names = "default";
-        pinctrl-0 = <&pinctrl_leds_pin_pwm>;
+	/* Enable 1-wire network on terminal block W2 */
+	onewire_w2: onewire_w2 {
+		compatible = "w1-gpio";
+		pinctrl-names = "default";
+	};
 
-        green {
-            label = "green";
-            pwms = <&pwm8 0 1000000>;
-            max-brightness = <255>;
-            linux,default-trigger = "default-off";
-            default-state = "on";
-            active-low;
-        };
+	leds-pwm {
+		compatible = "pwm-leds";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_leds_pin_pwm>;
 
-        red {
-            label = "red";
-            pwms = <&pwm7 0 1000000>;
-            max-brightness = <255>;
-            linux,default-trigger = "timer";
-        };
-    };
+		green {
+			label = "green";
+			pwms = <&pwm8 0 1000000>;
+			max-brightness = <255>;
+			linux,default-trigger = "default-off";
+			default-state = "on";
+			active-low;
+		};
 
-    lirc_dev_rfm69: lirc-rfm69 {
-        compatible = "lirc-pwm";
+		red {
+			label = "red";
+			pwms = <&pwm7 0 1000000>;
+			max-brightness = <255>;
+			linux,default-trigger = "timer";
+		};
+	};
 
-        pinctrl-names = "default";
-        pinctrl-0 = <&pinctrl_rfm69_dio2>;
+	lirc_dev_rfm69: lirc-rfm69 {
+		compatible = "lirc-pwm";
 
-        gpio-recv = <&gpio3 13 0>;
-        gpio-recv-disable-filter;
-    };
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_rfm69_dio2>;
+
+		gpio-recv = <&gpio3 13 0>;
+		gpio-recv-disable-filter;
+	};
 
 	spi_rfm69: spi-rfm69 {
 		status = "disabled";
 	};
 
-    mcp6542: watchdog {
-        /* external watchdog timer using mcp6542  */
-        compatible = "linux,wdt-gpio";
+	mcp6542: watchdog {
+		/* external watchdog timer using mcp6542  */
+		compatible = "linux,wdt-gpio";
 
-        pinctrl-names = "default";
-        pinctrl-0 = <&pinctrl_wdg_gpio>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_wdg_gpio>;
 
-        gpios = <&gpio2 19 0>;
-        hw_algo = "toggle";
-        hw_margin_ms = <100>;
-        always-running;
-        timeout-sec = <30>;
-        status = "okay";
-    };
+		gpios = <&gpio2 19 0>;
+		hw_algo = "toggle";
+		hw_margin_ms = <100>;
+		always-running;
+		timeout-sec = <30>;
+		status = "okay";
+	};
 
-    i2c_rtc {
+	i2c_rtc {
 		compatible = "i2c-gpio";
 
 		#address-cells = <1>;
@@ -154,7 +165,7 @@
 		};
 	};
 
-    i2c_eeprom1 {
+	i2c_eeprom1 {
 		compatible = "i2c-gpio";
 
 		#address-cells = <1>;
@@ -178,7 +189,7 @@
 		};
 	};
 
-    i2c_eeprom2 {
+	i2c_eeprom2 {
 		compatible = "i2c-gpio";
 
 		#address-cells = <1>;
@@ -214,7 +225,7 @@
 		};
 	};
 
-    wirenboard {
+	wirenboard {
 		adc-type = <3>;
 		pwm-buzzer = <0>;
 
@@ -286,7 +297,7 @@
 			};
 		};
 
-        analog-inputs {
+		analog-inputs {
 			/* we don't use standard 'io-channels = <&adc1 N>' here because
 			   there is seemingly no way to assiciate iio channel index (N
 			   in above example) with channel name as in sysfs path
@@ -360,7 +371,7 @@
 			simselect-gpios = <&gpio3 24 0>;
 		};
 
-        radio {
+		radio {
 			/* Wb-dt-overlays's wb6-noradio overlay is looking into radio node.
 			Empty node here is to prevent overlay-applying conflicts. */
 		};
@@ -422,12 +433,12 @@
 		};
 
 		ethphy3: ethernet-phy@3 {
-                    compatible = "ethernet-phy-ieee802.3-c22";
-                    max-speed = <100>;
-                    reg = <3>;
-                    clocks = <&clks IMX6UL_CLK_ENET_REF>;
-                    clock-names = "rmii-ref";
-                    micrel,led-mode = <0>;
+					compatible = "ethernet-phy-ieee802.3-c22";
+					max-speed = <100>;
+					reg = <3>;
+					clocks = <&clks IMX6UL_CLK_ENET_REF>;
+					clock-names = "rmii-ref";
+					micrel,led-mode = <0>;
 		};
 	};
 };
