@@ -105,52 +105,10 @@
 		>;
 	};
 
-	pinctrl_mod3_txrx_gpio: mod3gpiogrp-1 {
-		fsl,pins = <
-			MX6UL_PAD_CSI_MCLK__GPIO4_IO17		0x30b0
-			MX6UL_PAD_CSI_PIXCLK__GPIO4_IO18	0x30b0
-		>;
-	};
-
-	pinctrl_mod3_de_gpio: mod3gpiogrp-2 {
-		fsl,pins = <
-			MX6UL_PAD_CSI_VSYNC__GPIO4_IO19	0x30b0
-		>;
-	};
-
 	pinctrl_uart8: uart8grp {
 		fsl,pins = <
 			MX6UL_PAD_LCD_DATA21__UART8_DCE_RX   0x1b0b1
 			MX6UL_PAD_LCD_DATA20__UART8_DCE_TX   0x1b0b1
-		>;
-	};
-
-	pinctrl_mod4_txrx_gpio: mod4uartgpiogrp-1 {
-		fsl,pins = <
-			MX6UL_PAD_LCD_DATA16__GPIO3_IO21	0x30b0
-			MX6UL_PAD_LCD_DATA17__GPIO3_IO22	0x30b0
-		>;
-	};
-
-	pinctrl_mod4_de_gpio: mod4uartgpiogrp-2 {
-		fsl,pins = <
-			MX6UL_PAD_LCD_CLK__GPIO3_IO00	0x30b0
-		>;
-	};
-
-	pinctrl_mod4_i2c_gpio: mod4i2cgpiogrp-1 {
-		fsl,pins = <
-			MX6UL_PAD_LCD_DATA16__GPIO3_IO21	0x70b0 /* SDA, 47K PU */
-			MX6UL_PAD_LCD_DATA17__GPIO3_IO22	0x70b0 /* SCL, 47K PU */
-		>;
-	};
-
-	pinctrl_mod4spi_gpio: mod4spigpiogrp-2 {
-		fsl,pins = <
-			MX6UL_PAD_CSI_DATA06__GPIO4_IO27	0x30b0
-			MX6UL_PAD_CSI_DATA07__GPIO4_IO28	0x30b0
-			MX6UL_PAD_CSI_DATA04__GPIO4_IO25	0x30b0
-			MX6UL_PAD_CSI_DATA05__GPIO4_IO26	0x30b0
 		>;
 	};
 
@@ -182,6 +140,100 @@
 			MX6UL_PAD_ENET2_TX_DATA1__ENET2_TDATA01	0x1b0b0
 			MX6UL_PAD_ENET2_TX_CLK__ENET2_REF_CLK2	0x4001b031
 			MX6UL_PAD_ENET2_RX_ER__ENET2_RX_ER	0x1b0b0
+		>;
+	};
+
+	/*
+	 * Deprecated pinctrls for WB6.7.x mod3 and mod4 slots
+	 * Providing compatibility with old wb-hwconf-manager versions, where mod3 and mod4 were changed places
+	 * Actual wb6.7's mod3 is defined in dts as mod4 (and so on)
+	 * Use new pinctrls (defined below) in new wb-hwconf-manager's versions!
+	 */
+	pinctrl_mod4_txrx_gpio: mod4gpiogrp-1 {
+		fsl,pins = <
+			MX6UL_PAD_CSI_MCLK__GPIO4_IO17		0x30b0
+			MX6UL_PAD_CSI_PIXCLK__GPIO4_IO18	0x30b0
+		>;
+	};
+
+	pinctrl_mod4_de_gpio: mod4gpiogrp-2 {
+		fsl,pins = <
+			MX6UL_PAD_CSI_VSYNC__GPIO4_IO19	0x30b0
+		>;
+	};
+
+	pinctrl_mod3_txrx_gpio: mod3uartgpiogrp-1 {
+		fsl,pins = <
+			MX6UL_PAD_LCD_DATA16__GPIO3_IO21	0x30b0
+			MX6UL_PAD_LCD_DATA17__GPIO3_IO22	0x30b0
+		>;
+	};
+
+	pinctrl_mod3_de_gpio: mod3uartgpiogrp-2 {
+		fsl,pins = <
+			MX6UL_PAD_LCD_CLK__GPIO3_IO00	0x30b0
+		>;
+	};
+
+	pinctrl_mod3_i2c_gpio: mod3i2cgpiogrp-1 {
+		fsl,pins = <
+			MX6UL_PAD_LCD_DATA16__GPIO3_IO21	0x70b0 /* SDA, 47K PU */
+			MX6UL_PAD_LCD_DATA17__GPIO3_IO22	0x70b0 /* SCL, 47K PU */
+		>;
+	};
+
+	pinctrl_mod3spi_gpio: mod3spigpiogrp-2 {
+		fsl,pins = <
+			MX6UL_PAD_CSI_DATA06__GPIO4_IO27	0x30b0
+			MX6UL_PAD_CSI_DATA07__GPIO4_IO28	0x30b0
+			MX6UL_PAD_CSI_DATA04__GPIO4_IO25	0x30b0
+			MX6UL_PAD_CSI_DATA05__GPIO4_IO26	0x30b0
+		>;
+	};
+
+	/*
+	 * New pinctrls for WB6.7.x mod3 and mod4 slots
+	 * Use these pinctrls by default in new wb-hwconf-manager's versions!
+	 */
+	pinctrl_mod3_txrx_gpio_new: mod3gpiogrp-new-1 {
+		fsl,pins = <
+			MX6UL_PAD_CSI_MCLK__GPIO4_IO17		0x30b0
+			MX6UL_PAD_CSI_PIXCLK__GPIO4_IO18	0x30b0
+		>;
+	};
+
+	pinctrl_mod3_de_gpio_new: mod3gpiogrp-new-2 {
+		fsl,pins = <
+			MX6UL_PAD_CSI_VSYNC__GPIO4_IO19	0x30b0
+		>;
+	};
+
+	pinctrl_mod4_txrx_gpio_new: mod4uartgpiogrp-new-1 {
+		fsl,pins = <
+			MX6UL_PAD_LCD_DATA16__GPIO3_IO21	0x30b0
+			MX6UL_PAD_LCD_DATA17__GPIO3_IO22	0x30b0
+		>;
+	};
+
+	pinctrl_mod4_de_gpio_new: mod4uartgpiogrp-new-2 {
+		fsl,pins = <
+			MX6UL_PAD_LCD_CLK__GPIO3_IO00	0x30b0
+		>;
+	};
+
+	pinctrl_mod4_i2c_gpio_new: mod4i2cgpiogrp-new-1 {
+		fsl,pins = <
+			MX6UL_PAD_LCD_DATA16__GPIO3_IO21	0x70b0 /* SDA, 47K PU */
+			MX6UL_PAD_LCD_DATA17__GPIO3_IO22	0x70b0 /* SCL, 47K PU */
+		>;
+	};
+
+	pinctrl_mod4spi_gpio_new: mod4spigpiogrp-new-2 {
+		fsl,pins = <
+			MX6UL_PAD_CSI_DATA06__GPIO4_IO27	0x30b0
+			MX6UL_PAD_CSI_DATA07__GPIO4_IO28	0x30b0
+			MX6UL_PAD_CSI_DATA04__GPIO4_IO25	0x30b0
+			MX6UL_PAD_CSI_DATA05__GPIO4_IO26	0x30b0
 		>;
 	};
 
