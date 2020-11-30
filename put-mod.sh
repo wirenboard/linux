@@ -17,7 +17,9 @@ set -x
 try ./sftp2.sh "
 put drivers/w1/slaves/w1_therm.ko /lib/modules/$KERN/kernel/drivers/w1/slaves/w1_therm.ko \n
 put drivers/w1/wire.ko /lib/modules/$KERN/kernel/drivers/w1/wire.ko \n
+put drivers/w1/masters/w1-gpio.ko /lib/modules/$KERN/kernel/drivers/w1/masters/w1-gpio.ko
 "
-#Распаковываем архив с модулями.
-try ./plink2.sh "~/w1reload.sh"
+
+#Перегрузка временно убрана.
+#try ./plink2.sh "~/w1reload.sh"
 
