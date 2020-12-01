@@ -97,7 +97,12 @@ static int w1_gpio_probe(struct platform_device *pdev)
 	int err;
 
 	if (of_have_populated_dt()) {
-		pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+		/*
+		 * Changed devm_kzalloc to kzalloc. Can't use devm managed alloc here
+		 * because struct platform_device :: struct device dev :: void* platform_data is kfreed in default platform_device_release.
+		 * via pointer that is set in platform_device_alloc.
+		*/
+		pdata = kzalloc(sizeof(*pdata), GFP_KERNEL);
 		if (!pdata)
 			return -ENOMEM;
 
