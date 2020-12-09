@@ -1,3 +1,0 @@
-[submodule "drivers/net/wireless/realtek/rtl8723bu"]
-	path = drivers/net/wireless/realtek/rtl8723bu
-	url = https://github.com/lwfinger/rtl8723bu
