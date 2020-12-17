@@ -7,6 +7,7 @@ set -v
 
 INSTM=_mod
 export CROSS_COMPILE=arm-linux-gnueabihf-
+export KBUILD_OUTPUT=/home/ivan/rep/linux-wiren-pull2/out
 
 try time make -j8 ARCH=arm LOCALVERSION=ivz zImage modules
 try time make -j8 ARCH=arm LOCALVERSION=ivz dtbs
