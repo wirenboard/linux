@@ -59,7 +59,7 @@
 			enable-active-high;
 		};
 
-		/* WIFI_EN should be always 3.3V so Wi-Fi power control 
+		/* WIFI_EN should be always 3.3V so Wi-Fi power control
 		   is handled by USB hub PRTCTL pins */
 		reg_wifi_en_pullup: regulator@2 {
 			reg = <2>;
@@ -346,7 +346,7 @@
 			   in above example) with channel name as in sysfs path
 			*/
 			A1 {
-				iio-device = <&adc1>; 
+				iio-device = <&adc1>;
 				iio-channel-name = "voltage4";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -356,7 +356,7 @@
 			};
 
 			A2 {
-				iio-device = <&adc1>; 
+				iio-device = <&adc1>;
 				iio-channel-name = "voltage2";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -366,7 +366,7 @@
 			};
 
 			A3 {
-				iio-device = <&adc1>; 
+				iio-device = <&adc1>;
 				iio-channel-name = "voltage1";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -376,7 +376,7 @@
 			};
 
 			A4 {
-				iio-device = <&adc1>; 
+				iio-device = <&adc1>;
 				iio-channel-name = "voltage3";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -386,7 +386,7 @@
 			};
 
 			Vin {
-				iio-device = <&adc1>; 
+				iio-device = <&adc1>;
 				iio-channel-name = "voltage8";
 				divider-r1-ohms = <88700>;
 				divider-r2-ohms = <12000>;
@@ -396,7 +396,7 @@
 			};
 
 			5Vout {
-				iio-device = <&adc1>; 
+				iio-device = <&adc1>;
 				iio-channel-name = "voltage5";
 				divider-r1-ohms = <33000>;
 				divider-r2-ohms = <12000>;
@@ -575,7 +575,7 @@
 
 	dmas = <&sdma 3 7 1>, <&sdma 4 7 2>;
 	dma-names = "rx", "tx";
-	
+
 	status = "disabled";
 };
 
@@ -809,8 +809,8 @@
 			MX6UL_PAD_LCD_DATA15__GPIO3_IO20	0x30b0 /* POWER_SIM900 */
 			MX6UL_PAD_LCD_DATA14__GPIO3_IO19	0x30b0 /* STATUS SIM900 */
 			MX6UL_PAD_LCD_DATA19__GPIO3_IO24	0x30b0 /* SIM select */
-			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0x70b0 /* Battery STAT1, pulled up */
-			MX6UL_PAD_UART1_RTS_B__GPIO1_IO19	0x70b0 /* Battery STAT2, pulled up */
+			MX6UL_PAD_UART1_CTS_B__GPIO1_IO18	0xf0b0 /* Battery STAT1, 22K Ohm pulled up */
+			MX6UL_PAD_UART1_RTS_B__GPIO1_IO19	0xf0b0 /* Battery STAT2, 22K Ohm pulled up */
 			MX6UL_PAD_JTAG_TDO__CCM_CLKO2	0xb0 /* 24MHz clock output */
 			MX6UL_PAD_UART3_RTS_B__GPIO1_IO27	0x30b0 /* 5V enable */
 			MX6UL_PAD_LCD_DATA04__GPIO3_IO09	0x30b0 /* V_OUT_ON */
