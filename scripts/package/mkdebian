@@ -179,7 +179,6 @@ Homepage: http://www.kernel.org/
 
 Package: $packagename
 Architecture: $debarch
-Breaks: wb-hwconf-manager (<< 1.38.2)
 Description: Linux kernel, version $version
  This package contains the Linux kernel, modules and corresponding other
  files, version: $version.
