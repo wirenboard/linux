@@ -1,1 +1,0 @@
-make -j8 ARCH=arm LOCALVERSION=ivz menuconfig
