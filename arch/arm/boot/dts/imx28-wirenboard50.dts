@@ -234,9 +234,6 @@
 		};
 
 		apbx@80040000 {
-			spdif: spdif@80054000 {
-				status = "okay";
-			};
 
 			lradc@80050000 {
 				status = "okay";

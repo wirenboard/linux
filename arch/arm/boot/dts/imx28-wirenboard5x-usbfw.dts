@@ -167,11 +167,6 @@
                 };
 
                 apbx@80040000 {
-                        spdif: spdif@80054000 {
-                                pinctrl-names = "default";
-                                pinctrl-0 = <&spdif_pins>;
-                                status = "okay";
-                        };
 
                         lradc@80050000 {
                                 status = "okay";

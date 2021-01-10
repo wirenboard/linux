@@ -434,11 +434,6 @@
         };
 
         apbx@80040000 {
-            spdif: spdif@80054000 {
-                pinctrl-names = "default";
-                pinctrl-0 = <&spdif_pins>;
-                status = "okay";
-            };
 
             lradc@80050000 {
                 status = "okay";
@@ -639,12 +634,6 @@
         always-running;
         timeout-sec = <30>;
         status = "okay";
-    };
-
-    sound-spdif {
-        compatible = "fsl,mxs-spdif-audio";
-        model = "On-board SPDIF";
-        spdif-controller = <&spdif>;
     };
 
     lirc_dev_rfm69: lirc-rfm69 {
