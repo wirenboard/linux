@@ -35,7 +35,7 @@
 				};
 			};
 
-			ocotp: ocotp@8002c000 {
+			ocotp: efuse@8002c000 {
 				status = "okay";
 			};
 
