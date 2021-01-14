@@ -96,7 +96,7 @@
 
 		green {
 			label = "green";
-			pwms = <&pwm8 0 1000000>;
+			pwms = <&pwm8 0 1000000 0>;
 			max-brightness = <255>;
 			linux,default-trigger = "default-off";
 			default-state = "on";
@@ -105,7 +105,7 @@
 
 		red {
 			label = "red";
-			pwms = <&pwm7 0 1000000>;
+			pwms = <&pwm7 0 1000000 0>;
 			max-brightness = <255>;
 			linux,default-trigger = "timer";
 		};
