@@ -249,12 +249,14 @@ void w1_remove_master_device(struct w1_bus_master *master);
  * @remove_slave: remove_slave
  * @groups: sysfs group
  * @chip_info: pointer to struct hwmon_chip_info
+ * @read_powermode: reset and issue W1_READ_PSUPPLY command; NULL if not implemented
  */
 struct w1_family_ops {
 	int  (*add_slave)(struct w1_slave *sl);
 	void (*remove_slave)(struct w1_slave *sl);
 	const struct attribute_group **groups;
 	const struct hwmon_chip_info *chip_info;
+	int  (*read_powermode)(struct w1_slave *sl);
 };
 
 /**
