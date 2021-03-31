@@ -1,0 +1,2 @@
+# base commit for this branch (from mainline)
+WB_BRANCH_BASE="cf2586e60ede2217d7f53a0585e27e1cca693600"
