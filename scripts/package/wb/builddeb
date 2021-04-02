@@ -230,7 +230,7 @@ done
 # Create symlink to kernel image (/boot/zImage) in postinst
 sed -e "s/exit 0//g" -i $tmpdir/DEBIAN/postinst
 cat >> $tmpdir/DEBIAN/postinst <<EOF
-ln -sf $(basename $installed_image_path) /boot/zImage > /dev/null 2>&1 || mv /$installed_image_path /boot/zImage
+ln -sf /$installed_image_path /boot/zImage > /dev/null 2>&1 || mv /$installed_image_path /boot/zImage
 touch /boot/.next
 exit 0
 EOF
