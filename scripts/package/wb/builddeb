@@ -84,18 +84,32 @@ set_debarch() {
 }
 
 # Some variables and settings used throughout the script
-version=$KERNELRELEASE
-revision=$(cat .version)
-if [ -n "$KDEB_PKGVERSION" ]; then
-	packageversion=$KDEB_PKGVERSION
-else
-	packageversion=$version-$revision
-fi
 if [ -z "$KDEB_WBTARGET" ]; then
     echo "Please set KDEB_WBTARGET to build Wirenboard debian package" >&2
     exit 2
 fi
-sourcename=$KDEB_SOURCENAME
+if [ ! -f $srctree/debian/changelog ]; then
+    echo "Can't find debian/changelog, aborting" >&2
+    exit 2
+fi
+
+version=$KERNELRELEASE
+
+# Read changelog and get sourcename and kernel version from there
+changelog_top=$(head -1 $srctree/debian/changelog)
+sourcename=$(echo $changelog_top | awk '{print $1}')
+packageversion="$(echo $changelog_top | sed 's/.*(\(.*\)).*/\1/')${WB_VERSION_SUFFIX}"
+
+case $packageversion in
+${version}-*)
+    revision=${packageversion#"${version}-"}
+    ;;
+*)
+    echo "Package version must be in format '${version}-<revision>'" >&2
+    exit 2
+    ;;
+esac
+
 wb_target=$KDEB_WBTARGET
 wb_description=$KDEB_WBDESC
 tmpdir="$objtree/debian/tmp"
@@ -252,26 +266,21 @@ else
 fi
 maintainer="$name <$email>"
 
-# Try to determine distribution
-if [ -n "$KDEB_CHANGELOG_DIST" ]; then
-        distribution=$KDEB_CHANGELOG_DIST
-# In some cases lsb_release returns the codename as n/a, which breaks dpkg-parsechangelog
-elif distribution=$(lsb_release -cs 2>/dev/null) && [ -n "$distribution" ] && [ "$distribution" != "n/a" ]; then
-        : # nothing to do in this case
-else
-        distribution="unstable"
-        echo >&2 "Using default distribution of 'unstable' in the changelog"
-        echo >&2 "Install lsb-release or set \$KDEB_CHANGELOG_DIST explicitly"
-fi
+# Add entry to the changelog if version suffix is set
+if [ -n "$WB_VERSION_SUFFIX" ]; then
+    cat <<EOF > debian/changelog
+$sourcename ($packageversion) unstable; urgency=low
 
-# Generate a simple changelog template
-cat <<EOF > debian/changelog
-$sourcename ($packageversion) $distribution; urgency=low
-
-  * Custom built Linux kernel.
+  * Automatically added version suffix.
 
  -- $maintainer  $(date -R)
+
 EOF
+    cat $srctree/debian/changelog >> debian/changelog
+else
+    # Take the changelog from the tree as is
+    cp $srctree/debian/changelog debian/changelog
+fi
 
 # Generate copyright file
 cat <<EOF > debian/copyright

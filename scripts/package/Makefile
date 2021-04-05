@@ -127,8 +127,9 @@ binwbdeb-pkg: FORCE
 	$(MAKE) KBUILD_SRC=
 	+$(call cmd,builddeb_wb)
 
+ifneq ($(srctree),$(objtree))
 clean-dirs += $(objtree)/debian/
-
+endif
 
 # tarball targets
 # ---------------------------------------------------------------------------

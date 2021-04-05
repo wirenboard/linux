@@ -10,20 +10,22 @@
 CORES_DEFAULT=$(nproc || echo 1)
 CORES=${CORES:-$CORES_DEFAULT}
 
+case $1 in
+*help)
+    echo "Usage: KERNEL_FLAVOUR=<flavour> $0" >&2
+    echo -e "\nOptional envvars:"
+    echo -e "\tCORES\tNumber of threads to build kernel (default $CORES)"
+    echo -e "\tFORCE_DEFAULT\tDefault answer about using exising defconfig (y/n)"
+    echo -e "\tVERSION_SUFFIX\tCustom version suffix for non-dev branches"
+    exit
+    ;;
+esac
+
 source scripts/package/wb/version.sh
 setup_kernel_vars || exit $?
 
-source wb_revision || echo "Warning: failed to source wb_revision file" >&2
-
-if [[ -n "$WB_BRANCH_BASE" && -z "$WB_REVISION" ]]; then
-    DEFAULT_WB_REVISION="+r$(git rev-list --count HEAD...${WB_BRANCH_BASE})"
-elif [[ -z "$WB_REVISION" ]]; then
-    echo "Set either WB_BRANCH_BASE or WB_REVISION variable to determine package version" >&2
-    exit 2
-fi
-
-export WB_REVISION=${WB_REVISION:-${DEFAULT_WB_REVISION}}
-export LOCALVERSION=${LOCALVERSION:-"-${KERNEL_FLAVOUR}"}
+export DEBEMAIL="info@wirenboard.com"
+export DEBFULLNAME="Wirenboard robot"
 
 export KBUILD_OUTPUT=".build-$KERNEL_FLAVOUR"
 
@@ -54,19 +56,13 @@ make_image() {
 }
 
 make_deb () {
-    KERNEL_RELEASE=$(cat ${KBUILD_OUTPUT}/include/config/kernel.release)
-    echo "kernel release: $KERNEL_RELEASE"
-
-    KDEB_PKGVERSION="${KERNEL_RELEASE}${WB_REVISION}"
-
     fakeroot make -j${CORES} ARCH=arm KBUILD_DEBARCH=${DEBARCH} \
-        KDEB_PKGVERSION=${KDEB_PKGVERSION} KDEB_WBTARGET=${KERNEL_FLAVOUR} binwbdeb-pkg
+        LOCALVERSION='' WB_VERSION_SUFFIX=$VERSION_SUFFIX \
+        KDEB_WBTARGET=${KERNEL_FLAVOUR} binwbdeb-pkg
 }
 
 echo "Building kernel packages for $KERNEL_FLAVOUR ($KDEB_WBDESC)"
 echo "Architecture: ${DEBARCH}"
-echo "Local version: ${LOCALVERSION}"
-echo "WB revision: ${WB_REVISION}"
 echo "Config: ${KERNEL_DEFCONFIG}"
 
 make_config
