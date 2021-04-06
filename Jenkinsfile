@@ -63,8 +63,8 @@ pipeline {
                         git log --diff-filter=A --cherry --pretty=format:"%h" -- debian/changelog''').trim()
 
                     def versionSuffix = sh(returnStdout: true, script: """\\
-                        echo ~exp~`echo ${BRANCH_NAME} | sed 's/[/~^ \\_\\-]/+/g'`+`\\
-                        git rev-list --count HEAD...${baseCommit}`+g`\\
+                        echo ~exp~`echo ${BRANCH_NAME} | sed -e 's/\\W/+/g' -e 's/_/+/g'`~`\\
+                        git rev-list --count HEAD...${baseCommit}`~g`\\
                         git rev-parse --short HEAD`""").trim()
                     env.VERSION_SUFFIX = versionSuffix
                 }
