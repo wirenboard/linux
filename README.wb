@@ -1,0 +1,49 @@
+Как собирать ядро
+=================
+
+TLDR
+----
+
+```
+# ./scripts/package/wb/do_build_deb.sh --help
+Usage: KERNEL_FLAVOUR=<flavour> ./scripts/package/wb/do_build_deb.sh
+
+Optional envvars:
+        CORES   Number of threads to build kernel (default `nproc`)
+        FORCE_DEFAULT   Default answer about using exising defconfig (y/n)
+        VERSION_SUFFIX  Custom version suffix for non-dev branches
+```
+
+Пример сборки пакетов для wb6:
+
+```
+# KERNEL_FLAVOUR=wb6 ./scripts/package/wb/do_build_deb.sh
+```
+
+Собранные пакеты появятся в корне директории с исходниками.
+
+
+Как апнуть версию
+-----------------
+
+```
+# dch
+```
+
+Changelog общий для всех `KERNEL_FLAVOUR`.
+
+
+Как это работает
+----------------
+
+Ранее сборка пакетов с ядром делалась с помощью скриптов из репозитория build_kernel.
+Сейчас мы решили перенести сборку в репозиторий с ядром, чтобы не усложнять процедуру
+вознёй с двумя репозиториями одновременно.
+
+Для сборки пакета используется модифицированный скрипт `builddeb` из ядра.
+Что поменялось:
+
+ * используется статический changelog;
+ * можно добавить суффикс для версии (полезно при автоматической сборке из веток);
+ * создаётся симлинк `/boot/zImage -> /boot/<актуальный_образ_ядра>`;
+ * собранные Device tree хранятся в `/boot/dtbs`.
