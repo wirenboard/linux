@@ -197,7 +197,8 @@
 		status = "okay";
 
 		rtc@51 {
-			compatible = "nxp,pcf8563";
+			compatible = "nxp,pcf85063";
+			quartz-load-femtofarads = <12500>;
 			reg = <0x51>;
 		};
 
