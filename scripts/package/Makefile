@@ -97,8 +97,39 @@ bindeb-pkg: FORCE
 	$(MAKE) KBUILD_SRC=
 	+$(call cmd,builddeb)
 
-clean-dirs += $(objtree)/debian/
+# Wirenboard deb target
+# ---------------------------------------------------------------------------
+quiet_cmd_builddeb_wb = BUILDDEB
+      cmd_builddeb_wb = set -e; \
+	test `id -u` = 0 || \
+	test -n "$(KBUILD_PKG_ROOTCMD)" || { \
+		which fakeroot >/dev/null 2>&1 && \
+		KBUILD_PKG_ROOTCMD="fakeroot -u"; \
+	} || { \
+		echo; \
+		echo "builddeb must be run as root (or using fakeroot)."; \
+		echo "KBUILD_PKG_ROOTCMD is unset and fakeroot not found."; \
+		echo "Try setting KBUILD_PKG_ROOTCMD to a command to acquire"; \
+		echo "root privileges (e.g., 'fakeroot -u' or 'sudo')."; \
+		false; \
+	} && \
+	\
+	$$KBUILD_PKG_ROOTCMD $(CONFIG_SHELL) \
+		$(srctree)/scripts/package/wb/builddeb $@
 
+wbdeb-pkg: FORCE
+	$(MAKE) clean
+	$(call cmd,src_tar,$(KDEB_SOURCENAME))
+	$(MAKE) KBUILD_SRC=
+	+$(call cmd,builddeb_wb)
+
+binwbdeb-pkg: FORCE
+	$(MAKE) KBUILD_SRC=
+	+$(call cmd,builddeb_wb)
+
+ifneq ($(srctree),$(objtree))
+clean-dirs += $(objtree)/debian/
+endif
 
 # tarball targets
 # ---------------------------------------------------------------------------
