@@ -86,6 +86,10 @@ PHONY += intdeb-pkg
 intdeb-pkg:
 	+$(CONFIG_SHELL) $(srctree)/scripts/package/builddeb
 
+PHONY += binwbdeb-pkg
+binwbdeb-pkg:
+	+$$KBUILD_PKG_ROOTCMD $(CONFIG_SHELL) $(srctree)/scripts/package/wb/builddeb $@
+
 # snap-pkg
 # ---------------------------------------------------------------------------
 PHONY += snap-pkg

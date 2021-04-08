@@ -160,3 +160,8 @@ x509.genkey
 
 # Documentation toolchain
 sphinx_*/
+
+# Wirenboard
+zImage-*
+initramfs_usbgadget
+/pkgs/
