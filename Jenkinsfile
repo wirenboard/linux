@@ -126,7 +126,7 @@ pipeline {
             }}
 
             steps {
-                build job: 'contactless/wb-releases/master', wait: true
+                build job: 'contactless/wb-releases/master', wait: true, parameters: [booleanParam(name: 'FORCE_OVERWRITE', value: true)]
             }
         }
     }

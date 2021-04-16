@@ -21,6 +21,11 @@ case $1 in
     ;;
 esac
 
+if [ ! -f debian/changelog ]; then
+    echo "Can't find debian/changelog, aborting" >&2
+    exit 2
+fi
+
 source scripts/package/wb/version.sh
 setup_kernel_vars || exit $?
 
@@ -30,6 +35,23 @@ export DEBFULLNAME="Wirenboard robot"
 export KBUILD_OUTPUT=".build-$KERNEL_FLAVOUR"
 
 mkdir -p "$KBUILD_OUTPUT"
+
+get_kernel_revision() {
+    local changelog_top=$(head -1 debian/changelog)
+    local packageversion="$(echo $changelog_top | sed 's/.*(\(.*\)).*/\1/')${WB_VERSION_SUFFIX}"
+
+    case $packageversion in
+    *-*)
+        local revision=${packageversion##*-}
+        ;;
+    *)
+        echo "Package version must be in format '${version}-<revision>'" >&2
+        exit 2
+        ;;
+    esac
+
+    echo "-${revision}"
+}
 
 make_config() {
     if [[ -t 0 && -e "${KBUILD_OUTPUT}/.config" ]]; then
@@ -52,16 +74,17 @@ make_config() {
 }
 
 make_image() {
-    make -j${CORES} ARCH=arm KBUILD_DEBARCH=${DEBARCH} zImage modules dtbs
+    make -j${CORES} LOCALVERSION=$(get_kernel_revision) ARCH=arm KBUILD_DEBARCH=${DEBARCH} zImage modules dtbs
 }
 
 make_deb () {
     fakeroot make -j${CORES} ARCH=arm KBUILD_DEBARCH=${DEBARCH} \
-        LOCALVERSION='' WB_VERSION_SUFFIX=$VERSION_SUFFIX \
+        LOCALVERSION=$(get_kernel_revision) WB_VERSION_SUFFIX=${VERSION_SUFFIX} \
         KDEB_WBTARGET=${KERNEL_FLAVOUR} binwbdeb-pkg
 }
 
 echo "Building kernel packages for $KERNEL_FLAVOUR ($KDEB_WBDESC)"
+echo "Revision: $(get_kernel_revision)"
 echo "Architecture: ${DEBARCH}"
 echo "Config: ${KERNEL_DEFCONFIG}"
 
