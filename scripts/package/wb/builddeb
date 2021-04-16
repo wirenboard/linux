@@ -102,18 +102,7 @@ version=$KERNELRELEASE
 # Read changelog and get sourcename and kernel version from there
 changelog_top=$(head -1 $srctree/debian/changelog)
 sourcename=$(echo $changelog_top | awk '{print $1}')
-packageversion="$(echo $changelog_top | sed 's/.*(\(.*\)).*/\1/')${WB_VERSION_SUFFIX}"
-
-case $packageversion in
-${version}-*)
-    revision=${packageversion#"${version}-"}
-    ;;
-*)
-    echo "Package version must be in format '${version}-<revision>'" >&2
-    exit 2
-    ;;
-esac
-
+packageversion="$version$WB_VERSION_SUFFIX"
 wb_target=$KDEB_WBTARGET
 wb_description=$KDEB_WBDESC
 tmpdir="$objtree/debian/tmp"
