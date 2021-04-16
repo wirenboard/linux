@@ -6,7 +6,7 @@ pipeline {
         booleanParam(name: 'ADD_VERSION_SUFFIX', defaultValue: true, description: 'for non dev/* branches')
         booleanParam(name: 'UPLOAD_TO_POOL', defaultValue: true,
                      description: 'works only with ADD_VERSION_SUFFIX to keep staging clean')
-        booleanParam(name: 'CLEAN', defaultValue: false, description: 'clean tree before build')
+        booleanParam(name: 'CLEAN', defaultValue: false, description: 'force cleaned on dev/* branches')
         string(name: 'KERNEL_FLAVOUR', defaultValue: 'wb2 wb6', description: 'space-separated list')
         string(name: 'WBDEV_IMAGE', defaultValue: '', description: 'docker image path and tag')
     }
@@ -26,7 +26,8 @@ pipeline {
                     $class: 'GitSCM',
                     branches: scm.branches,
                     extensions: [
-                        [$class: 'CloneOption', timeout: 30 ],
+                        [$class: 'CloneOption', timeout: 30, shallow: true, depth: 300,
+                         reference: '/home/jenkins/userContent/linux-reference'],
                         [$class: 'SubmoduleOption', disableSubmodules: false, recursiveSubmodules: true]
                     ],
                     userRemoteConfigs: scm.userRemoteConfigs
@@ -39,8 +40,11 @@ pipeline {
             }
         }
         stage('Clean build tree') {
-            when { expression {
-                params.CLEAN
+            when { anyOf {
+                expression {
+                    params.CLEAN
+                }
+                branch 'dev/*'
             }}
             steps {
                 sh """wbdev user make mrproper && \\
@@ -83,7 +87,7 @@ pipeline {
                                 sh """wbdev user \\
                                    KERNEL_FLAVOUR=${currentFlavour} \\
                                    VERSION_SUFFIX=\$VERSION_SUFFIX \\
-                                   FORCE_DEFAULT=y \\
+                                   FORCE_DEFAULT=n \\
                                    scripts/package/wb/do_build_deb.sh"""
                             }
                         }
