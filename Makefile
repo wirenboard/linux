@@ -1490,7 +1490,7 @@ CLEAN_FILES += include/ksym vmlinux.symvers \
 # Directories & files removed with 'make mrproper'
 MRPROPER_FILES += include/config include/generated          \
 		  arch/$(SRCARCH)/include/generated .tmp_objdiff \
-		  debian snap tar-install \
+		  snap tar-install \
 		  .config .config.old .version \
 		  Module.symvers \
 		  signing_key.pem signing_key.priv signing_key.x509	\
