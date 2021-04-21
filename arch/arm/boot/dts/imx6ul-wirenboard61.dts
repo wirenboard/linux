@@ -524,8 +524,8 @@
 &uart2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart2>;
-	uart-has-rtscts;
 	linux,rs485-enabled-at-boot-time;
+	rts-gpios = <&gpio1 22 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 };
 
@@ -537,8 +537,8 @@
 
 &uart4 {
 	pinctrl-names = "default";
-	uart-has-rtscts;
 	linux,rs485-enabled-at-boot-time;
+	rts-gpios = <&gpio3 2 GPIO_ACTIVE_HIGH>;
 	status = "disabled";
 };
 
@@ -688,7 +688,7 @@
 		fsl,pins = <
 			MX6UL_PAD_UART2_TX_DATA__UART2_DCE_TX   0x1b0b1
 			MX6UL_PAD_UART2_RX_DATA__UART2_DCE_RX   0x1b0b1
-			MX6UL_PAD_UART2_CTS_B__UART2_DCE_CTS   0x1b0b1
+			MX6UL_PAD_UART2_CTS_B__GPIO1_IO22   0x30b0
 		>;
 	};
 
@@ -709,7 +709,7 @@
 		fsl,pins = <
 			MX6UL_PAD_UART4_TX_DATA__UART4_DCE_TX   0x1b0b1
 			MX6UL_PAD_UART4_RX_DATA__UART4_DCE_RX   0x1b0b1
-			MX6UL_PAD_LCD_HSYNC__UART4_DCE_CTS   0x1b0b1
+			MX6UL_PAD_LCD_HSYNC__GPIO3_IO02   0x30b0
 			MX6UL_PAD_LCD_ENABLE__GPIO3_IO01   0xb0b0
 			MX6UL_PAD_SD1_DATA3__GPIO2_IO21   0xb0b0
 			MX6UL_PAD_SD1_DATA2__GPIO2_IO20   0xb0b0
