@@ -531,7 +531,7 @@
 
 // uart on mod1
 &uart3 {
-	uart-has-rtscts;
+	rts-gpios = <&gpio1 26 GPIO_ACTIVE_HIGH>;
 	status = "disabled";
 };
 
@@ -544,7 +544,7 @@
 
 // uart on mod2
 &uart5 {
-	uart-has-rtscts;
+	rts-gpios = <&gpio1 9 GPIO_ACTIVE_HIGH>;
 	status = "disabled";
 };
 
@@ -557,7 +557,7 @@
 
 // uart on mod3
 &uart7 {
-	uart-has-rtscts;
+	rts-gpios = <&gpio3 11 GPIO_ACTIVE_HIGH>;
 	status = "disabled";
 };
 
@@ -701,7 +701,7 @@
 
 	pinctrl_uart3_ctsb: uart3ctsbgrp {
 		fsl,pins = <
-			MX6UL_PAD_UART3_CTS_B__UART3_DCE_CTS	0x1b0b1
+			MX6UL_PAD_UART3_CTS_B__GPIO1_IO26	0x30b0
 		>;
 	};
 
@@ -740,7 +740,7 @@
 
 	pinctrl_uart5_ctsb: uart5ctsbgrp {
 		fsl,pins = <
-			MX6UL_PAD_GPIO1_IO09__UART5_DCE_CTS  0x1b0b1
+			MX6UL_PAD_GPIO1_IO09__GPIO1_IO09	0x30b0
 		>;
 	};
 
@@ -755,7 +755,7 @@
 
 	pinctrl_uart7_ctsb: uart7ctsbgrp {
 		fsl,pins = <
-			MX6UL_PAD_LCD_DATA06__UART7_DCE_CTS  0x1b0b1
+			MX6UL_PAD_LCD_DATA06__GPIO3_IO11	0x30b0
 		>;
 	};
 
