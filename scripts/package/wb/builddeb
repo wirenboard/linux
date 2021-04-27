@@ -330,6 +330,7 @@ else
 	cat <<EOF >> debian/control
 
 Package: $packagename
+Conflicts: wb-hwconf-manager (<< 1.38.3)
 Provides: linux-image, linux-image-2.6, linux-modules-$version
 Breaks: linux-image-4.9.22-$wb_target (<< $packageversion)
 Replaces: linux-image-4.9.22-$wb_target (<< $packageversion)
