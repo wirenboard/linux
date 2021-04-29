@@ -1,3 +1,9 @@
+linux-wb (5.10.0-wb2) stable; urgency=medium
+
+  * RS-485 transcievers rts pins are configured as gpios with default pull down
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Thu, 22 Apr 2021 18:24:12 +0300
+
 linux-wb (5.10.0-wb1) stable; urgency=medium
 
   * Initial release
