@@ -1,3 +1,9 @@
+linux-wb (5.10.31-wb1) stable; urgency=medium
+
+  * rebased on linux-stable/v5.10.y, initial linux stable version was 5.10.31
+
+ -- Evgeny Boger <boger@contactless.ru>  Fri, 07 May 2021 19:13:47 +0300
+
 linux-wb (5.10.0-wb2) stable; urgency=medium
 
   * RS-485 transcievers rts pins are configured as gpios with default pull down
