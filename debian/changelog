@@ -1,3 +1,19 @@
+linux-wb (5.10.35-wb101) stable; urgency=medium
+
+  * wb7: proper initramfs for USB update
+  * wb7: improved handling of GPIOs 
+  * wb7: LEDs are driven by PWM
+  * wb7: PWM improvements
+  * wb7: delete some unused options from defconf
+
+ -- Evgeny Boger <boger@contactless.ru>  Sun, 23 Jan 2022 15:39:54 +0300
+
+linux-wb (5.10.35-wb100) stable; urgency=medium
+
+  * WB7 initial support
+
+ -- Evgeny Boger <boger@contactless.ru>  Mon, 17 May 2021 19:46:14 +0300
+
 linux-wb (5.10.35-wb7) stable; urgency=medium
 
   * dts: added WB6.9 support
