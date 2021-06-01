@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb2) stable; urgency=medium
+
+  * fix unstable link on eth0 on some units
+
+ -- Evgeny Boger <boger@contactless.ru>  Tue, 01 Jun 2021 20:20:05 +0300
+
 linux-wb (5.10.35-wb1) stable; urgency=medium
 
   * merge linux-stable/v.5.10.y, 5.10.35
