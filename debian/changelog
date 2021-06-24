@@ -1,3 +1,9 @@
+linux-wb (4.9.22-wb2) stable; urgency=medium
+
+  * Defined RTC_CLKOUT as gpio in WB6.8+
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Thu, 24 Jun 2021 15:37:11 +0300
+
 linux-wb (4.9.22-wb1) stable; urgency=medium
 
   * Initial release
