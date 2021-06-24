@@ -1,3 +1,9 @@
+linux-wb (5.10.0-wb3) stable; urgency=medium
+
+  * Defined RTC_CLKOUT as gpio in WB6.8+
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Fri, 25 Jun 2021 18:37:11 +0300
+
 linux-wb (5.10.0-wb2) stable; urgency=medium
 
   * RS-485 transcievers rts pins are configured as gpios with default pull down
