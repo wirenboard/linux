@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb4) stable; urgency=medium
+
+  * CONFIG_NVMEM_IMX_OCOTP=y
+  * Duplicate entries in imx6_wirenboard_defconfig are removed
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.ru>  Thu, 05 Aug 2021 16:00:26 +0500
+
 linux-wb (5.10.35-wb3) stable; urgency=medium
 
   * Defined RTC_CLKOUT as gpio in WB6.8+
