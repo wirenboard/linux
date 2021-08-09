@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb5) stable; urgency=medium
+
+  * LIRC and SC16IS7XX drivers are included into imx6_wirenboard_defconfig 
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.ru>  Fri, 06 Aug 2021 11:29:13 +0500
+
 linux-wb (5.10.35-wb4) stable; urgency=medium
 
   * CONFIG_NVMEM_IMX_OCOTP=y
