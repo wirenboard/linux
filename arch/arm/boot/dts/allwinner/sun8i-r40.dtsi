@@ -813,6 +813,12 @@
 			};
 
 			/omit-if-no-ref/
+			uart3_ph_pins: uart3-ph-pins {
+				pins = "PH0", "PH1";
+				function = "uart3";
+			};
+
+			/omit-if-no-ref/
 			uart3_rts_cts_pg_pins: uart3-rts-cts-pg-pins {
 				pins = "PG8", "PG9";
 				function = "uart3";
@@ -824,6 +830,12 @@
 				function = "uart4";
 			};
 
+			/omit-if-no-ref/				
+			uart4_ph_pins: uart4-ph-pins {
+				pins = "PH4", "PH5";
+				function = "uart4";
+			};
+
 			/omit-if-no-ref/
 			uart5_ph_pins: uart5-ph-pins {
 				pins = "PH6", "PH7";
@@ -831,9 +843,39 @@
 			};
 
 			/omit-if-no-ref/
+			uart5_pi_pins: uart5-pi-pins {
+				pins = "PI10", "PI11";
+				function = "uart5";
+			};
+
+			/omit-if-no-ref/
+			uart6_pa_pins: uart6-pa-pins {
+				pins = "PA12", "PA13";
+				function = "uart6";
+			};
+
+			/omit-if-no-ref/
+			uart6_pi_pins: uart6-pi-pins {
+				pins = "PI12", "PI13";
+				function = "uart6";
+			};
+
+			/omit-if-no-ref/
+			uart7_pa_pins: uart7-pa-pins {
+				pins = "PA14", "PA15";
+				function = "uart7";
+			};
+
+			/omit-if-no-ref/
 			uart7_pi_pins: uart7-pi-pins {
 				pins = "PI20", "PI21";
 				function = "uart7";
+			};
+
+			/omit-if-no-ref/
+			pwm_ch2_pi_pins: pwm-ch2-pi-pins {
+				pins = "PI20";
+				function = "pwm";
 			};
 		};
 
