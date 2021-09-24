@@ -864,6 +864,56 @@
 				pins = "PG8", "PG9";
 				function = "uart3";
 			};
+
+			uart3_ph_pins: uart3-ph-pins {
+				pins = "PH0", "PH1";
+				function = "uart3";
+			};
+
+			uart4_pg_pins: uart4-pg-pins {
+				pins = "PG10", "PG11";
+				function = "uart4";
+			};
+
+			uart4_ph_pins: uart4-ph-pins {
+				pins = "PH4", "PH5";
+				function = "uart4";
+			};
+
+			uart5_ph_pins: uart5-ph-pins {
+				pins = "PH6", "PH7";
+				function = "uart5";
+			};
+
+			uart5_pi_pins: uart5-pi-pins {
+				pins = "PI10", "PI11";
+				function = "uart5";
+			};
+
+			uart6_pa_pins: uart6-pa-pins {
+				pins = "PA12", "PA13";
+				function = "uart6";
+			};
+
+			uart6_pi_pins: uart6-pi-pins {
+				pins = "PI12", "PI13";
+				function = "uart6";
+			};
+
+			uart7_pi_pins: uart7-pi-pins {
+				pins = "PI20", "PI21";
+				function = "uart7";
+			};
+
+			uart7_pa_pins: uart7-pa-pins {
+				pins = "PA14", "PA15";
+				function = "uart7";
+			};
+
+			pwm_ch2_pi_pins: pwm-ch2-pi-pins {
+				pins = "PI20";
+				function = "pwm";
+			};
 		};
 
 		timer@1c20c00 {
