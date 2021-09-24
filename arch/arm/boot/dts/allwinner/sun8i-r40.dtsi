@@ -475,6 +475,8 @@
 			status = "disabled";
 			#address-cells = <1>;
 			#size-cells = <0>;
+			dmas = <&dma 26>, <&dma 26>;
+			dma-names = "rx", "tx";
 		};
 
 		ahci: sata@1c18000 {
@@ -739,6 +741,15 @@
 			uart0_pb_pins: uart0-pb-pins {
 				pins = "PB22", "PB23";
 				function = "uart0";
+			};
+
+			uart1_pa_pins: uart1-pa-pins {
+				pins = "PA10", "PA11";
+			};
+
+			uart2_pa_pins: uart2-pa-pins {
+				pins = "PA2", "PA3";
+				function = "uart2";
 			};
 
 			/omit-if-no-ref/
