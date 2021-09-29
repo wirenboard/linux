@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb6) stable; urgency=medium
+
+  * dts: remove rts-gpios from WB6 dts by default.
+    This fixes some internal Wiren Board modules such as GPS and Zigbee
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Wed, 29 Sep 2021 22:40:39 +0300
+
 linux-wb (5.10.35-wb5) stable; urgency=medium
 
   * LIRC and SC16IS7XX drivers are included into imx6_wirenboard_defconfig 
