@@ -281,3 +281,7 @@ dtb-$(CONFIG_MACH_SUNIV) += \
 	suniv-f1c100s-licheepi-nano.dtb \
 	suniv-f1c200s-lctech-pi.dtb \
 	suniv-f1c200s-popstick-v1.1.dtb
+
+# Wiren Board
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard720.dtb
+DTC_FLAGS_sun8i-r40-wirenboard720 := -@
