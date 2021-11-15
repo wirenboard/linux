@@ -615,6 +615,12 @@ static int axp20x_power_probe(struct platform_device *pdev)
 	if (!power_supply_get_battery_info(axp20x_batt->batt, &info)) {
 		int vmin = info->voltage_min_design_uv;
 		int ccc = info->constant_charge_current_max_ua;
+		int vcv = info->constant_charge_voltage_max_uv;
+
+		if (vcv > 0 && axp20x_batt->data->set_max_voltage(axp20x_batt,
+								  vcv))
+			dev_err(&pdev->dev,
+				"couldn't set charge constant voltage from DT");
 
 		if (vmin > 0 && axp20x_set_voltage_min_design(axp20x_batt,
 							      vmin))
