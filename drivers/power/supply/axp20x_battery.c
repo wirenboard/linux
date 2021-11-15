@@ -961,6 +961,11 @@ static void axp209_set_battery_info(struct platform_device *pdev,
 {
 	int vmin = info->voltage_min_design_uv;
 	int ccc = info->constant_charge_current_max_ua;
+	int vcv = info->constant_charge_voltage_max_uv;
+
+	if (vcv > 0 && axp_batt->data->set_max_voltage(axp_batt, vcv))
+		dev_err(&pdev->dev,
+			"couldn't set charge constant voltage from DT");
 
 	if (vmin > 0 && axp20x_set_voltage_min_design(axp_batt, vmin))
 		dev_err(&pdev->dev,
