@@ -1,0 +1,3 @@
+Changes from v1:
+  - return scale factor of 1 as IIO_VAL_INT, not IIO_VAL_INT_PLUS_MICRO
+  - get rid of unused variable
