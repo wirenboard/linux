@@ -259,6 +259,12 @@ config BATTERY_INTEL_DC_TI
 	  To compile this driver as a module, choose M here: the module will be
 	  called intel_dc_ti_battery.
 
+config BATTERY_EDLC
+	tristate "EDLC (supercapacitor) battery driver"
+	depends on IIO
+	help
+	  Say Y to enable support for the generic ADC-backed EDLC battery.
+
 config BATTERY_IPAQ_MICRO
 	tristate "iPAQ Atmel Micro ASIC battery driver"
 	depends on MFD_IPAQ_MICRO
