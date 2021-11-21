@@ -285,3 +285,5 @@ dtb-$(CONFIG_MACH_SUNIV) += \
 # Wiren Board
 dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard720.dtb
 DTC_FLAGS_sun8i-r40-wirenboard720 := -@
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard-som-test.dtb
+DTC_FLAGS_sun8i-r40-wirenboard-som-test := -@
