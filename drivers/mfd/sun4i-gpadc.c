@@ -48,6 +48,7 @@ static struct mfd_cell sun4i_gpadc_cells[] = {
 		.name	= "sun4i-a10-gpadc-iio",
 		.resources = adc_resources,
 		.num_resources = ARRAY_SIZE(adc_resources),
+		.of_compatible = "allwinner,sun4i-a10-gpadc",
 	},
 	{ .name = "iio_hwmon" }
 };
@@ -57,6 +58,7 @@ static struct mfd_cell sun5i_gpadc_cells[] = {
 		.name	= "sun5i-a13-gpadc-iio",
 		.resources = adc_resources,
 		.num_resources = ARRAY_SIZE(adc_resources),
+		.of_compatible = "allwinner,sun5i-a13-gpadc",
 	},
 	{ .name = "iio_hwmon" },
 };
@@ -66,6 +68,7 @@ static struct mfd_cell sun6i_gpadc_cells[] = {
 		.name	= "sun6i-a31-gpadc-iio",
 		.resources = adc_resources,
 		.num_resources = ARRAY_SIZE(adc_resources),
+		.of_compatible = "allwinner,sun7i-a31-gpadc",
 	},
 	{ .name = "iio_hwmon" },
 };
@@ -75,6 +78,7 @@ static struct mfd_cell sun8i_r40_gpadc_cells[] = {
 		.name	= "sun8i-r40-gpadc-iio",
 		.resources = adc_resources,
 		.num_resources = ARRAY_SIZE(adc_resources),
+		.of_compatible = "allwinner,sun8i-r40-gpadc",
 	},
 	{ .name = "iio_hwmon" },
 };
