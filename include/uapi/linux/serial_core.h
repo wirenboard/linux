@@ -279,4 +279,7 @@
 /* Freescale LINFlexD UART */
 #define PORT_LINFLEXUART	122
 
+/* Allwinner sun4i UART */
+#define PORT_SUN4I	123
+
 #endif /* _UAPILINUX_SERIAL_CORE_H */

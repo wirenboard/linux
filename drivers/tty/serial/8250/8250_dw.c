@@ -396,6 +396,7 @@ static bool dw8250_idma_filter(struct dma_chan *chan, void *param)
 
 static void dw8250_quirks(struct uart_port *p, struct dw8250_data *data)
 {
+	struct uart_8250_port *up = up_to_u8250p(p);
 	if (p->dev->of_node) {
 		struct device_node *np = p->dev->of_node;
 		int id;
@@ -421,6 +422,11 @@ static void dw8250_quirks(struct uart_port *p, struct dw8250_data *data)
 		}
 		if (of_device_is_compatible(np, "marvell,armada-38x-uart"))
 			p->serial_out = dw8250_serial_out38x;
+		if (of_device_is_compatible(np, "allwinner,sun4i-a10-uart")) {
+			p->flags = UPF_SHARE_IRQ | UPF_FIXED_TYPE | UPF_FIXED_PORT;
+			up->capabilities = UART_CAP_FIFO;
+			p->type = PORT_SUN4I;
+		}
 
 	} else if (acpi_dev_present("APMC0D08", NULL, -1)) {
 		p->iotype = UPIO_MEM32;
@@ -706,6 +712,7 @@ static const struct of_device_id dw8250_of_match[] = {
 	{ .compatible = "cavium,octeon-3860-uart" },
 	{ .compatible = "marvell,armada-38x-uart" },
 	{ .compatible = "renesas,rzn1-uart" },
+	{ .compatible = "allwinner,sun4i-a10-uart" },
 	{ /* Sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, dw8250_of_match);
