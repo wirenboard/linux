@@ -334,6 +334,7 @@ static void dw8250_set_termios(struct uart_port *p, struct ktermios *termios,
 {
 	unsigned long newrate = tty_termios_baud_rate(termios) * 16;
 	struct dw8250_data *d = to_dw8250_data(p->private_data);
+	struct uart_8250_port *up = up_to_u8250p(p);
 	long rate;
 	int ret;
 
@@ -354,7 +355,7 @@ static void dw8250_set_termios(struct uart_port *p, struct ktermios *termios,
 	clk_prepare_enable(d->clk);
 
 	p->status &= ~UPSTAT_AUTOCTS;
-	if (termios->c_cflag & CRTSCTS)
+	if ((up->capabilities & UART_CAP_AFE) && (termios->c_cflag & CRTSCTS))
 		p->status |= UPSTAT_AUTOCTS;
 
 	serial8250_do_set_termios(p, termios, old);
