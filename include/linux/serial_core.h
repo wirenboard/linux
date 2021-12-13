@@ -344,6 +344,7 @@ void uart_write_wakeup(struct uart_port *port);
 /*
  * Baud rate helpers.
  */
+unsigned int uart_get_bits_in_char(struct uart_port *port, unsigned int cflag);
 void uart_update_timeout(struct uart_port *port, unsigned int cflag,
 			 unsigned int baud);
 unsigned int uart_get_baud_rate(struct uart_port *port, struct ktermios *termios,
