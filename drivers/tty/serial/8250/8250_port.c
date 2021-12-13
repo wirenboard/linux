@@ -1485,6 +1485,7 @@ static enum hrtimer_restart serial8250_em485_handle_stop_tx(struct hrtimer *t)
 			int ret = __wait_for_empty(p, 100);
 
 			if (ret < 0) {
+				hrtimer_forward_now(&em485->stop_tx_timer, p->char_duration / 4);
 				restart = HRTIMER_RESTART;
 				goto out;
 			}
@@ -1523,11 +1524,11 @@ static void __stop_tx_rs485(struct uart_8250_port *p)
 				   p->port.rs485.delay_rts_after_send);
 	} else if (!(p->capabilities & UART_CAP_TEMT) &&
 		   __wait_for_empty(p, 100)) {
-		/* Short timer of 1us to check for clear fifos */
-		ktime_t tim = ktime_set(0, 1000);
+		/* Short timer of char / 2 to check for clear fifos */
+
 
 		em485->active_timer = &em485->stop_tx_timer;
-		hrtimer_start(&em485->stop_tx_timer, tim, HRTIMER_MODE_REL);
+		hrtimer_start(&em485->stop_tx_timer, p->char_duration / 2, HRTIMER_MODE_REL);
 	} else {
 		p->rs485_stop_tx(p);
 		em485->active_timer = NULL;
@@ -2810,6 +2811,10 @@ serial8250_do_set_termios(struct uart_port *port, struct ktermios *termios,
 	 * Update the per-port timeout.
 	 */
 	uart_update_timeout(port, termios->c_cflag, baud);
+
+	up->char_duration = ns_to_ktime(
+		uart_get_bits_in_char(port, termios->c_cflag) * (NSEC_PER_SEC / baud)
+	);
 
 	port->read_status_mask = UART_LSR_OE | UART_LSR_THRE | UART_LSR_DR;
 	if (termios->c_iflag & INPCK)
