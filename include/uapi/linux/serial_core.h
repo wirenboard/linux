@@ -245,4 +245,7 @@
 /* Sunplus UART */
 #define PORT_SUNPLUS	123
 
+/* Allwinner sun4i UART */
+#define PORT_SUN4I	124
+
 #endif /* _UAPILINUX_SERIAL_CORE_H */
