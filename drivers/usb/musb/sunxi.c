@@ -66,6 +66,7 @@
 #define SUNXI_MUSB_FL_HAS_RESET			6
 #define SUNXI_MUSB_FL_NO_CONFIGDATA		7
 #define SUNXI_MUSB_FL_PHY_MODE_PEND		8
+#define SUNXI_MUSB_FL_NO_HOSTMODE		9
 
 /* Our read/write methods need access and do not get passed in a musb ref :| */
 static struct musb *sunxi_musb;
@@ -239,11 +240,13 @@ static int sunxi_musb_init(struct musb *musb)
 
 	writeb(SUNXI_MUSB_VEND0_PIO_MODE, musb->mregs + SUNXI_MUSB_VEND0);
 
-	/* Register notifier before calling phy_init() */
-	ret = devm_extcon_register_notifier(glue->dev, glue->extcon,
-					EXTCON_USB_HOST, &glue->host_nb);
-	if (ret)
-		goto error_reset_assert;
+	if (!test_bit(SUNXI_MUSB_FL_NO_HOSTMODE, &glue->flags)) {
+		/* Register notifier before calling phy_init() */
+		ret = devm_extcon_register_notifier(glue->dev, glue->extcon,
+						EXTCON_USB_HOST, &glue->host_nb);
+		if (ret)
+			goto error_reset_assert;
+	}
 
 	ret = phy_init(glue->phy);
 	if (ret)
@@ -680,10 +683,19 @@ static int sunxi_musb_probe(struct platform_device *pdev)
 	if (!glue)
 		return -ENOMEM;
 
+	if (of_device_is_compatible(np, "allwinner,sun8i-r40-musb")) {
+		set_bit(SUNXI_MUSB_FL_NO_HOSTMODE, &glue->flags);
+	}
+
 	memset(&pdata, 0, sizeof(pdata));
 	switch (usb_get_dr_mode(&pdev->dev)) {
 #if defined CONFIG_USB_MUSB_DUAL_ROLE || defined CONFIG_USB_MUSB_HOST
 	case USB_DR_MODE_HOST:
+		if (test_bit(SUNXI_MUSB_FL_NO_HOSTMODE, &glue->flags)) {
+			dev_err(&pdev->dev, "only support peripheral mode\n");
+			return -EINVAL;
+		}
+
 		pdata.mode = MUSB_HOST;
 		glue->phy_mode = PHY_MODE_USB_HOST;
 		break;
@@ -696,6 +708,10 @@ static int sunxi_musb_probe(struct platform_device *pdev)
 #endif
 #ifdef CONFIG_USB_MUSB_DUAL_ROLE
 	case USB_DR_MODE_OTG:
+		if (test_bit(SUNXI_MUSB_FL_NO_HOSTMODE, &glue->flags)) {
+			dev_err(&pdev->dev, "only support peripheral mode\n");
+			return -EINVAL;
+		}
 		pdata.mode = MUSB_OTG;
 		glue->phy_mode = PHY_MODE_USB_OTG;
 		break;
@@ -705,7 +721,8 @@ static int sunxi_musb_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 	pdata.platform_ops	= &sunxi_musb_ops;
-	if (!of_device_is_compatible(np, "allwinner,sun8i-h3-musb"))
+	if (!of_device_is_compatible(np, "allwinner,sun8i-h3-musb") && 
+	    !of_device_is_compatible(np, "allwinner,sun8i-r40-musb"))
 		pdata.config = &sunxi_musb_hdrc_config;
 	else
 		pdata.config = &sunxi_musb_hdrc_config_h3;
@@ -721,7 +738,8 @@ static int sunxi_musb_probe(struct platform_device *pdev)
 		set_bit(SUNXI_MUSB_FL_HAS_RESET, &glue->flags);
 
 	if (of_device_is_compatible(np, "allwinner,sun8i-a33-musb") ||
-	    of_device_is_compatible(np, "allwinner,sun8i-h3-musb")) {
+	    of_device_is_compatible(np, "allwinner,sun8i-h3-musb") ||
+	    of_device_is_compatible(np, "allwinner,sun8i-r40-musb")) {
 		set_bit(SUNXI_MUSB_FL_HAS_RESET, &glue->flags);
 		set_bit(SUNXI_MUSB_FL_NO_CONFIGDATA, &glue->flags);
 	}
@@ -818,6 +836,7 @@ static const struct of_device_id sunxi_musb_match[] = {
 	{ .compatible = "allwinner,sun6i-a31-musb", },
 	{ .compatible = "allwinner,sun8i-a33-musb", },
 	{ .compatible = "allwinner,sun8i-h3-musb", },
+	{ .compatible = "allwinner,sun8i-r40-musb", },
 	{}
 };
 MODULE_DEVICE_TABLE(of, sunxi_musb_match);
