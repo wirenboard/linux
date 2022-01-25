@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb7) stable; urgency=medium
+
+  * dts: added WB6.9 support
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 26 Jan 2022 00:39:12 +0300
+
 linux-wb (5.10.35-wb6) stable; urgency=medium
 
   * dts: remove rts-gpios from WB6 dts by default.
@@ -7,7 +13,7 @@ linux-wb (5.10.35-wb6) stable; urgency=medium
 
 linux-wb (5.10.35-wb5) stable; urgency=medium
 
-  * LIRC and SC16IS7XX drivers are included into imx6_wirenboard_defconfig 
+  * LIRC and SC16IS7XX drivers are included into imx6_wirenboard_defconfig
 
  -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.ru>  Fri, 06 Aug 2021 11:29:13 +0500
 
