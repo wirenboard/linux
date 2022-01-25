@@ -1,0 +1,55 @@
+/dts-v1/;
+
+#include "imx6ul-wirenboard61.dts"
+
+/ {
+	model = "Wiren Board init (i.MX6UL/ULL)";
+	compatible = "contactless,imx6ul-wirenboard6x-init", "contactless,imx6ul-wirenboard61", "contactless,imx6ul-wirenboard60", "contactless,imx6ul-wirenboard-evk", "fsl,imx6ul-14x14-evk", "fsl,imx6ul";
+
+	/delete-node/ mcp6542; // Defining 2 watchdog nodes: for wb6.x and wb 6.9.x
+
+	mcp6542_6x: watchdog_6x {
+		/* external watchdog timer using mcp6542 (wb 6.x < 6.9) */
+		compatible = "linux,wdt-gpio";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_wdg_gpio_6x>;
+
+		gpios = <&gpio2 19 0>;
+		hw_algo = "toggle";
+		hw_margin_ms = <100>;
+		always-running;
+		timeout-sec = <30>;
+		status = "okay";
+	};
+
+	mcp6542_69: watchdog_69 {
+		/* external watchdog timer using mcp6542 (wb 6.9+) */
+		compatible = "linux,wdt-gpio";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_wdg_gpio_69>;
+
+		gpios = <&gpio3 8 0>;
+		hw_algo = "toggle";
+		hw_margin_ms = <100>;
+		always-running;
+		timeout-sec = <30>;
+		status = "okay";
+	};
+};
+
+
+&iomuxc {
+	pinctrl_wdg_gpio_6x: wdggrp_6x {
+		fsl,pins = <
+			MX6UL_PAD_SD1_DATA1__GPIO2_IO19	0x30b0 /* watchdog toggle out (wb 6.x < 6.9) */
+		>;
+	};
+
+	pinctrl_wdg_gpio_69: wdggrp_69 {
+		fsl,pins = <
+			MX6UL_PAD_LCD_DATA03__GPIO3_IO08	0x30b0 /* watchdog toggle out (wb 6.9) */
+		>;
+	};
+};
