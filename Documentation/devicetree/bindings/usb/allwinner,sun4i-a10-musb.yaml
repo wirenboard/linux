@@ -19,6 +19,7 @@ properties:
           - allwinner,sun8i-a33-musb
           - allwinner,sun8i-h3-musb
           - allwinner,suniv-f1c100s-musb
+          - allwinner,sun8i-r40-musb
       - items:
           - enum:
               - allwinner,sun8i-a83t-musb
@@ -82,6 +83,7 @@ if:
           - allwinner,sun6i-a31-musb
           - allwinner,sun8i-a33-musb
           - allwinner,sun8i-h3-musb
+          - allwinner,sun8i-r40-musb
 
 then:
   required:
