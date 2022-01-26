@@ -75,6 +75,16 @@ properties:
   usb2_vbus-supply:
     description: Regulator controlling USB2 Host controller
 
+  dr_mode:
+    description: On SoCs with dual route PHY0, port 0 role is controlled by phy, not OTG (peripheral) controller
+    enum:
+      - host
+      - otg
+      - peripheral
+
+  wirenboard,mux-on-id-pin:
+    description: On Wiren Board 7 USB0 is muxed between USB-A connector for host mode and USB-C connector for peripheral mode. The mux is controller by voltage on perihperal connector. The same signal is used as USB ID.
+
 required:
   - "#phy-cells"
   - compatible
