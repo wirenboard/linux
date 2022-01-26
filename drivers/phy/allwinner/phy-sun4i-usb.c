@@ -140,6 +140,7 @@ struct sun4i_usb_phy_data {
 	int id_det_irq;
 	int vbus_det_irq;
 	int id_det;
+	bool mux_on_id_pin;
 	int vbus_det;
 	struct delayed_work detect;
 	struct usb_role_switch *role_sw;
@@ -257,6 +258,26 @@ static void sun4i_usb_phy_passby(struct sun4i_usb_phy *phy, int enable)
 	writel(reg_value, phy->pmu);
 }
 
+static void sun4i_usb_phy0_set_mode_mux(struct sun4i_usb_phy_data *data)
+{
+	if (!data->mux_on_id_pin)
+		return;
+
+	if (!data->id_det_gpio)
+		return;
+
+	switch (data->dr_mode) {
+		case USB_DR_MODE_HOST:
+			gpiod_direction_output(data->id_det_gpio, 0);
+			break;
+		case USB_DR_MODE_PERIPHERAL:
+			gpiod_direction_output(data->id_det_gpio, 1);
+			break;
+		default:
+			gpiod_direction_input(data->id_det_gpio);
+	}
+}
+
 static int sun4i_usb_phy_init(struct phy *_phy)
 {
 	struct sun4i_usb_phy *phy = phy_get_drvdata(_phy);
@@ -364,6 +385,7 @@ static int sun4i_usb_phy_init(struct phy *_phy)
 		data->id_det = -1;
 		data->vbus_det = -1;
 		queue_delayed_work(system_wq, &data->detect, 0);
+		sun4i_usb_phy0_set_mode_mux(data);
 	}
 
 	return 0;
@@ -519,6 +541,8 @@ static void sun4i_usb_phy0_set_dr_mode(struct sun4i_usb_phy_data *data, int new_
 		dev_info(&data->phys[0].phy->dev, "Changing dr_mode to %d\n", new_mode);
 		data->dr_mode = new_mode;
 	}
+
+	sun4i_usb_phy0_set_mode_mux(data);
 
 	data->id_det = -1; /* Force reprocessing of id */
 	data->force_session_end = true;
@@ -814,6 +838,10 @@ static int sun4i_usb_phy_probe(struct platform_device *pdev)
 		return PTR_ERR(data->id_det_gpio);
 	}
 
+	if (data->id_det_gpio) {
+		data->mux_on_id_pin = of_property_read_bool(np, "wirenboard,mux-on-id-pin");
+	}
+
 	data->vbus_det_gpio = devm_gpiod_get_optional(dev, "usb0_vbus_det",
 						      GPIOD_IN);
 	if (IS_ERR(data->vbus_det_gpio)) {
@@ -928,17 +956,9 @@ static int sun4i_usb_phy_probe(struct platform_device *pdev)
 		phy_set_drvdata(phy->phy, &data->phys[i]);
 	}
 
-	data->id_det_irq = gpiod_to_irq(data->id_det_gpio);
-	if (data->id_det_irq > 0) {
-		ret = devm_request_irq(dev, data->id_det_irq,
-				sun4i_usb_phy0_id_vbus_det_irq,
-				IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
-				"usb0-id-det", data);
-		if (ret) {
-			dev_err(dev, "Err requesting id-det-irq: %d\n", ret);
-			return ret;
-		}
-	}
+	// on WB7/WB8 we are going to control id_det GPIO manually in some cases
+	// so it's important to configure it as IRQ and set as output at a later stage
+	data->id_det_irq = -1;
 
 	data->vbus_det_irq = gpiod_to_irq(data->vbus_det_gpio);
 	if (data->vbus_det_irq > 0) {
