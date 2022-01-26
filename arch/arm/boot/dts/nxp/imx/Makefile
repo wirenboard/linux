@@ -431,3 +431,5 @@ dtb-$(CONFIG_SOC_IMX6UL) += imx6ul-wirenboard670.dtb
 DTC_FLAGS_imx6ul-wirenboard670 := -@
 dtb-$(CONFIG_SOC_IMX6UL) += imx6ul-wirenboard680.dtb
 DTC_FLAGS_imx6ul-wirenboard680 := -@
+dtb-$(CONFIG_SOC_IMX6UL) += imx6ul-wirenboard690.dtb
+DTC_FLAGS_imx6ul-wirenboard690 := -@
