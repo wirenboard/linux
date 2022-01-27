@@ -731,8 +731,16 @@ mv64xxx_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msgs[], int num)
 	return ret;
 }
 
+static int
+mv64xxx_i2c_xfer_atomic_dummy(struct i2c_adapter *adap, struct i2c_msg msgs[], int num)
+{
+	dev_warn(&adap->dev, "No atomic I2C transfer handler");
+	return mv64xxx_i2c_xfer(adap, msgs, num);
+}
+
 static const struct i2c_algorithm mv64xxx_i2c_algo = {
 	.master_xfer = mv64xxx_i2c_xfer,
+	.master_xfer_atomic = mv64xxx_i2c_xfer_atomic_dummy,
 	.functionality = mv64xxx_i2c_functionality,
 };
 
