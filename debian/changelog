@@ -1,3 +1,9 @@
+linux-wb (4.9.22-wb4) stable; urgency=medium
+
+  * Backported WB6.9 dts from 5.10 branch
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Fri, 28 Jan 2022 19:12:52 +0300
+
 linux-wb (4.9.22-wb3) stable; urgency=medium
 
   * Added universal WB6x-init dts
