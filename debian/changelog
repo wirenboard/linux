@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb8) stable; urgency=medium
+
+  * spidev: add compatible string for rfm96w
+    (missing after migration from 4.9)
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Fri, 28 Jan 2022 13:06:55 +0300
+
 linux-wb (5.10.35-wb7) stable; urgency=medium
 
   * dts: added WB6.9 support
