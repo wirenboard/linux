@@ -321,18 +321,7 @@ static void uart_shutdown(struct tty_struct *tty, struct uart_state *state)
 		free_page((unsigned long)xmit_buf);
 }
 
-/**
- *	uart_update_timeout - update per-port FIFO timeout.
- *	@port:  uart_port structure describing the port
- *	@cflag: termios cflag value
- *	@baud:  speed of the port
- *
- *	Set the port FIFO timeout value.  The @cflag value should
- *	reflect the actual hardware settings.
- */
-void
-uart_update_timeout(struct uart_port *port, unsigned int cflag,
-		    unsigned int baud)
+unsigned int uart_get_bits_in_char(struct uart_port *port, unsigned int cflag)
 {
 	unsigned int bits;
 
@@ -356,6 +345,26 @@ uart_update_timeout(struct uart_port *port, unsigned int cflag,
 		bits++;
 	if (cflag & PARENB)
 		bits++;
+
+	return bits;
+}
+
+EXPORT_SYMBOL(uart_get_bits_in_char);
+
+/**
+ *	uart_update_timeout - update per-port FIFO timeout.
+ *	@port:  uart_port structure describing the port
+ *	@cflag: termios cflag value
+ *	@baud:  speed of the port
+ *
+ *	Set the port FIFO timeout value.  The @cflag value should
+ *	reflect the actual hardware settings.
+ */
+void
+uart_update_timeout(struct uart_port *port, unsigned int cflag,
+		    unsigned int baud)
+{
+	unsigned int bits = uart_get_bits_in_char(port, cflag);
 
 	/*
 	 * The total number of bits to be transmitted in the fifo.
@@ -3265,6 +3274,14 @@ int uart_get_rs485_mode(struct uart_port *port)
 		ret = PTR_ERR(port->rs485_term_gpio);
 		port->rs485_term_gpio = NULL;
 		return dev_err_probe(dev, ret, "Cannot get rs485-term-gpios\n");
+	}
+
+	port->rs485_re_gpio = devm_gpiod_get_optional(dev, "rs485-rx-enable",
+						      GPIOD_OUT_HIGH);
+	if (IS_ERR(port->rs485_re_gpio)) {
+		ret = PTR_ERR(port->rs485_re_gpio);
+		port->rs485_re_gpio = NULL;
+		return dev_err_probe(dev, ret, "Cannot get rs485-rx-enable-gpios\n");
 	}
 
 	return 0;
