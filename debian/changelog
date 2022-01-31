@@ -1,4 +1,4 @@
-linux-wb (5.10.35-wb9) stable; urgency=medium
+linux-wb (5.10.35-wb103) stable; urgency=medium
 
   * dts: fixed unstable eth connection on wb6.9
 
