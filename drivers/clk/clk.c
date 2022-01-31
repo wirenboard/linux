@@ -4156,6 +4156,12 @@ static int devm_clk_hw_match(struct device *dev, void *res, void *data)
 	return hw == data;
 }
 
+bool devm_clk_name_match(struct clk *clk, const char *string)
+{
+	return match_string(&clk->con_id, 1, string) == 0;
+}
+EXPORT_SYMBOL_GPL(devm_clk_name_match);
+
 /**
  * devm_clk_unregister - resource managed clk_unregister()
  * @dev: device that is unregistering the clock data

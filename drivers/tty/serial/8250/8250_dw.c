@@ -331,6 +331,7 @@ static void dw8250_set_termios(struct uart_port *p, struct ktermios *termios,
 {
 	unsigned long newrate = tty_termios_baud_rate(termios) * 16;
 	struct dw8250_data *d = to_dw8250_data(p->private_data);
+	struct uart_8250_port *up = up_to_u8250p(p);
 	long rate;
 	int ret;
 
@@ -351,7 +352,7 @@ static void dw8250_set_termios(struct uart_port *p, struct ktermios *termios,
 	clk_prepare_enable(d->clk);
 
 	p->status &= ~UPSTAT_AUTOCTS;
-	if (termios->c_cflag & CRTSCTS)
+	if ((up->capabilities & UART_CAP_AFE) && (termios->c_cflag & CRTSCTS))
 		p->status |= UPSTAT_AUTOCTS;
 
 	serial8250_do_set_termios(p, termios, old);
@@ -393,6 +394,7 @@ static bool dw8250_idma_filter(struct dma_chan *chan, void *param)
 
 static void dw8250_quirks(struct uart_port *p, struct dw8250_data *data)
 {
+	struct uart_8250_port *up = up_to_u8250p(p);
 	if (p->dev->of_node) {
 		struct device_node *np = p->dev->of_node;
 		int id;
@@ -418,6 +420,11 @@ static void dw8250_quirks(struct uart_port *p, struct dw8250_data *data)
 		}
 		if (of_device_is_compatible(np, "marvell,armada-38x-uart"))
 			p->serial_out = dw8250_serial_out38x;
+		if (of_device_is_compatible(np, "allwinner,sun4i-a10-uart")) {
+			p->flags = UPF_SHARE_IRQ | UPF_FIXED_TYPE | UPF_FIXED_PORT;
+			up->capabilities = UART_CAP_FIFO;
+			p->type = PORT_SUN4I;
+		}
 
 	} else if (acpi_dev_present("APMC0D08", NULL, -1)) {
 		p->iotype = UPIO_MEM32;
@@ -468,6 +475,9 @@ static int dw8250_probe(struct platform_device *pdev)
 	p->serial_out	= dw8250_serial_out;
 	p->set_ldisc	= dw8250_set_ldisc;
 	p->set_termios	= dw8250_set_termios;
+	p->rs485_config = serial8250_em485_config;
+	up->rs485_start_tx = serial8250_em485_start_tx;
+	up->rs485_stop_tx = serial8250_em485_stop_tx;
 
 	p->membase = devm_ioremap(dev, regs->start, resource_size(regs));
 	if (!p->membase)
@@ -573,6 +583,10 @@ static int dw8250_probe(struct platform_device *pdev)
 
 	if (!data->skip_autocfg)
 		dw8250_setup_port(p);
+
+	if (p->dev->of_node)
+		if (of_property_read_bool(p->dev->of_node, "uart-has-rtscts"))
+			up->capabilities |= UART_CAP_AFE;
 
 	/* If we have a valid fifosize, try hooking up DMA */
 	if (p->fifosize) {
@@ -700,6 +714,7 @@ static const struct of_device_id dw8250_of_match[] = {
 	{ .compatible = "cavium,octeon-3860-uart" },
 	{ .compatible = "marvell,armada-38x-uart" },
 	{ .compatible = "renesas,rzn1-uart" },
+	{ .compatible = "allwinner,sun4i-a10-uart" },
 	{ /* Sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, dw8250_of_match);

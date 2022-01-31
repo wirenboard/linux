@@ -254,6 +254,7 @@ struct uart_port {
 	const struct attribute_group **tty_groups;	/* all attributes (serial core use only) */
 	struct serial_rs485     rs485;
 	struct gpio_desc	*rs485_term_gpio;	/* enable RS485 bus termination */
+	struct gpio_desc	*rs485_re_gpio;		/* gpio RS485 receive enable */
 	struct serial_iso7816   iso7816;
 	void			*private_data;		/* generic platform data pointer */
 };
@@ -325,6 +326,7 @@ void uart_write_wakeup(struct uart_port *port);
 /*
  * Baud rate helpers.
  */
+unsigned int uart_get_bits_in_char(struct uart_port *port, unsigned int cflag);
 void uart_update_timeout(struct uart_port *port, unsigned int cflag,
 			 unsigned int baud);
 unsigned int uart_get_baud_rate(struct uart_port *port, struct ktermios *termios,

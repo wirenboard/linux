@@ -4,6 +4,30 @@ linux-wb (5.10.35-wb9) stable; urgency=medium
 
  -- Vladimir Romanov <v.romanov@wirenboard.ru>  Mon, 31 Jan 2022 13:30:41 +0300
 
+linux-wb (5.10.35-wb102) stable; urgency=medium
+
+  * wb7: improved USB role switching for muxed USB-A/USB-C ports
+  * wb7: remove battery nodes from device tree
+  * wb7: remove V_OUT_OK status input
+
+ -- Evgeny Boger <boger@contactless.ru>  Sun, 30 Jan 2022 00:27:35 +0300
+
+linux-wb (5.10.35-wb101) stable; urgency=medium
+
+  * wb7: proper initramfs for USB update
+  * wb7: improved handling of GPIOs
+  * wb7: LEDs are driven by PWM
+  * wb7: PWM improvements
+  * wb7: delete some unused options from defconf
+
+ -- Evgeny Boger <boger@wirenboard.com>  Sun, 23 Jan 2022 15:39:54 +0300
+
+linux-wb (5.10.35-wb100) stable; urgency=medium
+
+  * WB7 initial support
+
+ -- Evgeny Boger <boger@wirenboard.com>  Mon, 17 May 2021 19:46:14 +0300
+
 linux-wb (5.10.35-wb8) stable; urgency=medium
 
   * spidev: add compatible string for rfm96w

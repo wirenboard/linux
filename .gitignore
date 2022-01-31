@@ -162,6 +162,9 @@ x509.genkey
 sphinx_*/
 
 # Wirenboard
+*.changes
+*.deb
+modules_install/*
 zImage-*
 initramfs_usbgadget
 /pkgs/
