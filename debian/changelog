@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb9) stable; urgency=medium
+
+  * dts: fixed unstable eth connection on wb6.9
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Mon, 31 Jan 2022 13:30:41 +0300
+
 linux-wb (5.10.35-wb102) stable; urgency=medium
 
   * wb7: improved USB role switching for muxed USB-A/USB-C ports
