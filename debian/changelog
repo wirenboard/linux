@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb105) stable; urgency=medium
+
+  * wb7: defined proper modem's gpios and usb-soc addr
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 02 Feb 2022 02:39:41 +0300
+
 linux-wb (5.10.35-wb104) stable; urgency=medium
 
   * make linux-image-wb6 and linux-image-wb7 conflict
