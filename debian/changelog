@@ -1,8 +1,14 @@
-linux-wb (5.10.35-wb105) stable; urgency=medium
+linux-wb (5.10.35-wb106) stable; urgency=medium
 
   * wb7: defined proper modem's gpios and usb-soc addr
 
- -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 02 Feb 2022 02:39:41 +0300
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Fri, 04 Feb 2022 10:03:51 +0300
+
+linux-wb (5.10.35-wb105) stable; urgency=medium
+
+  * wb6.9: fixed incorrect clk on fec2
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 02 Feb 2022 23:05:27 +0300
 
 linux-wb (5.10.35-wb104) stable; urgency=medium
 
