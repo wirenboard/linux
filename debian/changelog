@@ -1,6 +1,7 @@
 linux-wb (5.10.35-wb106) stable; urgency=medium
 
-  * wb7: defined proper modem's gpios and usb-soc addr
+  * wb7: defined proper modem's gpios
+  * wb6, wb7: binded modem's usb port
 
  -- Vladimir Romanov <v.romanov@wirenboard.ru>  Fri, 04 Feb 2022 10:03:51 +0300
 

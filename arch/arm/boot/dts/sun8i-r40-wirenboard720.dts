@@ -317,8 +317,6 @@
 		};
 
 		gsm {
-			usb-soc-addr = "1c1c000";	// ehci2; modem is connected to
-
 			power-type = <2>;
 
 			/* keeps compatibility in wb of-parsing tools */
@@ -713,6 +711,12 @@
 
 &ehci2 {
 	status = "okay";
+
+	/* wbc-modem is connected to 1st port of usb bus */
+	wbc-modem@1 {
+		compatible = "wirenboard,wbc-usb-modem";
+		reg = <1>;
+	};
 };
 
 

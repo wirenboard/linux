@@ -453,6 +453,22 @@
 	};
 };
 
+/* wbc-modem is connected to port3 of usb-hub */
+&usbotg2 {
+	usb-hub@1 {
+		compatible = "usb424,2514";
+		reg = <1>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		wbc-modem@3 {
+			compatible = "wirenboard,wbc-usb-modem";
+			reg = <3>;
+		};
+	};
+};
+
+
 &clks {
 	assigned-clocks = <&clks IMX6UL_CLK_PLL4_AUDIO_DIV>;
 	assigned-clock-rates = <786432000>;
