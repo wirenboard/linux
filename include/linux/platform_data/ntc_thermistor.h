@@ -41,6 +41,7 @@ struct ntc_thermistor_platform_data {
 
 	unsigned int pullup_ohm;
 	unsigned int pulldown_ohm;
+	unsigned int series_ohm;
 	enum { NTC_CONNECTED_POSITIVE, NTC_CONNECTED_GROUND } connect;
 	struct iio_channel *chan;
 
