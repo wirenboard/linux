@@ -32,6 +32,7 @@
 		mmc1 = &mmc0;
 		rtc0 = &ext_rtc;
 		rtc1 = &rtc;
+		gsm-usb = &ehci2;
 	};
 
 	chosen {

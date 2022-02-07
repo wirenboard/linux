@@ -37,6 +37,7 @@
 */
 		mmc0 = &usdhc2;
 		mmc1 = &usdhc1;
+		gsm-usb = &gsm_usb;
 	};
 
 	chosen {
@@ -449,6 +450,32 @@
 				hwmon-node-name = "pcb-temp";
 				hwmon-channel = "temp1";
 			};
+		};
+	};
+};
+
+&usbotg2 {
+	hub@1 {
+		compatible = "usb424,2514";
+		reg = <1>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		wifi_usb: port@1 {
+			reg = <1>;
+		};
+
+		port@2 {
+			reg = <2>;
+		};
+
+		gsm_usb: port@3 {
+			reg = <3>;
+			compatible = "usb1e0e,9011";
+		};
+
+		port@4 {
+			reg = <4>;
 		};
 	};
 };
