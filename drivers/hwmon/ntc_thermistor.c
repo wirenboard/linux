@@ -337,6 +337,8 @@ struct ntc_data {
 	unsigned int pullup_uv;
 	unsigned int pullup_ohm;
 	unsigned int pulldown_ohm;
+    unsigned int series_ohm;
+
 	enum { NTC_CONNECTED_POSITIVE, NTC_CONNECTED_GROUND } connect;
 	struct iio_channel *chan;
 };
@@ -402,6 +404,8 @@ static int get_ohm_of_thermistor(struct ntc_data *data, unsigned int uv)
 				puo * uv - pdo * (puv - uv));
 	else
 		n = div64_u64_safe(pdo * puo * uv, pdo * (puv - uv) - puo * uv);
+
+	n -= data->series_ohm;
 
 	if (n > INT_MAX)
 		n = INT_MAX;
@@ -591,6 +595,10 @@ static int ntc_thermistor_parse_props(struct device *dev,
 	ret = device_property_read_u32(dev, "pulldown-ohm", &data->pulldown_ohm);
 	if (ret)
 		return dev_err_probe(dev,  ret, "pulldown-ohm not specified\n");
+
+	ret = device_property_read_u32(dev, "series-ohm", &data->series_ohm);
+	if (ret)
+		data->series_ohm = 0;
 
 	if (device_property_read_bool(dev, "connected-positive"))
 		data->connect = NTC_CONNECTED_POSITIVE;
