@@ -5,7 +5,6 @@
 / {
 	model = "Wiren Board init (i.MX6UL/ULL)";
 	compatible = "contactless,imx6ul-wirenboard6x-init", "contactless,imx6ul-wirenboard690", "contactless,imx6ul-wirenboard680", "contactless,imx6ul-wirenboard670", "contactless,imx6ul-wirenboard660", "contactless,imx6ul-wirenboard65", "contactless,imx6ul-wirenboard61", "contactless,imx6ul-wirenboard60", "contactless,imx6ul-wirenboard-evk", "fsl,imx6ul-14x14-evk", "fsl,imx6ul";
-};
 
 	/delete-node/ mcp6542; // Defining 2 watchdog nodes: for wb6.x and wb 6.9.x
 
