@@ -31,7 +31,7 @@
 #include <linux/iio/consumer.h>
 #include <linux/mfd/axp20x.h>
 
-#define AXP20X_PWR_STATUS_BAT_CHARGING	BIT(2)
+#define AXP20X_PWR_STATUS_BAT_CURR_DIRECTION	BIT(2)
 
 #define AXP20X_PWR_OP_BATT_PRESENT	BIT(5)
 #define AXP20X_PWR_OP_BATT_ACTIVATED	BIT(3)
@@ -180,6 +180,28 @@ static int axp20x_get_constant_charge_current(struct axp20x_batt_ps *axp,
 	return 0;
 }
 
+static int axp20x_get_batt_current_ua(struct axp20x_batt_ps *axp, int *val)
+{
+	int ret = 0, reg, val1;
+
+	ret = regmap_read(axp->regmap, AXP20X_PWR_INPUT_STATUS,
+				&reg);
+	if (ret)
+		return ret;
+
+	if (reg & AXP20X_PWR_STATUS_BAT_CURR_DIRECTION) {
+		ret = iio_read_channel_processed(axp->batt_chrg_i, val);
+	} else {
+		ret = iio_read_channel_processed(axp->batt_dischrg_i, &val1);
+		*val = -val1;
+	}
+
+	/* IIO framework gives mA but Power Supply framework gives uA */
+	*val *= 1000;
+
+	return ret;
+}
+
 static int axp20x_battery_get_prop(struct power_supply *psy,
 				   enum power_supply_property psp,
 				   union power_supply_propval *val)
@@ -209,22 +231,16 @@ static int axp20x_battery_get_prop(struct power_supply *psy,
 		break;
 
 	case POWER_SUPPLY_PROP_STATUS:
-		ret = regmap_read(axp20x_batt->regmap, AXP20X_PWR_INPUT_STATUS,
-				  &reg);
+		ret = axp20x_get_batt_current_ua(axp20x_batt, &val1);
+
 		if (ret)
 			return ret;
 
-		if (reg & AXP20X_PWR_STATUS_BAT_CHARGING) {
+		// 3 mA threshold to ignore noise on current shunt
+		if (val1 > 3000) {
 			val->intval = POWER_SUPPLY_STATUS_CHARGING;
 			return 0;
-		}
-
-		ret = iio_read_channel_processed(axp20x_batt->batt_dischrg_i,
-						 &val1);
-		if (ret)
-			return ret;
-
-		if (val1) {
+		} else if (val1 < -3000) {
 			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
 			return 0;
 		}
@@ -269,22 +285,11 @@ static int axp20x_battery_get_prop(struct power_supply *psy,
 		break;
 
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
-		ret = regmap_read(axp20x_batt->regmap, AXP20X_PWR_INPUT_STATUS,
-				  &reg);
+		ret = axp20x_get_batt_current_ua(axp20x_batt, &val->intval);
+
 		if (ret)
 			return ret;
 
-		if (reg & AXP20X_PWR_STATUS_BAT_CHARGING) {
-			ret = iio_read_channel_processed(axp20x_batt->batt_chrg_i, &val->intval);
-		} else {
-			ret = iio_read_channel_processed(axp20x_batt->batt_dischrg_i, &val1);
-			val->intval = -val1;
-		}
-		if (ret)
-			return ret;
-
-		/* IIO framework gives mA but Power Supply framework gives uA */
-		val->intval *= 1000;
 		break;
 
 	case POWER_SUPPLY_PROP_CAPACITY:
