@@ -1050,4 +1050,8 @@ even if no battery module is installed.
 &battery_power_supply {
     status = "okay";
     monitored-battery = <&fallback_battery_desc>;
+
+	// it's ~40C conservative high temperature limit.
+	// to be overrided by battery overlay
+	x-powers,charge-high-temp-microvolt = <499200>;
 };
