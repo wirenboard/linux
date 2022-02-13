@@ -34,6 +34,10 @@
     };
 };
 
+&wbc_modem {
+	power-gpios = <&gpio5 4 0>;
+};
+
 &ecspi3 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_ecspi3>;
