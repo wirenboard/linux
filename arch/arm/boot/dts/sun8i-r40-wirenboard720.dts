@@ -706,6 +706,7 @@
 
 		compatible = "wirenboard,wbc-usb";
 		power-type = <2>;
+		status = "disabled";
 
 		/* keeps compatibility in wb of-parsing tools */
 		gpio-xlate-type = "bank_pin";
