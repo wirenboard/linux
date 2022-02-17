@@ -1,3 +1,9 @@
+linux-wb (4.9.22-wb4) stable; urgency=medium
+
+  * Added compatible strings for all supported Wiren Board devices to WB6x-init dts
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Thu, 10 Feb 2022 09:47:44 +0300
+
 linux-wb (4.9.22-wb3) stable; urgency=medium
 
   * Added universal WB6x-init dts
