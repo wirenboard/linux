@@ -1048,8 +1048,8 @@ modification. So we have to enable the battery driver on boot time
 even if no battery module is installed.
 */
 &battery_power_supply {
-    status = "okay";
-    monitored-battery = <&fallback_battery_desc>;
+	status = "okay";
+	monitored-battery = <&fallback_battery_desc>;
 
 	// it's ~40C conservative high temperature limit.
 	// to be overrided by battery overlay
