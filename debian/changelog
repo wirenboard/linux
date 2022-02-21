@@ -1,4 +1,4 @@
-linux-wb (5.10.35-wb105) stable; urgency=medium
+linux-wb (5.10.35-wb107) stable; urgency=medium
 
   * wb7: battery and supercap modules support
 
