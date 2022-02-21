@@ -455,7 +455,7 @@
 	};
 };
 
-/* wbc-modem is connected to port3 of usb-hub */
+/* wbc-modem is connected to port2 of usb-hub */
 &usbotg2 {
 	usb-hub@1 {
 		compatible = "usb424,2514";
@@ -463,9 +463,9 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		wbc_modem: wbc-modem@3 {
+		wbc_modem: wbc-modem@2 {
 			compatible = "wirenboard,wbc-usb";
-			reg = <3>;
+			reg = <2>;
 			status = "disabled";
 
 			power-type = <2>;

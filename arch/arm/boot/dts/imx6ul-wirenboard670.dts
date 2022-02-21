@@ -34,7 +34,9 @@
     };
 };
 
+/* wbc-modem is connected to port3 of usb-hub */
 &wbc_modem {
+	reg = <3>;
 	power-gpios = <&gpio5 4 0>;
 };
 
