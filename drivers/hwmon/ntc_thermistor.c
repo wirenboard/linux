@@ -412,6 +412,9 @@ ntc_thermistor_parse_dt(struct device *dev)
 	if (of_property_read_u32(np, "pulldown-ohm", &pdata->pulldown_ohm))
 		return ERR_PTR(-ENODEV);
 
+	if (of_property_read_u32(np, "series-ohm", &pdata->series_ohm))
+		pdata->series_ohm = 0;
+
 	if (of_find_property(np, "connected-positive", NULL))
 		pdata->connect = NTC_CONNECTED_POSITIVE;
 	else /* status change should be possible if not always on. */
@@ -466,6 +469,8 @@ static int get_ohm_of_thermistor(struct ntc_data *data, unsigned int uv)
 				puo * uv - pdo * (puv - uv));
 	else
 		n = div64_u64_safe(pdo * puo * uv, pdo * (puv - uv) - puo * uv);
+
+	n -= pdata->series_ohm;
 
 	if (n > INT_MAX)
 		n = INT_MAX;
