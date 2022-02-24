@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb108) stable; urgency=medium
+
+  * wb7: defined proper modem's gpios
+  * wb6, wb7: binded modem's usb port
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 23 Feb 2022 23:43:21 +0300
+
 linux-wb (5.10.35-wb107) stable; urgency=medium
 
   * wb7: battery and supercap modules support
