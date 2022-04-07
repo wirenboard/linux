@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb109-1) stable; urgency=medium
+
+  * writable regmap
+
+ -- Evgeny Boger <boger@wirenboard.com>  Thu, 07 Apr 2022 20:21:34 +0300
+
 linux-wb (5.10.35-wb109) stable; urgency=medium
 
   * wb6, wb7: added rtc-rv8803 driver to defconfig
