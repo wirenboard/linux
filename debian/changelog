@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb105+1) stable; urgency=medium
+
+  * wb6.7: added dummy (a copy of 6.7's) dts for wb6.7s without usb hub
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 13 Apr 2022 17:41:01 +0300
+
 linux-wb (5.10.35-wb105) stable; urgency=medium
 
   * wb6.9: fixed incorrect clk on fec2
