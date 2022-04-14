@@ -55,7 +55,7 @@ pipeline {
         }
         stage('Determine version suffix') {
             when { expression {
-                params.ADD_VERSION_SUFFIX && !wb.isBranchRelease(env.BRANCH_NAME, config.customReleaseBranchPattern)
+                params.ADD_VERSION_SUFFIX && !wb.isBranchRelease(env.BRANCH_NAME, 'dev/(.*)')
             }}
 
             steps {
