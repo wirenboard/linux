@@ -54,14 +54,9 @@ pipeline {
             }
         }
         stage('Determine version suffix') {
-            when {
-                not {
-                    branch 'dev/*'
-                }
-                expression {
-                    params.ADD_VERSION_SUFFIX
-                }
-            }
+            when { expression {
+                params.ADD_VERSION_SUFFIX && !wb.isBranchRelease(env.BRANCH_NAME, config.customReleaseBranchPattern)
+            }}
 
             steps {
                 script {
@@ -80,22 +75,17 @@ pipeline {
             steps {
                 script {
                     def flavours = params.KERNEL_FLAVOUR.split(' ')
-                    def jobs = [:]
 
                     for (flavour in flavours) {
                         def currentFlavour = flavour  // to refer in closure
-                        jobs["build ${currentFlavour}"] = {
-                            stage("Build ${currentFlavour}") {
-                                sh """wbdev user \\
-                                   KERNEL_FLAVOUR=${currentFlavour} \\
-                                   VERSION_SUFFIX=\$VERSION_SUFFIX \\
-                                   FORCE_DEFAULT=n \\
-                                   scripts/package/wb/do_build_deb.sh"""
-                            }
+                        stage("Build ${currentFlavour}") {
+                            sh """wbdev user \\
+                               KERNEL_FLAVOUR=${currentFlavour} \\
+                               VERSION_SUFFIX=\$VERSION_SUFFIX \\
+                               FORCE_DEFAULT=n \\
+                               scripts/package/wb/do_build_deb.sh"""
                         }
                     }
-
-                    parallel jobs
                 }
             }
             post {
