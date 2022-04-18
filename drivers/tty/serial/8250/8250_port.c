@@ -1444,6 +1444,7 @@ void serial8250_em485_stop_tx(struct uart_8250_port *p)
 		gpiod_set_value(port->rs485_re_gpio, 1);
 		serial8250_clear_and_reinit_fifos(p);
 
+		p->rx_disabled = false;
 		p->ier |= UART_IER_RLSI | UART_IER_RDI;
 		serial_port_out(&p->port, UART_IER, p->ier);
 	}
@@ -1630,6 +1631,7 @@ void serial8250_em485_start_tx(struct uart_8250_port *up)
 
 	if (!(up->port.rs485.flags & SER_RS485_RX_DURING_TX)) {
 		gpiod_set_value(port->rs485_re_gpio, 0);
+		up->rx_disabled = true;
 		serial8250_stop_rx(&up->port);
 	}
 
@@ -1965,6 +1967,9 @@ int serial8250_handle_irq(struct uart_port *port, unsigned int iir)
 	if (!(status & (UART_LSR_FIFOE | UART_LSR_BRK_ERROR_BITS)) &&
 	    (port->status & (UPSTAT_AUTOCTS | UPSTAT_AUTORTS)) &&
 	    !(port->read_status_mask & UART_LSR_DR))
+		skip_rx = true;
+
+	if (up->rx_disabled)
 		skip_rx = true;
 
 	if (status & (UART_LSR_DR | UART_LSR_BI) && !skip_rx) {
