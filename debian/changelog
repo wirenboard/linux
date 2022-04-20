@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb111) stable; urgency=medium
+
+  * Fixes the 00 byte (and a break condition) received while sending large
+    enough buffers by RS-485 on Wiren Board 7
+
+ -- Evgeny Boger <boger@wirenboard.com>  Mon, 18 Apr 2022 23:39:39 +0300
+
 linux-wb (5.10.35-wb110) stable; urgency=medium
 
   * wb6.7.x: added imx6ul-wirenboard670-nousbhub dts (wbc-modem is connected directly to SoC's usb)
