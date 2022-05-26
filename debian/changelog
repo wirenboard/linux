@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb112) stable; urgency=medium
+
+  * dts: wb6: add missing eMMC pinctrl entries for DATA4..DATA7 pins
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Thu, 19 May 2022 23:26:55 +0300
+
 linux-wb (5.10.35-wb111) stable; urgency=medium
 
   * Fixes the 00 byte (and a break condition) received while sending large
