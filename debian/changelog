@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb113) stable; urgency=medium
+
+  * wb7: add missing drivers similar to wb6
+    This includes USB cameras, USB sound cards and GPIO keyboard
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Thu, 26 May 2022 12:37:29 +0300
+
 linux-wb (5.10.35-wb112) stable; urgency=medium
 
   * dts: wb6: add missing eMMC pinctrl entries for DATA4..DATA7 pins
