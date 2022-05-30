@@ -379,11 +379,11 @@ int ads1015_get_adc_result(struct ads1015_data *data, int chan, int *val)
 		data->conv_invalid = true;
 	}
 	if (data->conv_invalid) {
-		// dr_old = (old & ADS1015_CFG_DR_MASK) >> ADS1015_CFG_DR_SHIFT;
-		// conv_time = DIV_ROUND_UP(USEC_PER_SEC, data->data_rate[dr_old]);
-		// conv_time += DIV_ROUND_UP(USEC_PER_SEC, data->data_rate[dr]);
-		// conv_time += conv_time / 3; /* 10% internal clock inaccuracy + 23.3% to be sure*/
-		usleep_range(10000, 20000);
+		dr_old = (old & ADS1015_CFG_DR_MASK) >> ADS1015_CFG_DR_SHIFT;
+		conv_time = DIV_ROUND_UP(USEC_PER_SEC, data->data_rate[dr_old]);
+		conv_time += DIV_ROUND_UP(USEC_PER_SEC, data->data_rate[dr]);
+		conv_time += conv_time / 2; /* 10% internal clock inaccuracy + 40% to be sure */
+		usleep_range(conv_time, conv_time + conv_time / 10);
 		data->conv_invalid = false;
 	}
 
