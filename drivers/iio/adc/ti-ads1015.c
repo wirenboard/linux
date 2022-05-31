@@ -356,6 +356,7 @@ int ads1015_get_adc_result(struct ads1015_data *data, int chan, int *val)
 	if (ret)
 		return ret;
 
+	pr_err("old cfg %d\n", old);
 	pga = data->channel_data[chan].pga;
 	dr = data->channel_data[chan].data_rate;
 	mask = ADS1015_CFG_MUX_MASK | ADS1015_CFG_PGA_MASK |
@@ -374,6 +375,7 @@ int ads1015_get_adc_result(struct ads1015_data *data, int chan, int *val)
 	cfg = (old & ~mask) | (cfg & mask);
 	if (old != cfg) {
 		ret = regmap_write(data->regmap, ADS1015_CFG_REG, cfg);
+		pr_err("new cfg %d\n", cfg);
 		if (ret)
 			return ret;
 		data->conv_invalid = true;
