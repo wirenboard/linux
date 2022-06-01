@@ -246,6 +246,7 @@ struct ads1015_data {
 	struct ads1015_thresh_data thresh_data[ADS1015_CHANNELS];
 
 	unsigned int *data_rate;
+	unsigned int *real_data_rate;
 	/*
 	 * Set to true when the ADC is switched to the continuous-conversion
 	 * mode and exits from a power-down state.  This flag is used to avoid
@@ -352,6 +353,9 @@ int ads1015_get_adc_result(struct ads1015_data *data, int chan, int *val)
 	if (chan < 0 || chan >= ADS1015_CHANNELS)
 		return -EINVAL;
 
+	if (data->real_data_rate == NULL)
+		return -EINVAL;
+
 	ret = regmap_read(data->regmap, ADS1015_CFG_REG, &old);
 	if (ret)
 		return ret;
@@ -380,8 +384,8 @@ int ads1015_get_adc_result(struct ads1015_data *data, int chan, int *val)
 	}
 	if (data->conv_invalid) {
 		dr_old = (old & ADS1015_CFG_DR_MASK) >> ADS1015_CFG_DR_SHIFT;
-		conv_time = DIV_ROUND_UP(USEC_PER_SEC, data->data_rate[dr_old]);
-		conv_time += DIV_ROUND_UP(USEC_PER_SEC, data->data_rate[dr]);
+		conv_time = DIV_ROUND_UP(USEC_PER_SEC, data->real_data_rate[dr_old]);
+		conv_time += DIV_ROUND_UP(USEC_PER_SEC, data->real_data_rate[dr]);
 		conv_time += conv_time / 10; /* 10% internal clock inaccuracy */
 		usleep_range(conv_time, conv_time + 1);
 		data->conv_invalid = false;
@@ -929,6 +933,38 @@ static int ads1015_set_conv_mode(struct ads1015_data *data, int mode)
 				  mode << ADS1015_CFG_MOD_SHIFT);
 }
 
+static int ads1015_check_type(struct regmap* map, unsigned int *is_ads1015)
+{
+	unsigned int old;
+	int ret;
+	unsigned int test_value;
+	
+	// get current Lo_thresh value
+	ret = regmap_read(map, ADS1015_LO_THRESH_REG, &old);
+	if (ret)
+		return ret;
+
+	// 4 LSB in ADS1015's Lo_thresh register are read only, they are always zero.
+	// Use it to check real device type by writing 0xFF to Lo_thresh
+	// and reading actual value
+	ret = regmap_write(map, ADS1015_LO_THRESH_REG, 0xFF);
+	if (ret)
+		return ret;
+
+	test_value = 0;
+	ret = regmap_read(map, ADS1015_LO_THRESH_REG, &test_value);
+	if (ret)
+		return ret;
+
+	// set back old Lo_thresh value
+	ret = regmap_write(map, ADS1015_LO_THRESH_REG, old);
+	if (ret)
+		return ret;
+
+	*is_ads1015 = (test_value != 0xFF ? 1 : 0);
+	return 0;
+}
+
 static int ads1015_probe(struct i2c_client *client,
 			 const struct i2c_device_id *id)
 {
@@ -959,12 +995,14 @@ static int ads1015_probe(struct i2c_client *client,
 		indio_dev->num_channels = ARRAY_SIZE(ads1015_channels);
 		indio_dev->info = &ads1015_info;
 		data->data_rate = (unsigned int *) &ads1015_data_rate;
+		data->real_data_rate = NULL;
 		break;
 	case ADS1115:
 		indio_dev->channels = ads1115_channels;
 		indio_dev->num_channels = ARRAY_SIZE(ads1115_channels);
 		indio_dev->info = &ads1115_info;
 		data->data_rate = (unsigned int *) &ads1115_data_rate;
+		data->real_data_rate = (unsigned int *) &ads1115_data_rate;
 		break;
 	default:
 		dev_err(&client->dev, "Unknown chip %d\n", chip);
@@ -1038,6 +1076,19 @@ static int ads1015_probe(struct i2c_client *client,
 	ret = ads1015_set_conv_mode(data, ADS1015_CONTINUOUS);
 	if (ret)
 		return ret;
+
+	if (chip == ADS1015) {
+		unsigned int is_ads1015;
+		ret = ads1015_check_type(data->regmap, &is_ads1015);
+		if (ret)
+			return ret;
+		if (is_ads1015) {
+			data->real_data_rate = (unsigned int *) &ads1015_data_rate;
+		} else {
+			data->real_data_rate = (unsigned int *) &ads1115_data_rate;
+			dev_err(&client->dev, "The device is not ADS1015, seems to be ADS1115\n");
+		}
+	}
 
 	data->conv_invalid = true;
 

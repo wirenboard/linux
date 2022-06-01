@@ -1,3 +1,15 @@
+linux-wb (5.10.35-wb114) stable; urgency=medium
+
+  * ADS1115 detection
+    Some WBIO-AI-DV-12 can have ADS1115 instead of ADS1015. They have different conversion times.
+    Using ti-ads1015 driver for them will lead to reading wrong values.
+    To detect such devices the driver uses Lo_thresh register.
+    4 LSB in ADS1015's Lo_thresh register are read only, they are always zero.
+    ADS1115's Lo_thresh is completely writable.
+    The driver writes 0xFF and reads value back, if they are different, it is ADS1015.
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.ru>  Wed, 01 Jun 2022 10:46:18 +0500
+
 linux-wb (5.10.35-wb113) stable; urgency=medium
 
   * wb7: add missing drivers similar to wb6
