@@ -80,6 +80,7 @@ enum chip_ids {
 	ADSXXXX = 0,
 	ADS1015,
 	ADS1115,
+	ADS1x15,
 };
 
 enum ads1015_channels {
@@ -929,6 +930,56 @@ static int ads1015_set_conv_mode(struct ads1015_data *data, int mode)
 				  mode << ADS1015_CFG_MOD_SHIFT);
 }
 
+static int ads1015_check_type(struct regmap* map, unsigned int *is_ads1015)
+{
+	unsigned int old;
+	int ret;
+	unsigned int test_value;
+	
+	// get current Lo_thresh value
+	ret = regmap_read(map, ADS1015_LO_THRESH_REG, &old);
+	if (ret)
+		return ret;
+
+	// 4 LSB in ADS1015's Lo_thresh register are read only, they are always zero.
+	// Use it to check real device type by writing 0xFF to Lo_thresh
+	// and reading actual value
+	ret = regmap_write(map, ADS1015_LO_THRESH_REG, 0xFF);
+	if (ret)
+		return ret;
+
+	test_value = 0;
+	ret = regmap_read(map, ADS1015_LO_THRESH_REG, &test_value);
+	if (ret)
+		return ret;
+
+	// set back old Lo_thresh value
+	ret = regmap_write(map, ADS1015_LO_THRESH_REG, old);
+	if (ret)
+		return ret;
+
+	*is_ads1015 = (test_value != 0xFF ? 1 : 0);
+	return 0;
+}
+
+static int ads1015_init_1015(struct iio_dev *indio_dev,
+	struct ads1015_data *data)
+{
+	indio_dev->channels = ads1015_channels;
+	indio_dev->num_channels = ARRAY_SIZE(ads1015_channels);
+	indio_dev->info = &ads1015_info;
+	data->data_rate = (unsigned int *) &ads1015_data_rate;
+}
+
+static int ads1015_init_1115(struct iio_dev *indio_dev,
+	struct ads1015_data *data)
+{
+	indio_dev->channels = ads1115_channels;
+	indio_dev->num_channels = ARRAY_SIZE(ads1115_channels);
+	indio_dev->info = &ads1115_info;
+	data->data_rate = (unsigned int *) &ads1115_data_rate;
+}
+
 static int ads1015_probe(struct i2c_client *client,
 			 const struct i2c_device_id *id)
 {
@@ -955,16 +1006,13 @@ static int ads1015_probe(struct i2c_client *client,
 		chip = id->driver_data;
 	switch (chip) {
 	case ADS1015:
-		indio_dev->channels = ads1015_channels;
-		indio_dev->num_channels = ARRAY_SIZE(ads1015_channels);
-		indio_dev->info = &ads1015_info;
-		data->data_rate = (unsigned int *) &ads1015_data_rate;
+		ads1015_init_1015(indio_dev, data);
 		break;
 	case ADS1115:
-		indio_dev->channels = ads1115_channels;
-		indio_dev->num_channels = ARRAY_SIZE(ads1115_channels);
-		indio_dev->info = &ads1115_info;
-		data->data_rate = (unsigned int *) &ads1115_data_rate;
+		ads1015_init_1115(indio_dev, data);
+		break;
+	case ADS1x15:
+		/* indio_dev will be set according to ads1015_check_type later after i2c initialization*/
 		break;
 	default:
 		dev_err(&client->dev, "Unknown chip %d\n", chip);
@@ -1033,6 +1081,20 @@ static int ads1015_probe(struct i2c_client *client,
 						client->name, indio_dev);
 		if (ret)
 			return ret;
+	}
+
+	if (chip == ADS1x15) {
+		unsigned int is_ads1015;
+		ret = ads1015_check_type(data->regmap, &is_ads1015);
+		if (ret)
+			return ret;
+		if (is_ads1015) {
+			ads1015_init_1015(indio_dev, data);
+			dev_info(&client->dev, "The device is detected as ADS1015\n");
+		} else {
+			ads1015_init_1115(indio_dev, data);
+			dev_info(&client->dev, "The device is detected as ADS1115\n");
+		}
 	}
 
 	ret = ads1015_set_conv_mode(data, ADS1015_CONTINUOUS);
@@ -1115,6 +1177,10 @@ static const struct of_device_id ads1015_of_match[] = {
 	{
 		.compatible = "ti,ads1115",
 		.data = (void *)ADS1115
+	},
+	{
+		.compatible = "ti,ads1x15",
+		.data = (void *)ADS1x15
 	},
 	{}
 };
