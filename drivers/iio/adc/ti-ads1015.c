@@ -1086,7 +1086,7 @@ static int ads1015_probe(struct i2c_client *client,
 			data->real_data_rate = (unsigned int *) &ads1015_data_rate;
 		} else {
 			data->real_data_rate = (unsigned int *) &ads1115_data_rate;
-			dev_err(&client->dev, "The device is not ADS1015, seems to be ADS1115\n");
+			dev_warn(&client->dev, "The device is not ADS1015, seems to be ADS1115\n");
 		}
 	}
 
