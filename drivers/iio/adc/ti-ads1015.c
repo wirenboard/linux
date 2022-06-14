@@ -1060,6 +1060,12 @@ static int ads1015_probe(struct i2c_client *client,
 	ret = devm_iio_triggered_buffer_setup(&client->dev, indio_dev, NULL,
 					      ads1015_trigger_handler,
 					      &ads1015_buffer_setup_ops);
+
+	{
+		unsigned int is_ads1015;
+		ret = ads1015_check_type(data->regmap, &is_ads1015);
+	}
+
 	if (ret < 0) {
 		dev_err(&client->dev, "iio triggered buffer setup failed\n");
 		return ret;
