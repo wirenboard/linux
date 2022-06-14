@@ -1106,6 +1106,11 @@ static int ads1015_probe(struct i2c_client *client,
 			return ret;
 	}
 
+	{
+		unsigned int is_ads1015;
+		ret = ads1015_check_type(data->regmap, &is_ads1015);
+	}
+
 	ret = ads1015_set_conv_mode(data, ADS1015_CONTINUOUS);
 	if (ret)
 		return ret;
