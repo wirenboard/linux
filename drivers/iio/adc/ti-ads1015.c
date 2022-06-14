@@ -958,6 +958,7 @@ static int ads1015_check_type(struct regmap* map, unsigned int *is_ads1015)
 	if (ret)
 		return ret;
 
+	printk("!!!! %d %d\n", old, test_value);
 	*is_ads1015 = (test_value != 0xFF ? 1 : 0);
 	return 0;
 }
