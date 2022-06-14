@@ -291,6 +291,7 @@ static const struct regmap_config ads1015_regmap_config = {
 	.val_bits = 16,
 	.max_register = ADS1015_HI_THRESH_REG,
 	.writeable_reg = ads1015_is_writeable_reg,
+	.cache_type = REGCACHE_NONE,
 };
 
 static const struct iio_chan_spec ads1015_channels[] = {
@@ -1116,6 +1117,11 @@ static int ads1015_probe(struct i2c_client *client,
 	if (ret < 0) {
 		dev_err(&client->dev, "Failed to register IIO device\n");
 		return ret;
+	}
+
+	{
+		unsigned int is_ads1015;
+		ret = ads1015_check_type(data->regmap, &is_ads1015);
 	}
 
 	return 0;
