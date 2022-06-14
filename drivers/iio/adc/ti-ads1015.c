@@ -1020,19 +1020,6 @@ static int ads1015_probe(struct i2c_client *client,
 	}
 
 	data->event_channel = ADS1015_CHANNELS;
-	/*
-	 * Set default lower and upper threshold to min and max value
-	 * respectively.
-	 */
-	for (i = 0; i < ADS1015_CHANNELS; i++) {
-		int realbits = indio_dev->channels[i].scan_type.realbits;
-
-		data->thresh_data[i].low_thresh = -1 << (realbits - 1);
-		data->thresh_data[i].high_thresh = (1 << (realbits - 1)) - 1;
-	}
-
-	/* we need to keep this ABI the same as used by hwmon ADS1015 driver */
-	ads1015_get_channels_config(client);
 
 	data->regmap = devm_regmap_init_i2c(client, &ads1015_regmap_config);
 	if (IS_ERR(data->regmap)) {
@@ -1053,6 +1040,20 @@ static int ads1015_probe(struct i2c_client *client,
 			dev_info(&client->dev, "The device is detected as ADS1115\n");
 		}
 	}
+
+	/*
+	 * Set default lower and upper threshold to min and max value
+	 * respectively.
+	 */
+	for (i = 0; i < ADS1015_CHANNELS; i++) {
+		int realbits = indio_dev->channels[i].scan_type.realbits;
+
+		data->thresh_data[i].low_thresh = -1 << (realbits - 1);
+		data->thresh_data[i].high_thresh = (1 << (realbits - 1)) - 1;
+	}
+
+	/* we need to keep this ABI the same as used by hwmon ADS1015 driver */
+	ads1015_get_channels_config(client);
 
 	ret = devm_iio_triggered_buffer_setup(&client->dev, indio_dev, NULL,
 					      ads1015_trigger_handler,
