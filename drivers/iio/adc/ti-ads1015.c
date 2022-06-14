@@ -962,7 +962,7 @@ static int ads1015_check_type(struct regmap* map, unsigned int *is_ads1015)
 	return 0;
 }
 
-static int ads1015_init_1015(struct iio_dev *indio_dev,
+static void ads1015_init_1015(struct iio_dev *indio_dev,
 	struct ads1015_data *data)
 {
 	indio_dev->channels = ads1015_channels;
@@ -971,7 +971,7 @@ static int ads1015_init_1015(struct iio_dev *indio_dev,
 	data->data_rate = (unsigned int *) &ads1015_data_rate;
 }
 
-static int ads1015_init_1115(struct iio_dev *indio_dev,
+static void ads1015_init_1115(struct iio_dev *indio_dev,
 	struct ads1015_data *data)
 {
 	indio_dev->channels = ads1115_channels;
