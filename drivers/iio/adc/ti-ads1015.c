@@ -1040,6 +1040,20 @@ static int ads1015_probe(struct i2c_client *client,
 		return PTR_ERR(data->regmap);
 	}
 
+	if (chip == ADS1x15) {
+		unsigned int is_ads1015;
+		ret = ads1015_check_type(data->regmap, &is_ads1015);
+		if (ret)
+			return ret;
+		if (is_ads1015) {
+			ads1015_init_1015(indio_dev, data);
+			dev_info(&client->dev, "The device is detected as ADS1015\n");
+		} else {
+			ads1015_init_1115(indio_dev, data);
+			dev_info(&client->dev, "The device is detected as ADS1115\n");
+		}
+	}
+
 	ret = devm_iio_triggered_buffer_setup(&client->dev, indio_dev, NULL,
 					      ads1015_trigger_handler,
 					      &ads1015_buffer_setup_ops);
@@ -1081,20 +1095,6 @@ static int ads1015_probe(struct i2c_client *client,
 						client->name, indio_dev);
 		if (ret)
 			return ret;
-	}
-
-	if (chip == ADS1x15) {
-		unsigned int is_ads1015;
-		ret = ads1015_check_type(data->regmap, &is_ads1015);
-		if (ret)
-			return ret;
-		if (is_ads1015) {
-			ads1015_init_1015(indio_dev, data);
-			dev_info(&client->dev, "The device is detected as ADS1015\n");
-		} else {
-			ads1015_init_1115(indio_dev, data);
-			dev_info(&client->dev, "The device is detected as ADS1115\n");
-		}
 	}
 
 	ret = ads1015_set_conv_mode(data, ADS1015_CONTINUOUS);
