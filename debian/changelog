@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb115) stable; urgency=medium
+
+  * wb7: removed adc (a1-a3, vin) noise (fixups in sun4i-gpadc-iio driver)
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 15 Jun 2022 01:05:48 +0300
+
 linux-wb (5.10.35-wb114) stable; urgency=medium
 
   * dts: wb7: add dts for WB 7.3 which supports ultra high-speed SD cards
