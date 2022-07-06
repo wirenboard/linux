@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb116) stable; urgency=medium
+
+  * fec: use ethFECX interface names to reorder them in userspace
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Wed, 06 Jul 2022 17:20:48 +0300
+
 linux-wb (5.10.35-wb115) stable; urgency=medium
 
   * wb7: removed adc (a1-a3, vin) noise (fixups in sun4i-gpadc-iio driver)
