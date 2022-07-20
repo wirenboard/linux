@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb118) stable; urgency=medium
+
+  * add Docker-specific modules and config options
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Wed, 20 Jul 2022 20:07:22 +0300
+
 linux-wb (5.10.35-wb117) stable; urgency=medium
 
   * wb7: enable SYSVIPC config option
