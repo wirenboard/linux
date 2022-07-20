@@ -1,3 +1,13 @@
+linux-wb (5.10.35-wb117) stable; urgency=medium
+
+  * wb7: enable SYSVIPC config option
+
+    This config option enables System V IPC functions
+    (like shared memory access, semaphores, message queues and so on).
+    As it turned out, these functions are used by some of our customers.
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Tue, 19 Jul 2022 19:59:23 +0300
+
 linux-wb (5.10.35-wb116) stable; urgency=medium
 
   * fec: use ethFECX interface names to reorder them in userspace
