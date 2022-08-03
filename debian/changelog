@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb118) stable; urgency=medium
+
+  * disable CAN on WB7.3 and add WB7.3.1
+    See ERRWB73002 (https://wirenboard.com/wiki/WB_7:_Errata) for details.
+
+ -- Evgeny Boger <boger@wirenboard.com>  Tue, 02 Aug 2022 22:56:03 +0300
+
 linux-wb (5.10.35-wb117) stable; urgency=medium
 
   * wb7: enable SYSVIPC config option

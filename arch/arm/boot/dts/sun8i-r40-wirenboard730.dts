@@ -1,41 +1,33 @@
 /dts-v1/;
-#include "sun8i-r40-wirenboard72x.dtsi"
+#include "sun8i-r40-wirenboard73x.dtsi"
+
+/* CAN is disabled on WB 7.3
+	see https://wirenboard.com/wiki/WB_7:_Errata (ERRWB73002) for details
+*/
 
 / {
+	/* wirenboard-720 is left for userspace compatibility */
 	model = "Wiren Board rev. 7.3.0 (A40i)";
-	compatible = "wirenboard,wirenboard-730", "wirenboard,wirenboard-720", "wirenboard,wirenboard-700", "allwinner,sun8i-r40";
+	compatible = "wirenboard,wirenboard-730", "wirenboard,wirenboard-73x", "wirenboard,wirenboard-72x",  "wirenboard,wirenboard-720", "wirenboard,wirenboard-7xx", "allwinner,sun8i-r40";
 
 	regulators {
-		vdd_sd_power: vdd-sd-power {
+		/* GPIO hogs crash kernel on sunxi, so use dummy regulator */
+		errwb73002_disable_can: errwb73002-disable-can {
 			compatible = "regulator-fixed";
-			regulator-name = "vdd-sd-power";
+			regulator-name = "errwb73002-disable-can";
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
-			gpio = <PIN_PD 23 GPIO_ACTIVE_HIGH>;
-			enable-active-low;
+			gpio = <PIN_PE 11 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
 		};
 	};
 };
 
-&mmc0 {
-	vmmc-supply = <&vdd_sd_power>;
-	sd-uhs-sdr25;
-	sd-uhs-sdr50;
-	sd-uhs-sdr104;
-	max-frequency = <150000000>; /* 200 MHz doesn't work, probably due to signal integrity issues */
-};
+/delete-node/ &can0;
 
-&pio {
-	pinctrl_rtc_clkout_gpio: rtc-clkout-pins {
-		pins = "PI17";
-		function = "gpio_in";
-	};
-};
-
-&rtc_onboard {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_rtc_clkout_gpio>;
-	clkout-gpios = <PIN_PI 17 GPIO_ACTIVE_HIGH>;
-	gpio-xlate-type = "bank_pin";
-	gpio-pins-per-bank = <32>;
+/* RS-485 on "RS-485-2" can't be enabled by older userspace, and there is no CAN anyway,
+   so enable it here.
+*/
+&uart4 { 
+	status = "okay";
 };
