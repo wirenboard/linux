@@ -634,6 +634,7 @@ dtb-$(CONFIG_SOC_IMX6UL) += \
 	imx6ul-wirenboard670-nousbhub.dtb \
 	imx6ul-wirenboard680.dtb \
 	imx6ul-wirenboard690.dtb \
+	imx6ul-wirenboard6x-init.dtb \
 	imx6ull-14x14-evk.dtb \
 	imx6ull-colibri-eval-v3.dtb \
 	imx6ull-colibri-wifi-eval-v3.dtb \
@@ -1224,6 +1225,8 @@ dtb-$(CONFIG_MACH_SUN8I) += \
 	sun8i-r40-bananapi-m2-ultra.dtb \
 	sun8i-r40-wirenboard-som-test.dtb \
 	sun8i-r40-wirenboard720.dtb \
+	sun8i-r40-wirenboard730.dtb \
+	sun8i-r40-wirenboard731.dtb \
 	sun8i-s3-lichee-zero-plus.dtb \
 	sun8i-s3-pinecube.dtb \
 	sun8i-t3-cqa3t-bv3.dtb \

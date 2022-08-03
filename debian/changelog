@@ -1,3 +1,36 @@
+linux-wb (5.10.35-wb115+wb101+108) stable; urgency=medium
+
+  * disable CAN on WB7.3 and add WB7.3.1
+    See ERRWB73002 (https://wirenboard.com/wiki/WB_7:_Errata) for details.
+  * This is a port of 5.10.35-wb118 from testing
+
+ -- Evgeny Boger <boger@wirenboard.com>  Tue, 02 Aug 2022 22:56:03 +0300
+
+linux-wb (5.10.35-wb115) stable; urgency=medium
+
+  * wb7: removed adc (a1-a3, vin) noise (fixups in sun4i-gpadc-iio driver)
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 15 Jun 2022 01:05:48 +0300
+
+linux-wb (5.10.35-wb114) stable; urgency=medium
+
+  * dts: wb7: add dts for WB 7.3 which supports ultra high-speed SD cards
+
+ -- Evgeny Boger <boger@wirenboard.com>  Thu, 09 Jun 2022 12:46:13 +0300
+
+linux-wb (5.10.35-wb113) stable; urgency=medium
+
+  * wb7: add missing drivers similar to wb6
+    This includes USB cameras, USB sound cards and GPIO keyboard
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Thu, 26 May 2022 12:37:29 +0300
+
+linux-wb (5.10.35-wb112) stable; urgency=medium
+
+  * dts: wb6: add missing eMMC pinctrl entries for DATA4..DATA7 pins
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Thu, 19 May 2022 23:26:55 +0300
+
 linux-wb (5.10.35-wb111) stable; urgency=medium
 
   * Fixes the 00 byte (and a break condition) received while sending large
