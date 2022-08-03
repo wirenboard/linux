@@ -1,3 +1,11 @@
+linux-wb (5.10.35-wb115+wb101-wb108) stable; urgency=medium
+
+  * disable CAN on WB7.3 and add WB7.3.1
+    See ERRWB73002 (https://wirenboard.com/wiki/WB_7:_Errata) for details.
+  * This is a port of 5.10.35-wb118 from testing
+
+ -- Evgeny Boger <boger@wirenboard.com>  Tue, 02 Aug 2022 22:56:03 +0300
+
 linux-wb (5.10.35-wb115) stable; urgency=medium
 
   * wb7: removed adc (a1-a3, vin) noise (fixups in sun4i-gpadc-iio driver)
