@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb115+wb102+119) stable; urgency=medium
+
+  * wb7: add support for hw rev. 7.3.2 w/o eth MAC EEPROMs
+  * This is a port of 5.10.35-wb119 from testing
+
+ -- Evgeny Boger <boger@wirenboard.com>  Sat, 13 Aug 2022 16:12:27 +0300
+
 linux-wb (5.10.35-wb115+wb101+108) stable; urgency=medium
 
   * disable CAN on WB7.3 and add WB7.3.1
