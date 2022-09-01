@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb120) stable; urgency=medium
+
+  * wb7: add support for hw rev. 7.3.3
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Thu, 01 Sep 2022 20:37:11 +0300
+
 linux-wb (5.10.35-wb119) stable; urgency=medium
 
   * wb7: add support for hw rev. 7.3.2 w/o eth MAC EEPROMs
