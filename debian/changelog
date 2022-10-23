@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb121) stable; urgency=medium
+
+  * wb6, wb7: add bunch of kernel options for Docker
+  * wb6, wb7: enable wireguard 
+
+ -- Evgeny Boger <boger@wirenboard.com>  Sun, 23 Oct 2022 23:03:09 +0300
+
 linux-wb (5.10.35-wb120) stable; urgency=medium
 
   * wb7: add support for hw rev. 7.3.3
