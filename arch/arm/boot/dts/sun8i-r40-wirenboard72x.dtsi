@@ -992,6 +992,6 @@ even if no battery module is installed.
 	x-powers,charge-high-temp-microvolt = <499200>;
 };
 
-// labels used by overlays to control generic WB peripherals
-wb_eth0: &emac {};
-wb_eth1: &gmac {};
+// labels used by overlays to control generic peripherals
+ethernet0: &emac {};
+ethernet1: &gmac {};
