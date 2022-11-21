@@ -7,7 +7,7 @@
  */
 
 /* #define VERBOSE_DEBUG */
-
+#define DEBUG 1
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -49,10 +49,10 @@ struct f_ecm {
 
 	char				ethaddr[14];
 
-	struct usb_ep			*notify;
-	struct usb_request		*notify_req;
-	u8				notify_state;
-	atomic_t			notify_count;
+	// struct usb_ep			*notify;
+	// struct usb_request		*notify_req;
+	// u8				notify_state;
+	// atomic_t			notify_count;
 	bool				is_open;
 
 	/* FIXME is_open needs some irq-ish locking
@@ -185,15 +185,15 @@ static struct usb_interface_descriptor ecm_data_intf = {
 
 /* full speed support: */
 
-static struct usb_endpoint_descriptor fs_ecm_notify_desc = {
-	.bLength =		USB_DT_ENDPOINT_SIZE,
-	.bDescriptorType =	USB_DT_ENDPOINT,
+// static struct usb_endpoint_descriptor fs_ecm_notify_desc = {
+// 	.bLength =		USB_DT_ENDPOINT_SIZE,
+// 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
-	.bmAttributes =		USB_ENDPOINT_XFER_INT,
-	.wMaxPacketSize =	cpu_to_le16(ECM_STATUS_BYTECOUNT),
-	.bInterval =		ECM_STATUS_INTERVAL_MS,
-};
+// 	.bEndpointAddress =	USB_DIR_IN,
+// 	.bmAttributes =		USB_ENDPOINT_XFER_INT,
+// 	.wMaxPacketSize =	cpu_to_le16(ECM_STATUS_BYTECOUNT),
+// 	.bInterval =		ECM_STATUS_INTERVAL_MS,
+// };
 
 static struct usb_endpoint_descriptor fs_ecm_in_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
@@ -220,7 +220,7 @@ static struct usb_descriptor_header *ecm_fs_function[] = {
 	(struct usb_descriptor_header *) &ecm_desc,
 
 	/* NOTE: status endpoint might need to be removed */
-	(struct usb_descriptor_header *) &fs_ecm_notify_desc,
+	// (struct usb_descriptor_header *) &fs_ecm_notify_desc,
 
 	/* data interface, altsettings 0 and 1 */
 	(struct usb_descriptor_header *) &ecm_data_nop_intf,
@@ -232,15 +232,15 @@ static struct usb_descriptor_header *ecm_fs_function[] = {
 
 /* high speed support: */
 
-static struct usb_endpoint_descriptor hs_ecm_notify_desc = {
-	.bLength =		USB_DT_ENDPOINT_SIZE,
-	.bDescriptorType =	USB_DT_ENDPOINT,
+// static struct usb_endpoint_descriptor hs_ecm_notify_desc = {
+// 	.bLength =		USB_DT_ENDPOINT_SIZE,
+// 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
-	.bmAttributes =		USB_ENDPOINT_XFER_INT,
-	.wMaxPacketSize =	cpu_to_le16(ECM_STATUS_BYTECOUNT),
-	.bInterval =		USB_MS_TO_HS_INTERVAL(ECM_STATUS_INTERVAL_MS),
-};
+// 	.bEndpointAddress =	USB_DIR_IN,
+// 	.bmAttributes =		USB_ENDPOINT_XFER_INT,
+// 	.wMaxPacketSize =	cpu_to_le16(ECM_STATUS_BYTECOUNT),
+// 	.bInterval =		USB_MS_TO_HS_INTERVAL(ECM_STATUS_INTERVAL_MS),
+// };
 
 static struct usb_endpoint_descriptor hs_ecm_in_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
@@ -268,8 +268,8 @@ static struct usb_descriptor_header *ecm_hs_function[] = {
 	(struct usb_descriptor_header *) &ecm_union_desc,
 	(struct usb_descriptor_header *) &ecm_desc,
 
-	/* NOTE: status endpoint might need to be removed */
-	(struct usb_descriptor_header *) &hs_ecm_notify_desc,
+	// /* NOTE: status endpoint might need to be removed */
+	// (struct usb_descriptor_header *) &hs_ecm_notify_desc,
 
 	/* data interface, altsettings 0 and 1 */
 	(struct usb_descriptor_header *) &ecm_data_nop_intf,
@@ -281,25 +281,25 @@ static struct usb_descriptor_header *ecm_hs_function[] = {
 
 /* super speed support: */
 
-static struct usb_endpoint_descriptor ss_ecm_notify_desc = {
-	.bLength =		USB_DT_ENDPOINT_SIZE,
-	.bDescriptorType =	USB_DT_ENDPOINT,
+// static struct usb_endpoint_descriptor ss_ecm_notify_desc = {
+// 	.bLength =		USB_DT_ENDPOINT_SIZE,
+// 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
-	.bmAttributes =		USB_ENDPOINT_XFER_INT,
-	.wMaxPacketSize =	cpu_to_le16(ECM_STATUS_BYTECOUNT),
-	.bInterval =		USB_MS_TO_HS_INTERVAL(ECM_STATUS_INTERVAL_MS),
-};
+// 	.bEndpointAddress =	USB_DIR_IN,
+// 	.bmAttributes =		USB_ENDPOINT_XFER_INT,
+// 	.wMaxPacketSize =	cpu_to_le16(ECM_STATUS_BYTECOUNT),
+// 	.bInterval =		USB_MS_TO_HS_INTERVAL(ECM_STATUS_INTERVAL_MS),
+// };
 
-static struct usb_ss_ep_comp_descriptor ss_ecm_intr_comp_desc = {
-	.bLength =		sizeof ss_ecm_intr_comp_desc,
-	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
+// static struct usb_ss_ep_comp_descriptor ss_ecm_intr_comp_desc = {
+// 	.bLength =		sizeof ss_ecm_intr_comp_desc,
+// 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
-	/* the following 3 values can be tweaked if necessary */
-	/* .bMaxBurst =		0, */
-	/* .bmAttributes =	0, */
-	.wBytesPerInterval =	cpu_to_le16(ECM_STATUS_BYTECOUNT),
-};
+// 	/* the following 3 values can be tweaked if necessary */
+// 	/* .bMaxBurst =		0, */
+// 	/* .bmAttributes =	0, */
+// 	.wBytesPerInterval =	cpu_to_le16(ECM_STATUS_BYTECOUNT),
+// };
 
 static struct usb_endpoint_descriptor ss_ecm_in_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
@@ -337,8 +337,8 @@ static struct usb_descriptor_header *ecm_ss_function[] = {
 	(struct usb_descriptor_header *) &ecm_desc,
 
 	/* NOTE: status endpoint might need to be removed */
-	(struct usb_descriptor_header *) &ss_ecm_notify_desc,
-	(struct usb_descriptor_header *) &ss_ecm_intr_comp_desc,
+	// (struct usb_descriptor_header *) &ss_ecm_notify_desc,
+	// (struct usb_descriptor_header *) &ss_ecm_intr_comp_desc,
 
 	/* data interface, altsettings 0 and 1 */
 	(struct usb_descriptor_header *) &ecm_data_nop_intf,
@@ -372,98 +372,99 @@ static struct usb_gadget_strings *ecm_strings[] = {
 
 /*-------------------------------------------------------------------------*/
 
-static void ecm_do_notify(struct f_ecm *ecm)
-{
-	struct usb_request		*req = ecm->notify_req;
-	struct usb_cdc_notification	*event;
-	struct usb_composite_dev	*cdev = ecm->port.func.config->cdev;
-	__le32				*data;
-	int				status;
+// static void ecm_do_notify(struct f_ecm *ecm)
+// {
+// 	// struct usb_request		*req = ecm->notify_req;
+// 	// struct usb_cdc_notification	*event;
+// 	// struct usb_composite_dev	*cdev = ecm->port.func.config->cdev;
+// 	// __le32				*data;
+// 	// int				status;
+// 	// return;
 
-	/* notification already in flight? */
-	if (atomic_read(&ecm->notify_count))
-		return;
+// 	// /* notification already in flight? */
+// 	// if (atomic_read(&ecm->notify_count))
+// 	// 	return;
 
-	event = req->buf;
-	switch (ecm->notify_state) {
-	case ECM_NOTIFY_NONE:
-		return;
+// 	// event = req->buf;
+// 	// switch (ecm->notify_state) {
+// 	// case ECM_NOTIFY_NONE:
+// 	// 	return;
 
-	case ECM_NOTIFY_CONNECT:
-		event->bNotificationType = USB_CDC_NOTIFY_NETWORK_CONNECTION;
-		if (ecm->is_open)
-			event->wValue = cpu_to_le16(1);
-		else
-			event->wValue = cpu_to_le16(0);
-		event->wLength = 0;
-		req->length = sizeof *event;
+// 	// case ECM_NOTIFY_CONNECT:
+// 	// 	event->bNotificationType = USB_CDC_NOTIFY_NETWORK_CONNECTION;
+// 	// 	if (ecm->is_open)
+// 	// 		event->wValue = cpu_to_le16(1);
+// 	// 	else
+// 	// 		event->wValue = cpu_to_le16(0);
+// 	// 	event->wLength = 0;
+// 	// 	req->length = sizeof *event;
 
-		DBG(cdev, "notify connect %s\n",
-				ecm->is_open ? "true" : "false");
-		ecm->notify_state = ECM_NOTIFY_SPEED;
-		break;
+// 	// 	DBG(cdev, "notify connect %s\n",
+// 	// 			ecm->is_open ? "true" : "false");
+// 	// 	ecm->notify_state = ECM_NOTIFY_SPEED;
+// 	// 	break;
 
-	case ECM_NOTIFY_SPEED:
-		event->bNotificationType = USB_CDC_NOTIFY_SPEED_CHANGE;
-		event->wValue = cpu_to_le16(0);
-		event->wLength = cpu_to_le16(8);
-		req->length = ECM_STATUS_BYTECOUNT;
+// 	// case ECM_NOTIFY_SPEED:
+// 	// 	event->bNotificationType = USB_CDC_NOTIFY_SPEED_CHANGE;
+// 	// 	event->wValue = cpu_to_le16(0);
+// 	// 	event->wLength = cpu_to_le16(8);
+// 	// 	req->length = ECM_STATUS_BYTECOUNT;
 
-		/* SPEED_CHANGE data is up/down speeds in bits/sec */
-		data = req->buf + sizeof *event;
-		data[0] = cpu_to_le32(ecm_bitrate(cdev->gadget));
-		data[1] = data[0];
+// 	// 	/* SPEED_CHANGE data is up/down speeds in bits/sec */
+// 	// 	data = req->buf + sizeof *event;
+// 	// 	data[0] = cpu_to_le32(ecm_bitrate(cdev->gadget));
+// 	// 	data[1] = data[0];
 
-		DBG(cdev, "notify speed %d\n", ecm_bitrate(cdev->gadget));
-		ecm->notify_state = ECM_NOTIFY_NONE;
-		break;
-	}
-	event->bmRequestType = 0xA1;
-	event->wIndex = cpu_to_le16(ecm->ctrl_id);
+// 	// 	DBG(cdev, "notify speed %d\n", ecm_bitrate(cdev->gadget));
+// 	// 	ecm->notify_state = ECM_NOTIFY_NONE;
+// 	// 	break;
+// 	// }
+// 	// event->bmRequestType = 0xA1;
+// 	// event->wIndex = cpu_to_le16(ecm->ctrl_id);
 
-	atomic_inc(&ecm->notify_count);
-	status = usb_ep_queue(ecm->notify, req, GFP_ATOMIC);
-	if (status < 0) {
-		atomic_dec(&ecm->notify_count);
-		DBG(cdev, "notify --> %d\n", status);
-	}
-}
+// 	// atomic_inc(&ecm->notify_count);
+// 	// status = usb_ep_queue(ecm->notify, req, GFP_ATOMIC);
+// 	// if (status < 0) {
+// 	// 	atomic_dec(&ecm->notify_count);
+// 	// 	DBG(cdev, "notify --> %d\n", status);
+// 	// }
+// }
 
-static void ecm_notify(struct f_ecm *ecm)
-{
-	/* NOTE on most versions of Linux, host side cdc-ethernet
-	 * won't listen for notifications until its netdevice opens.
-	 * The first notification then sits in the FIFO for a long
-	 * time, and the second one is queued.
-	 */
-	ecm->notify_state = ECM_NOTIFY_CONNECT;
-	ecm_do_notify(ecm);
-}
+// static void ecm_notify(struct f_ecm *ecm)
+// {
+// 	/* NOTE on most versions of Linux, host side cdc-ethernet
+// 	 * won't listen for notifications until its netdevice opens.
+// 	 * The first notification then sits in the FIFO for a long
+// 	 * time, and the second one is queued.
+// 	 */
+// 	// ecm->notify_state = ECM_NOTIFY_CONNECT;
+// 	// ecm_do_notify(ecm);
+// }
 
-static void ecm_notify_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct f_ecm			*ecm = req->context;
-	struct usb_composite_dev	*cdev = ecm->port.func.config->cdev;
-	struct usb_cdc_notification	*event = req->buf;
+// static void ecm_notify_complete(struct usb_ep *ep, struct usb_request *req)
+// {
+// 	struct f_ecm			*ecm = req->context;
+// 	struct usb_composite_dev	*cdev = ecm->port.func.config->cdev;
+// 	struct usb_cdc_notification	*event = req->buf;
 
-	switch (req->status) {
-	case 0:
-		/* no fault */
-		atomic_dec(&ecm->notify_count);
-		break;
-	case -ECONNRESET:
-	case -ESHUTDOWN:
-		atomic_set(&ecm->notify_count, 0);
-		ecm->notify_state = ECM_NOTIFY_NONE;
-		break;
-	default:
-		DBG(cdev, "event %02x --> %d\n",
-			event->bNotificationType, req->status);
-		atomic_dec(&ecm->notify_count);
-		break;
-	}
-	ecm_do_notify(ecm);
-}
+// 	switch (req->status) {
+// 	case 0:
+// 		/* no fault */
+// 		atomic_dec(&ecm->notify_count);
+// 		break;
+// 	case -ECONNRESET:
+// 	case -ESHUTDOWN:
+// 		atomic_set(&ecm->notify_count, 0);
+// 		ecm->notify_state = ECM_NOTIFY_NONE;
+// 		break;
+// 	default:
+// 		DBG(cdev, "event %02x --> %d\n",
+// 			event->bNotificationType, req->status);
+// 		atomic_dec(&ecm->notify_count);
+// 		break;
+// 	}
+// 	ecm_do_notify(ecm);
+// }
 
 static int ecm_setup(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
 {
@@ -541,13 +542,13 @@ static int ecm_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
 			goto fail;
 
 		VDBG(cdev, "reset ecm control %d\n", intf);
-		usb_ep_disable(ecm->notify);
-		if (!(ecm->notify->desc)) {
-			VDBG(cdev, "init ecm ctrl %d\n", intf);
-			if (config_ep_by_speed(cdev->gadget, f, ecm->notify))
-				goto fail;
-		}
-		usb_ep_enable(ecm->notify);
+		// usb_ep_disable(ecm->notify);
+		// if (!(ecm->notify->desc)) {
+		// 	VDBG(cdev, "init ecm ctrl %d\n", intf);
+		// 	if (config_ep_by_speed(cdev->gadget, f, ecm->notify))
+		// 		goto fail;
+		// }
+		// usb_ep_enable(ecm->notify);
 
 	/* Data interface has two altsettings, 0 and 1 */
 	} else if (intf == ecm->data_id) {
@@ -596,7 +597,7 @@ static int ecm_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
 		 * follow another (if the first is in flight), and instead
 		 * just guarantee that a speed notification is always sent.
 		 */
-		ecm_notify(ecm);
+		// ecm_notify(ecm);
 	} else
 		goto fail;
 
@@ -631,8 +632,8 @@ static void ecm_disable(struct usb_function *f)
 		ecm->port.out_ep->desc = NULL;
 	}
 
-	usb_ep_disable(ecm->notify);
-	ecm->notify->desc = NULL;
+	// usb_ep_disable(ecm->notify);
+	// ecm->notify->desc = NULL;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -662,7 +663,7 @@ static void ecm_open(struct gether *geth)
 	DBG(ecm->port.func.config->cdev, "%s\n", __func__);
 
 	ecm->is_open = true;
-	ecm_notify(ecm);
+	// ecm_notify(ecm);
 }
 
 static void ecm_close(struct gether *geth)
@@ -672,7 +673,7 @@ static void ecm_close(struct gether *geth)
 	DBG(ecm->port.func.config->cdev, "%s\n", __func__);
 
 	ecm->is_open = false;
-	ecm_notify(ecm);
+	// ecm_notify(ecm);
 }
 
 /*-------------------------------------------------------------------------*/
@@ -759,22 +760,22 @@ ecm_bind(struct usb_configuration *c, struct usb_function *f)
 	 * don't treat it that way.  It's simpler, and some newer CDC
 	 * profiles (wireless handsets) no longer treat it as optional.
 	 */
-	ep = usb_ep_autoconfig(cdev->gadget, &fs_ecm_notify_desc);
-	if (!ep)
-		goto fail;
-	ecm->notify = ep;
+	// ep = usb_ep_autoconfig(cdev->gadget, &fs_ecm_notify_desc);
+	// if (!ep)
+	// 	goto fail;
+	// ecm->notify = ep;
 
-	status = -ENOMEM;
+	// status = -ENOMEM;
 
 	/* allocate notification request and buffer */
-	ecm->notify_req = usb_ep_alloc_request(ep, GFP_KERNEL);
-	if (!ecm->notify_req)
-		goto fail;
-	ecm->notify_req->buf = kmalloc(ECM_STATUS_BYTECOUNT, GFP_KERNEL);
-	if (!ecm->notify_req->buf)
-		goto fail;
-	ecm->notify_req->context = ecm;
-	ecm->notify_req->complete = ecm_notify_complete;
+	// ecm->notify_req = usb_ep_alloc_request(ep, GFP_KERNEL);
+	// if (!ecm->notify_req)
+	// 	goto fail;
+	// ecm->notify_req->buf = kmalloc(ECM_STATUS_BYTECOUNT, GFP_KERNEL);
+	// if (!ecm->notify_req->buf)
+	// 	goto fail;
+	// ecm->notify_req->context = ecm;
+	// ecm->notify_req->complete = ecm_notify_complete;
 
 	/* support all relevant hardware speeds... we expect that when
 	 * hardware is dual speed, all bulk-capable endpoints work at
@@ -782,13 +783,13 @@ ecm_bind(struct usb_configuration *c, struct usb_function *f)
 	 */
 	hs_ecm_in_desc.bEndpointAddress = fs_ecm_in_desc.bEndpointAddress;
 	hs_ecm_out_desc.bEndpointAddress = fs_ecm_out_desc.bEndpointAddress;
-	hs_ecm_notify_desc.bEndpointAddress =
-		fs_ecm_notify_desc.bEndpointAddress;
+	// hs_ecm_notify_desc.bEndpointAddress =
+		// fs_ecm_notify_desc.bEndpointAddress;
 
 	ss_ecm_in_desc.bEndpointAddress = fs_ecm_in_desc.bEndpointAddress;
 	ss_ecm_out_desc.bEndpointAddress = fs_ecm_out_desc.bEndpointAddress;
-	ss_ecm_notify_desc.bEndpointAddress =
-		fs_ecm_notify_desc.bEndpointAddress;
+	// ss_ecm_notify_desc.bEndpointAddress =
+	// 	fs_ecm_notify_desc.bEndpointAddress;
 
 	status = usb_assign_descriptors(f, ecm_fs_function, ecm_hs_function,
 			ecm_ss_function, NULL);
@@ -807,14 +808,14 @@ ecm_bind(struct usb_configuration *c, struct usb_function *f)
 			gadget_is_superspeed(c->cdev->gadget) ? "super" :
 			gadget_is_dualspeed(c->cdev->gadget) ? "dual" : "full",
 			ecm->port.in_ep->name, ecm->port.out_ep->name,
-			ecm->notify->name);
+			"ecm->notify->name");
 	return 0;
 
 fail:
-	if (ecm->notify_req) {
-		kfree(ecm->notify_req->buf);
-		usb_ep_free_request(ecm->notify, ecm->notify_req);
-	}
+	// if (ecm->notify_req) {
+	// 	kfree(ecm->notify_req->buf);
+	// 	usb_ep_free_request(ecm->notify, ecm->notify_req);
+	// }
 
 	ERROR(cdev, "%s: can't bind, err %d\n", f->name, status);
 
@@ -910,13 +911,13 @@ static void ecm_unbind(struct usb_configuration *c, struct usb_function *f)
 
 	usb_free_all_descriptors(f);
 
-	if (atomic_read(&ecm->notify_count)) {
-		usb_ep_dequeue(ecm->notify, ecm->notify_req);
-		atomic_set(&ecm->notify_count, 0);
-	}
+	// if (atomic_read(&ecm->notify_count)) {
+	// 	usb_ep_dequeue(ecm->notify, ecm->notify_req);
+	// 	atomic_set(&ecm->notify_count, 0);
+	// }
 
-	kfree(ecm->notify_req->buf);
-	usb_ep_free_request(ecm->notify, ecm->notify_req);
+	// kfree(ecm->notify_req->buf);
+	// usb_ep_free_request(ecm->notify, ecm->notify_req);
 }
 
 static struct usb_function *ecm_alloc(struct usb_function_instance *fi)
