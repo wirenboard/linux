@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb123) stable; urgency=medium
+
+  * wb: more robust 1-wire readings. Fix regression in wb 5.10 kernel.
+    Revert 1-wire timings to kernel defaults
+
+ -- Evgeny Boger <boger@wirenboard.com>  Mon, 21 Nov 2022 11:31:33 +0300
+
 linux-wb (5.10.35-wb122) stable; urgency=medium
 
   * dts: wb7: add generic labels for ethernet adapters
