@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb116+wb123) stable; urgency=medium
+
+  * wb: more robust 1-wire readings. Fix regression in wb 5.10 kernel.
+    Revert 1-wire timings to kernel defaults
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.com>  Tue, 22 Nov 2022 10:40:41 +0500
+
 linux-wb (5.10.35-wb116) stable; urgency=medium
 
   * fec: use ethFECX interface names to reorder them in userspace
