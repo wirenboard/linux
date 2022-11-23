@@ -392,7 +392,7 @@
 		"SoM PMIC_SCK", "SoM PMIC_SDA", "SIM_SELECT", "BUZZER", /*  0 - 3 */
 		"MOD1 RTS", "SODIMM:111 [NC]", "SODIMM:113 [NC]", "SODIMM:121 [NC]", /*  4 - 7 */
 		"SODIMM:123 [NC]", "Red LED", "Green LED", "[NC]", /*  8 - 11 */
-		"SODIMM:125 [NC]", "W1-UP", "EEPROM-2 SDA", "EEPROM-2 SCL", /* 12 - 15 */
+		"SODIMM:125 [NC]", "W1 UP", "EEPROM-2 SDA", "EEPROM-2 SCL", /* 12 - 15 */
 		"EEPROM-1 SDA", "EEPROM-1 SCL", "WBIO SCL", "WBIO SDA", /* 16 - 19 */
 		"SODIMM:52 [NC[", "SODIMM:50 [NC]", "DEBUG UART TX", "DEBUG UART RX", /* 20 - 23 */
 		"", "", "", "", /* 24 - 27 */
