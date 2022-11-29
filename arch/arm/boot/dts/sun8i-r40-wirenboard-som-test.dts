@@ -98,17 +98,17 @@
 		"SoM Eth1 TXD3", "SoM Eth1 TXD2", "SoM Eth1 TXD1", "SoM Eth1 TXD0", /*  4 - 7 */
 		"SoM Eth1 RXCK", "SoM Eth1 RXERR", "SoM Eth1 RXDV", "SoM Eth1 MDC", /*  8 - 11 */
 		"SoM Eth1 MDIO", "SoM Eth1 TXEN", "SoM Eth1 TXCK", "SoM Eth1 CRS", /* 12 - 15 */
-		"CAN_TX", "CAN_RX", "", "", /* 16 - 19 */
+		"CAN TX", "CAN RX", "", "", /* 16 - 19 */
 		"", "", "", "", /* 20 - 23 */
 		"", "", "", "", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
 		/* PB */
-		"SoM PMIC_SCK", "SoM PMIC_SDA", "", "", /*  0 - 3 */
+		"SoM PMIC SCK", "SoM PMIC SDA", "", "", /*  0 - 3 */
 		"", "SODIMM:111 [NC]", "SODIMM:113 [NC]", "SODIMM:121 [NC]", /*  4 - 7 */
 		"SODIMM:123 [NC]", "", "", "[NC]", /*  8 - 11 */
 		"SODIMM:125 [NC]", "", "", "", /* 12 - 15 */
 		"", "", "", "", /* 16 - 19 */
-		"SODIMM:52 [NC[", "SODIMM:50 [NC]", "DEBUG UART TX", "DEBUG UART RX", /* 20 - 23 */
+		"SODIMM:52 [NC]", "SODIMM:50 [NC]", "DEBUG UART TX", "DEBUG UART RX", /* 20 - 23 */
 		"", "", "", "", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
 		/* PC */

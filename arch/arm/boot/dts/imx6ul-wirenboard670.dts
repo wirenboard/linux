@@ -276,7 +276,7 @@
 		"MOD1 TX", // 24
 		"MOD1 RX", // 25
 		"MOD1 RTS", // 26
-		"5Vout ON"; // 27
+		"5V_OUT ON"; // 27
 };
 
 &gpio2 {
@@ -300,12 +300,12 @@
 		"RTC SDA", // 16
 		"RTC SCL", // 17
 		"", // 18
-		"Watchdog input"; // 19
+		"Watchdog out"; // 19
 };
 
 &gpio3 {
 	gpio-line-names =
-		"MOD4 RTS", // 0
+		"MOD4 DE", // 0
 		"", // 1
 		"", // 2
 		"EEPROM-1 SCL", // 3
@@ -357,16 +357,16 @@
 		"W1 UP", // 16
 		"MOD3 TX", // 17
 		"MOD3 RX", // 18
-		"MOD3 RTS", // 19
+		"MOD3 DE", // 19
 		"RS-485-2 Failsafe", // 20
 		"MOD2 TX", // 21
 		"MOD2 RX", // 22
 		"RS-485-1 Failsafe", // 23
 		"", // 24
-		"MOD4 SCK", // 25
-		"MOD4 SS", // 26
-		"MOD4 MOSI", // 27
-		"MOD4 MISO"; // 28
+		"MOD4 SPI SCK", // 25
+		"MOD4 SPI CS", // 26
+		"MOD4 SPI MOSI", // 27
+		"MOD4 SPI MISO"; // 28
 };
 
 &gpio5 {

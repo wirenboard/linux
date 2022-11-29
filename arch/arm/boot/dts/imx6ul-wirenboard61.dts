@@ -682,7 +682,7 @@
 		"MOD1 TX", // 24
 		"MOD1 RX", // 25
 		"MOD1 DE", // 26
-		"5Vout ON"; // 27
+		"5V_OUT ON"; // 27
 };
 
 &gpio2 {
@@ -706,7 +706,7 @@
 		"RTC SDA", // 16
 		"RTC SCL", // 17
 		"", // 18
-		"Watchdog input"; // 19
+		"Watchdog out"; // 19
 };
 
 &gpio3 {
@@ -769,10 +769,10 @@
 		"MOD2 RX", // 22
 		"RS-485-1 Failsafe", // 23
 		"GSM ON", // 24
-		"MOD3 SCK", // 25
-		"MOD3 SS", // 26
-		"MOD3 MOSI", // 27
-		"MOD3 MISO"; // 28
+		"MOD3 SPI SCK", // 25
+		"MOD3 SPI CS", // 26
+		"MOD3 SPI MOSI", // 27
+		"MOD3 SPI MISO"; // 28
 };
 
 &gpio5 {
