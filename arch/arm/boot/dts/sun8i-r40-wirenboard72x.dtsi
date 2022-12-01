@@ -390,7 +390,7 @@
 		"", "", "", "", /* 28 - 31 */
 		/* PB */
 		"SoM PMIC SCK", "SoM PMIC SDA", "SIM_SELECT", "BUZZER", /*  0 - 3 */
-		"MOD1 DE", "SODIMM:111 [NC]", "SODIMM:113 [NC]", "SODIMM:121 [NC]", /*  4 - 7 */
+		"MOD1 RTS", "SODIMM:111 [NC]", "SODIMM:113 [NC]", "SODIMM:121 [NC]", /*  4 - 7 */
 		"SODIMM:123 [NC]", "Red LED", "Green LED", "[NC]", /*  8 - 11 */
 		"SODIMM:125 [NC]", "W1 UP", "EEPROM-2 SDA", "EEPROM-2 SCL", /* 12 - 15 */
 		"EEPROM-1 SDA", "EEPROM-1 SCL", "WBIO SCL", "WBIO SDA", /* 16 - 19 */
@@ -403,7 +403,7 @@
 		"SoM eMMC D0", "SoM eMMC D1", "SoM eMMC D2", "SoM eMMC D3", /*  8 - 11 */
 		"SoM eMMC D4", "SoM eMMC D5", "SoM eMMC D6", "SoM eMMC D7", /* 12 - 15 */
 		"SoM Wi-Fi HOST_WAKE", "SoM BT WAKE", "SoM BT HOST_WAKE", "RS-485-1 RTS", /* 16 - 19 */
-		"MOD2 DE", "RS-485-2 RTS", "SODIMM:16 [NC]", "MOD4 SPI CS", /* 20 - 23 */
+		"MOD2 RTS", "RS-485-2 RTS", "SODIMM:16 [NC]", "MOD4 SPI CS", /* 20 - 23 */
 		"SoM eMMC RST", "", "", "", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
 		/* PD */
@@ -418,7 +418,7 @@
 		/* PE */
 		"USB0 ON", "5V_OUT ON", "V_OUT ON", "W2 UP",  /*  0 - 3 */
 		"SODIMM:79 [NC]", "RS-485-2 Termination", "RS-485-1 Termination", "RS-485-2 Failsafe", /*  4 - 7 */
-		"RS-485-1 Failsafe", "[NC]", "MOD3 DE", "CAN TXRX ON", /*  8 - 11 */
+		"RS-485-1 Failsafe", "[NC]", "MOD3 RTS", "CAN TXRX ON", /*  8 - 11 */
 		"", "", "", "", /* 12 - 15 */
 		"", "", "", "", /* 16 - 19 */
 		"", "", "", "", /* 20 - 23 */
@@ -455,7 +455,7 @@
 		"RTC SCK", "RTC SDA", "SODIMM: 76 [NC]", "[NC]", /*  0 - 3 */
 		"SODIMM: 75 [NC]", "SODIMM: 77 [NC]", "SODIMM: 79 [NC]", "SODIMM: 81 [NC]", /*  4 - 7 */
 		"SODIMM: 83 [NC]", "SODIMM: 85 [NC]", "MOD3 TX", "MOD3 RX", /*  8 - 11 */
-		"MOD2 TX", "MOD2 RX", "MOD4 DE", "W2", /* 12 - 15 */
+		"MOD2 TX", "MOD2 RX", "MOD4 RTS", "W2", /* 12 - 15 */
 		"WBIO INT", "RTC OUT", "RS-485-1 TX", "RS-485-1 RX", /* 16 - 19 */
 		"MOD1 TX", "MOD1 RX", "", "", /* 20 - 23 */
 		"", "", "", "", /* 24 - 27 */
