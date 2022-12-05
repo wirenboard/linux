@@ -103,7 +103,7 @@
 		"", "", "", "", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
 		/* PB */
-		"SOM PMIC SCK", "SoM PMIC SDA", "", "", /*  0 - 3 */
+		"SOM PMIC SCL", "SOM PMIC SDA", "", "", /*  0 - 3 */
 		"", "SODIMM:111 [NC]", "SODIMM:113 [NC]", "SODIMM:121 [NC]", /*  4 - 7 */
 		"SODIMM:123 [NC]", "", "", "[NC]", /*  8 - 11 */
 		"SODIMM:125 [NC]", "", "", "", /* 12 - 15 */

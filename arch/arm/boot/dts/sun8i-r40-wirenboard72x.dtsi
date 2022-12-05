@@ -285,7 +285,7 @@
 	/*
 	Because PMIC battery driver must be enabled at boot time,
 	we have to give it  some battery description to
-	override default (or pRESERVED from last boot) register
+	override default (or preserved from last boot) register
 	values when it comes to charging voltage and current
 	*/
 	fallback_battery_desc: fallback-battery-desc {
@@ -389,7 +389,7 @@
 		"", "", "", "", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
 		/* PB */
-		"SOM PMIC SCK", "SOM PMIC SDA", "SIM_SELECT", "BUZZER", /*  0 - 3 */
+		"SOM PMIC SCL", "SOM PMIC SDA", "SIM_SELECT", "BUZZER", /*  0 - 3 */
 		"MOD1 RTS", "SODIMM:111 [NC]", "SODIMM:113 [NC]", "SODIMM:121 [NC]", /*  4 - 7 */
 		"SODIMM:123 [NC]", "RED LED", "GREEN LED", "[NC]", /*  8 - 11 */
 		"SODIMM:125 [NC]", "W1 UP", "EEPROM-2 SDA", "EEPROM-2 SCL", /* 12 - 15 */

@@ -194,7 +194,7 @@
 		"EEPROM-2 SCL", // 7
 		"WATCHDOG OUT", // 8
 		"V_OUT ON", // 9
-		"Wi-Fi ON", // 10
+		"WI-FI ON", // 10
 		"", // 11
 		"EEPROM-1 SDA", // 12
 		"A2 IN", // 13
