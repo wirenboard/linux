@@ -412,7 +412,7 @@
 		"LVDS D3 P", "LVDS D3 N", "D1 OUT", "A3 OUT", /*  8 - 11 */
 		"A2 OUT", "A1 OUT", "PUSHBUTTON", "[NC]", /* 12 - 15 */
 		"[NC]", "[NC]", "[NC]", "WBMZ STATUS", /* 16 - 19 */
-		"USB0 ID", "WATHCDOG OUT", "[NC]", "[NC]", /* 20 - 23 */
+		"USB0 ID", "WATCHDOG OUT", "[NC]", "[NC]", /* 20 - 23 */
 		"WI-FI ON", "GSM STATUS", "GSM PWRKEY", "GSM ON", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
 		/* PE */
