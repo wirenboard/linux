@@ -300,7 +300,7 @@
 		"RTC SDA", // 16
 		"RTC SCL", // 17
 		"", // 18
-		"Watchdog out"; // 19
+		"WATCHDOG OUT"; // 19
 };
 
 &gpio3 {
@@ -313,7 +313,7 @@
 		"", // 5
 		"EEPROM-2 SDA", // 6
 		"EEPROM-2 SCL", // 7
-		"V_OUT Status", // 8
+		"V_OUT STATUS", // 8
 		"V_OUT ON", // 9
 		"Wi-Fi ON", // 10
 		"", // 11
@@ -324,7 +324,7 @@
 		"A2 OUT", // 16
 		"A3 OUT", // 17
 		"A4 OUT", // 18
-		"GSM Status", // 19
+		"GSM STATUS", // 19
 		"GSM PWRKEY", // 20
 		"MOD4 TX", // 21
 		"MOD4 RX", // 22
@@ -358,10 +358,10 @@
 		"MOD3 TX", // 17
 		"MOD3 RX", // 18
 		"MOD3 RTS", // 19
-		"RS-485-2 Failsafe", // 20
+		"RS-485-2 FAILSAFE", // 20
 		"MOD2 TX", // 21
 		"MOD2 RX", // 22
-		"RS-485-1 Failsafe", // 23
+		"RS-485-1 FAILSAFE", // 23
 		"", // 24
 		"MOD4 SPI SCK", // 25
 		"MOD4 SPI CS", // 26
@@ -371,9 +371,9 @@
 
 &gpio5 {
 	gpio-line-names =
-		"RS-485-1 Termination", // 0
+		"RS-485-1 TERMINATION", // 0
 		"", // 1
-		"RS-485-2 Termination", // 2
+		"RS-485-2 TERMINATION", // 2
 		"", // 3
 		"GSM ON", // 4
 		"", // 5
@@ -381,5 +381,5 @@
 		"", // 7
 		"", // 8
 		"", // 9
-		"Pushbutton"; // 10
+		"PUSHBUTTON"; // 10
 };
