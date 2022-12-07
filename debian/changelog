@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb125) stable; urgency=medium
+
+  * wb: dts: adjust gpio line names
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.com>  Wed, 07 Dec 2022 10:12:12 +0500
+
 linux-wb (5.10.35-wb124) stable; urgency=medium
 
   * usb-gadget: cherry-pick u_ether device name change
