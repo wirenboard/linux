@@ -1,0 +1,25 @@
+/dts-v1/;
+#include "sun8i-r40-wirenboard733.dts"
+
+/ {
+	model = "Wiren Board rev. 7.3.3 (A40i)";
+	/* wirenboard-720 is left for userspace compatibility */
+	compatible = "wirenboard,wirenboard-733x-sodimm-test, wirenboard,wirenboard-733", "wirenboard,wirenboard-73x", "wirenboard,wirenboard-72x", "wirenboard,wirenboard-720", "wirenboard,wirenboard-7xx", "allwinner,sun8i-r40";
+};
+
+&wbc_modem {
+	status = "okay";
+	model = "a7600x";
+	type = "4g", "3g", "edge", "gprs";
+	compatible = "wirenboard,wbc-usb";
+};
+
+&uart2 {
+	pinctrl-0 = <&pinctrl_rs485_1_uart_rs485>;
+	status = "okay";
+};
+
+&uart4 {
+	status = "okay";
+	pinctrl-0 = <&pinctrl_rs485_2_uart_rs485>;
+};
