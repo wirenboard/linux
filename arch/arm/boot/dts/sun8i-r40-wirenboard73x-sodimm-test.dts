@@ -1,6 +1,5 @@
 /dts-v1/;
-#include "sun8i-r40-wirenboard73x.dtsi"
-#include "sun8i-r40-wirenboard72x-eui-eeprom.dtsi"
+#include "sun8i-r40-wirenboard730.dts"
 
 /* CAN is disabled on WB 7.3
 	see https://wirenboard.com/wiki/WB_7:_Errata (ERRWB73002) for details
@@ -9,7 +8,7 @@
 / {
 	/* wirenboard-720 is left for userspace compatibility */
 	model = "Wiren Board rev. 7.3.0 (A40i)";
-	compatible = "wirenboard,wirenboard-730", "wirenboard,wirenboard-73x", "wirenboard,wirenboard-72x",  "wirenboard,wirenboard-720", "wirenboard,wirenboard-7xx", "allwinner,sun8i-r40";
+	compatible = "wirenboard,wirenboard-73x-sodimm-test, wirenboard,wirenboard-730", "wirenboard,wirenboard-73x", "wirenboard,wirenboard-72x",  "wirenboard,wirenboard-720", "wirenboard,wirenboard-7xx", "allwinner,sun8i-r40";
 
 	regulators {
 		/* GPIO hogs crash kernel on sunxi, so use dummy regulator */
@@ -24,11 +23,19 @@
 	};
 };
 
-/delete-node/ &can0;
+&wbc_modem {
+	status = "okay";
+	model = "a7600x";
+	type = "4g", "3g", "edge", "gprs";
+	compatible = "wirenboard,wbc-usb";
+};
 
-/* RS-485 on "RS-485-2" can't be enabled by older userspace, and there is no CAN anyway,
-   so enable it here.
-*/
+&uart2 {
+	pinctrl-0 = <&pinctrl_rs485_1_uart_rs485>;
+	status = "okay";
+};
+
 &uart4 {
 	status = "okay";
+	pinctrl-0 = <&pinctrl_rs485_2_uart_rs485>;
 };

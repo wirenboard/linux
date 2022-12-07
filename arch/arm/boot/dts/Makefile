@@ -1226,6 +1226,7 @@ dtb-$(CONFIG_MACH_SUN8I) += \
 	sun8i-r40-wirenboard-som-test.dtb \
 	sun8i-r40-wirenboard720.dtb \
 	sun8i-r40-wirenboard730.dtb \
+	sun8i-r40-wirenboard73x-sodimm-test.dtb \
 	sun8i-r40-wirenboard731.dtb \
 	sun8i-r40-wirenboard732.dtb \
 	sun8i-r40-wirenboard733.dtb \
