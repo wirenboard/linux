@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb126) stable; urgency=medium
+
+  * wb: Kconfig: add modules for ipsec support
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 07 Dec 2022 14:07:11 +0300
+
 linux-wb (5.10.35-wb125) stable; urgency=medium
 
   * wb: dts: adjust gpio line names
@@ -26,7 +32,7 @@ linux-wb (5.10.35-wb122) stable; urgency=medium
 linux-wb (5.10.35-wb121) stable; urgency=medium
 
   * wb6, wb7: add bunch of kernel options for Docker
-  * wb6, wb7: enable wireguard 
+  * wb6, wb7: enable wireguard
 
  -- Evgeny Boger <boger@wirenboard.com>  Sun, 23 Oct 2022 23:03:09 +0300
 
