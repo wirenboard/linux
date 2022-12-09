@@ -23,3 +23,7 @@
 	status = "okay";
 	pinctrl-0 = <&pinctrl_rs485_2_uart_rs485>;
 };
+
+&mmc0 {
+	max-frequency = <100000000>; /* reduce frequency from 150 to 100 MHz only for testing purpose */
+};
