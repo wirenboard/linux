@@ -1,6 +1,8 @@
 linux-wb (5.10.35-wb126) stable; urgency=medium
 
-  * wb: Kconfig: add modules for ipsec support
+  * wb7: defconfig: add nftables nat support
+  * wb7: defconfig: add modules for ipsec support
+    see https://wiki.strongswan.org/projects/strongswan/wiki/KernelModules for details
 
  -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 07 Dec 2022 14:07:11 +0300
 
