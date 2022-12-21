@@ -1,3 +1,11 @@
+linux-wb (5.10.35-wb127) stable; urgency=medium
+
+  * rtl8723bu: improve NetworkManager support
+    * fix disconnection procedure as a client
+    * disallow scan on the second interface if first is configured as a client
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Fri, 16 Dec 2022 16:33:42 +0600
+
 linux-wb (5.10.35-wb126) stable; urgency=medium
 
   * wb7: defconfig: add nftables nat support
