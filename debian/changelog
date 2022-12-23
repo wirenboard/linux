@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb128) stable; urgency=medium
+
+  * rtl8723bu: fix disallow scan on buddy interface if configured as AP
+  * rtl8723bu: check buddy interface before starting new client or AP
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Fri, 23 Dec 2022 12:28:56 +0600
+
 linux-wb (5.10.35-wb127) stable; urgency=medium
 
   * rtl8723bu: improve NetworkManager support
