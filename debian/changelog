@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb129) stable; urgency=medium
+
+  * usb: msub: sunxi: set max speed from DT
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Tue, 17 Jan 2023 21:08:26 +0600
+
 linux-wb (5.10.35-wb128) stable; urgency=medium
 
   * rtl8723bu: fix disallow scan on buddy interface if configured as AP
