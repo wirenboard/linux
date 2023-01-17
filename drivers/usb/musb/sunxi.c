@@ -669,7 +669,7 @@ static struct musb_hdrc_config sunxi_musb_hdrc_config_h3 = {
 static int sunxi_musb_probe(struct platform_device *pdev)
 {
 	struct musb_hdrc_platform_data	pdata;
-	struct musb_hdrc_config	*config;
+	struct musb_hdrc_config		*config;
 	struct platform_device_info	pinfo;
 	struct sunxi_glue		*glue;
 	struct device_node		*np = pdev->dev.of_node;
