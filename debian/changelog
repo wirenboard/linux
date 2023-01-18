@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb130) stable; urgency=medium
+
+  * wb7: dts: lower usb-gadget speed; add initram-dts with removed low usb-gadget speed
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 18 Jan 2023 17:11:38 +0300
+
 linux-wb (5.10.35-wb129) stable; urgency=medium
 
   * usb: msub: sunxi: set max speed from DT
