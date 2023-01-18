@@ -681,6 +681,7 @@ static const struct musb_hdrc_config sunxi_musb_hdrc_config_4eps = {
 static int sunxi_musb_probe(struct platform_device *pdev)
 {
 	struct musb_hdrc_platform_data	pdata;
+	struct musb_hdrc_config		*config;
 	struct platform_device_info	pinfo;
 	struct sunxi_glue		*glue;
 	struct device_node		*np = pdev->dev.of_node;
@@ -734,7 +735,13 @@ static int sunxi_musb_probe(struct platform_device *pdev)
 	if (!cfg)
 		return -EINVAL;
 
-	pdata.config = cfg->hdrc_config;
+	config = devm_kmemdup(&pdev->dev, cfg->hdrc_config, sizeof(*config),
+			      GFP_KERNEL);
+	if (!config)
+		return -ENOMEM;
+
+	config->maximum_speed = usb_get_maximum_speed(&pdev->dev);
+	pdata.config = config;
 
 	glue->dev = &pdev->dev;
 	INIT_WORK(&glue->work, sunxi_musb_work);
