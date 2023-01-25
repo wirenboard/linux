@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb131) stable; urgency=medium
+
+  * wb7-initramfs: remove all unused USB gadget features
+    (no functional changes for main OS kernel)
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Wed, 25 Jan 2023 17:27:12 +0600
+
 linux-wb (5.10.35-wb130) stable; urgency=medium
 
   * wb7: dts: lower usb-gadget speed; add initram-dts with removed low usb-gadget speed
