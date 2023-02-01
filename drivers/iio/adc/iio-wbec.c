@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
-TODO
-Write description
+ * TODO
+ * Write description
  */
 
 #include <linux/err.h>
@@ -44,32 +44,32 @@ enum wbec_iio_channel {
 
 
 struct wbec_iio {
-    struct regmap *regmap;
+	struct regmap *regmap;
 };
 
 union wbec_iio_value {
-    s16 s_value;
-    u16 u_value;
-    u8 regs[2];
+	s16 s_value;
+	u16 u_value;
+	u8 regs[2];
 };
 
 static int wbec_read_raw(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *channel, int *val,
-			    int *val2, long mask)
+				struct iio_chan_spec const *channel, int *val,
+				int *val2, long mask)
 {
 	struct wbec_iio *wbec_iio = iio_priv(indio_dev);
 	s32 ret;
 
-    // TODO Remove debug
-    printk(KERN_INFO "%s function. ch=%d, addr=%ld\n", __func__, channel->channel, channel->address);
+	// TODO Remove debug
+	dev_info(&indio_dev->dev, "%s function\n", __func__);
 
 	switch (mask) {
-    case IIO_CHAN_INFO_PROCESSED:
+	case IIO_CHAN_INFO_PROCESSED:
 		if ((channel->type == IIO_VOLTAGE) || (channel->type == IIO_TEMP)) {
 			/* Voltage in mV */
 			/* Temperature in deg C x100 */
 			ret = regmap_read(wbec_iio->regmap, channel->address, val);
-            if (ret < 0)
+			if (ret < 0)
 				return ret;
 		} else {
 			break;
@@ -95,7 +95,7 @@ static int wbec_read_raw(struct iio_dev *indio_dev,
 
 
 #define WBEC_IIO_CHANNEL(_id, _type, chan_info,	\
-			     _ext_name) {			\
+				 _ext_name) {			\
 	.type = _type,						\
 	.indexed = 1,						\
 	.channel = WBEC_IIO_CH_##_id,			\
@@ -107,15 +107,15 @@ static int wbec_read_raw(struct iio_dev *indio_dev,
 
 
 static const struct iio_chan_spec wbec_iio_channels[] = {
-    WBEC_IIO_CHANNEL(V_A1, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_a1"),
-    WBEC_IIO_CHANNEL(V_A2, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_a2"),
-    WBEC_IIO_CHANNEL(V_A3, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_a3"),
-    WBEC_IIO_CHANNEL(V_A4, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_a4"),
-    WBEC_IIO_CHANNEL(V_IN, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_in"),
-    WBEC_IIO_CHANNEL(V_BAT, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_bat"),
-    WBEC_IIO_CHANNEL(V_3_3, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_3.3"),
-    WBEC_IIO_CHANNEL(V_5_0, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_5.0"),
-    WBEC_IIO_CHANNEL(TEMP, IIO_TEMP, BIT(IIO_CHAN_INFO_RAW) | BIT(IIO_CHAN_INFO_SCALE), "temp"),
+	WBEC_IIO_CHANNEL(V_A1, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_a1"),
+	WBEC_IIO_CHANNEL(V_A2, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_a2"),
+	WBEC_IIO_CHANNEL(V_A3, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_a3"),
+	WBEC_IIO_CHANNEL(V_A4, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_a4"),
+	WBEC_IIO_CHANNEL(V_IN, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_in"),
+	WBEC_IIO_CHANNEL(V_BAT, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_bat"),
+	WBEC_IIO_CHANNEL(V_3_3, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_3.3"),
+	WBEC_IIO_CHANNEL(V_5_0, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "v_5.0"),
+	WBEC_IIO_CHANNEL(TEMP, IIO_TEMP, BIT(IIO_CHAN_INFO_RAW) | BIT(IIO_CHAN_INFO_SCALE), "temp"),
 };
 
 static const struct iio_info wbec_iio_info = {
@@ -124,13 +124,13 @@ static const struct iio_info wbec_iio_info = {
 
 static int wbec_iio_probe(struct platform_device *pdev)
 {
-    struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
-    struct i2c_client *client = wbec->i2c;
+	struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
+	struct i2c_client *client = wbec->i2c;
 	struct iio_dev *indio_dev;
 	struct wbec_iio *wbec_iio;
 
-    printk(KERN_INFO "%s function\n", __func__);
-    dev_dbg(&pdev->dev, "%s\n", __func__);
+	dev_info(&pdev->dev, "%s function\n", __func__);
+	dev_dbg(&pdev->dev, "%s\n", __func__);
 
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_WORD_DATA))
 		return -EOPNOTSUPP;
@@ -141,8 +141,8 @@ static int wbec_iio_probe(struct platform_device *pdev)
 
 	wbec_iio = iio_priv(indio_dev);
 
-    platform_set_drvdata(pdev, indio_dev);
-    wbec_iio->regmap = wbec->regmap_16;
+	platform_set_drvdata(pdev, indio_dev);
+	wbec_iio->regmap = wbec->regmap_16;
 
 	indio_dev->name = "wbec";
 	indio_dev->modes = INDIO_DIRECT_MODE;
@@ -158,7 +158,7 @@ static int wbec_iio_remove(struct platform_device *pdev)
 {
 	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
 
-    printk(KERN_INFO "%s function\n", __func__);
+	dev_info(&pdev->dev, "%s function\n", __func__);
 
 	iio_device_unregister(indio_dev);
 

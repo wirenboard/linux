@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
-TODO
-Write description
+ * TODO
+ * Write description
  */
 
 #include <linux/module.h>
@@ -81,7 +81,8 @@ static void wbec_pm_power_off(void)
 	int ret;
 	struct wbec *wbec = i2c_get_clientdata(wbec_i2c_client);
 
-	printk(KERN_INFO "%s function\n", __func__);
+	// TODO Remove debug
+	dev_info(&wbec_i2c_client->dev, "%s function\n", __func__);
 
 	ret = regmap_update_bits(wbec->regmap_8, DEV_POWER_REG, DEV_OFF, 1);
 	if (ret)
@@ -92,7 +93,8 @@ static int wbec_restart_notify(struct notifier_block *this, unsigned long mode, 
 {
 	struct wbec *wbec = i2c_get_clientdata(wbec_i2c_client);
 
-	printk(KERN_INFO "%s function\n", __func__);
+	// TODO Remove debug
+	dev_info(&wbec_i2c_client->dev, "%s function\n", __func__);
 
 	return NOTIFY_DONE;
 }
@@ -106,7 +108,8 @@ static void wbec_shutdown(struct i2c_client *client)
 {
 	struct wbec *wbec = i2c_get_clientdata(client);
 
-	printk(KERN_INFO "%s function\n", __func__);
+	// TODO Remove debug
+	dev_info(&client->dev, "%s function\n", __func__);
 }
 
 static int wbec_probe(struct i2c_client *client)
@@ -137,18 +140,20 @@ static int wbec_probe(struct i2c_client *client)
 		return PTR_ERR(wbec->regmap_16);
 	}
 
-	// if (!client->irq) {
-	// 	dev_err(&client->dev, "No interrupt support, no core IRQ\n");
-	// 	return -EINVAL;
-	// }
+	/*
+	if (!client->irq) {
+		dev_err(&client->dev, "No interrupt support, no core IRQ\n");
+		return -EINVAL;
+	}
 
-	// ret = regmap_add_irq_chip(wbec->regmap, client->irq,
-	// 			  IRQF_ONESHOT, -1,
-	// 			  wbec->regmap_irq_chip, &wbec->irq_data);
-	// if (ret) {
-	// 	dev_err(&client->dev, "Failed to add irq_chip %d\n", ret);
-	// 	return ret;
-	// }
+	ret = regmap_add_irq_chip(wbec->regmap, client->irq,
+				  IRQF_ONESHOT, -1,
+				  wbec->regmap_irq_chip, &wbec->irq_data);
+	if (ret) {
+		dev_err(&client->dev, "Failed to add irq_chip %d\n", ret);
+		return ret;
+	}
+	*/
 
 	ret = devm_mfd_add_devices(&client->dev, PLATFORM_DEVID_NONE,
 			      wbec_cells, ARRAY_SIZE(wbec_cells), NULL, 0,
@@ -163,12 +168,14 @@ static int wbec_probe(struct i2c_client *client)
 
 static int wbec_remove(struct i2c_client *client)
 {
-	printk(KERN_INFO "wbec_remove function\n");
+	// TODO Remove debug
+	dev_info(&client->dev, "%s function\n", __func__);
 	return 0;
 }
 
 #ifdef CONFIG_OF
 static const struct of_device_id wbec_of_match[] = {
+	// TODO DT compatible string "wbec" appears un-documented -- check ./Documentation/devicetree/bindings/
 	{ .compatible = "wbec" },
 	{}
 };
@@ -176,13 +183,13 @@ MODULE_DEVICE_TABLE(of, wbec_of_match);
 #endif
 
 static struct i2c_driver wbec_driver = {
-      .driver = {
-			.name   = "wbec",
-			.of_match_table = of_match_ptr(wbec_of_match),
-      },
-      .probe_new      = wbec_probe,
-      .remove         = wbec_remove,
-	  .shutdown = wbec_shutdown,
+	.driver = {
+		.name   = "wbec",
+		.of_match_table = of_match_ptr(wbec_of_match),
+	},
+	.probe_new      = wbec_probe,
+	.remove         = wbec_remove,
+	.shutdown = wbec_shutdown,
 };
 
 

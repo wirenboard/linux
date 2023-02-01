@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
-TODO
-Write description
+ * TODO
+ * Write description
  */
 
 #include <linux/errno.h>
@@ -38,7 +38,8 @@ static int wbec_pwrkey_probe(struct platform_device *pdev)
 	int fall_irq, rise_irq;
 	int err;
 
-    printk(KERN_INFO "%s function\n", __func__);
+	// TODO Remove debug
+	dev_info(&pdev->dev, "%s function\n", __func__);
 
 	pwr = devm_input_allocate_device(&pdev->dev);
 	if (!pwr) {

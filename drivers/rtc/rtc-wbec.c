@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
-TODO
-Write description
+ * TODO
+ * Write description
  */
 
 #include <linux/module.h>
@@ -33,7 +33,7 @@ struct wbec_rtc {
 
 static int wbec_rtc_read_time(struct device *dev, struct rtc_time *tm)
 {
-    struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
+	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
 
 	int rc;
 	u8 regs[7];
@@ -45,7 +45,7 @@ static int wbec_rtc_read_time(struct device *dev, struct rtc_time *tm)
 	 * time/date registers in one turn.
 	 */
 	rc = regmap_bulk_read(wbec_rtc->regmap, WBEC_REG_RTC_TIME_S, regs,
-			      sizeof(regs));
+				  sizeof(regs));
 	if (rc)
 		return rc;
 
@@ -72,7 +72,7 @@ static int wbec_rtc_set_time(struct device *dev, struct rtc_time *tm)
 	u8 regs[7];
 
 	// TODO Remove debug
-	printk(KERN_INFO "%s function\n", __func__);
+	dev_info(dev, "%s function\n", __func__);
 
 	/* hours, minutes and seconds */
 	regs[0] = bin2bcd(tm->tm_sec) & 0x7F; /* clear OS flag */
@@ -94,7 +94,7 @@ static int wbec_rtc_set_time(struct device *dev, struct rtc_time *tm)
 
 	/* write all registers at once */
 	rc = regmap_bulk_write(wbec_rtc->regmap, WBEC_REG_RTC_TIME_S,
-			       regs, sizeof(regs));
+				   regs, sizeof(regs));
 	if (rc)
 		return rc;
 
@@ -108,7 +108,7 @@ static int wbec_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 	int ret;
 
 	ret = regmap_bulk_read(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_S,
-			       buf, sizeof(buf));
+				   buf, sizeof(buf));
 	if (ret)
 		return ret;
 
@@ -132,9 +132,8 @@ static int wbec_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 	buf[2] = bin2bcd(alrm->time.tm_hour);
 	buf[3] = bin2bcd(alrm->time.tm_mday);
 
-	if (alrm->enabled) {
+	if (alrm->enabled)
 		buf[0] |= 0x80;
-	}
 
 	return regmap_bulk_write(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_S,
 				buf, sizeof(buf));
@@ -142,8 +141,8 @@ static int wbec_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 
 static int wbec_rtc_read_offset(struct device *dev, long *offset)
 {
-    // TODO Remove debug
-	printk(KERN_INFO "%s function\n", __func__);
+	// TODO Remove debug
+	dev_info(dev, "%s function\n", __func__);
 
 	*offset = 0;
 
@@ -152,8 +151,8 @@ static int wbec_rtc_read_offset(struct device *dev, long *offset)
 
 static int wbec_rtc_set_offset(struct device *dev, long offset)
 {
-    // TODO Remove debug
-	printk(KERN_INFO "%s function\n", __func__);
+	// TODO Remove debug
+	dev_info(dev, "%s function\n", __func__);
 
 	return 0;
 }
@@ -175,8 +174,8 @@ static int wbec_rtc_probe(struct platform_device *pdev)
 	unsigned int tmp;
 	int err;
 
-    // TODO Remove debug
-	printk(KERN_INFO "%s function\n", __func__);
+	// TODO Remove debug
+	dev_info(&pdev->dev, "%s function\n", __func__);
 	dev_dbg(&pdev->dev, "%s\n", __func__);
 
 	wbec_rtc = devm_kzalloc(&pdev->dev, sizeof(struct wbec_rtc),
