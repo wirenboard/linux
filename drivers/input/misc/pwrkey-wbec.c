@@ -11,6 +11,43 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
+#include <linux/hrtimer.h>
+#include <linux/regmap.h>
+#include "wbec.h"
+
+#define WBEC_PWRKEY_POLL_PERIOD_NS		100000000
+
+struct wbec_pwrkey {
+	struct input_dev *pwr;
+	struct hrtimer poll_timer;
+	struct regmap *regmap;
+};
+
+static enum hrtimer_restart pwrkey_poll_cb(struct hrtimer *hrtimer)
+{
+	struct wbec_pwrkey *wbec_pwrkey =
+		container_of(hrtimer, typeof(*wbec_pwrkey), poll_timer);
+	struct input_dev *pwr = wbec_pwrkey->pwr;
+
+	int val;
+	int ret = regmap_read(wbec_pwrkey->regmap, 49, &val);
+
+	if (ret == 0) {
+		if (val == 0x01) {
+			// TODO Remove debug
+			dev_info(&pwr->dev, "Power key press detected\n");
+			input_report_key(pwr, KEY_POWER, 1);
+			input_sync(pwr);
+
+			return HRTIMER_NORESTART;
+		}
+	}
+
+	hrtimer_forward_now(hrtimer,
+			    ns_to_ktime(WBEC_PWRKEY_POLL_PERIOD_NS));
+
+	return HRTIMER_RESTART;
+}
 
 static irqreturn_t pwrkey_fall_irq(int irq, void *_pwr)
 {
@@ -34,23 +71,31 @@ static irqreturn_t pwrkey_rise_irq(int irq, void *_pwr)
 
 static int wbec_pwrkey_probe(struct platform_device *pdev)
 {
-	struct input_dev *pwr;
+	struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
+	struct wbec_pwrkey *wbec_pwrkey;
 	int fall_irq, rise_irq;
 	int err;
 
 	// TODO Remove debug
 	dev_info(&pdev->dev, "%s function\n", __func__);
 
-	pwr = devm_input_allocate_device(&pdev->dev);
-	if (!pwr) {
+	wbec_pwrkey = devm_kzalloc(&pdev->dev, sizeof(struct wbec_pwrkey),
+				GFP_KERNEL);
+	if (!wbec_pwrkey)
+		return -ENOMEM;
+
+	wbec_pwrkey->regmap = wbec->regmap_8;
+
+	wbec_pwrkey->pwr = devm_input_allocate_device(&pdev->dev);
+	if (!wbec_pwrkey->pwr) {
 		dev_err(&pdev->dev, "Can't allocate power button\n");
 		return -ENOMEM;
 	}
 
-	pwr->name = "wbec pwrkey";
-	pwr->phys = "wbec_pwrkey/input0";
-	pwr->id.bustype = BUS_HOST;
-	input_set_capability(pwr, EV_KEY, KEY_POWER);
+	wbec_pwrkey->pwr->name = "wbec pwrkey";
+	wbec_pwrkey->pwr->phys = "wbec_pwrkey/input0";
+	wbec_pwrkey->pwr->id.bustype = BUS_HOST;
+	input_set_capability(wbec_pwrkey->pwr, EV_KEY, KEY_POWER);
 
 	fall_irq = platform_get_irq(pdev, 0);
 	if (fall_irq < 0)
@@ -78,14 +123,21 @@ static int wbec_pwrkey_probe(struct platform_device *pdev)
 		return err;
 	}
 
-	err = input_register_device(pwr);
+	hrtimer_init(&wbec_pwrkey->poll_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	wbec_pwrkey->poll_timer.function = pwrkey_poll_cb;
+
+	err = input_register_device(wbec_pwrkey->pwr);
 	if (err) {
 		dev_err(&pdev->dev, "Can't register power button: %d\n", err);
 		return err;
 	}
 
-	platform_set_drvdata(pdev, pwr);
+	platform_set_drvdata(pdev, wbec_pwrkey);
 	device_init_wakeup(&pdev->dev, true);
+
+	hrtimer_start(&wbec_pwrkey->poll_timer,
+			      ns_to_ktime(WBEC_PWRKEY_POLL_PERIOD_NS),
+			      HRTIMER_MODE_REL_PINNED);
 
 	return 0;
 }
