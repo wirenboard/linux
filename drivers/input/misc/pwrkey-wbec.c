@@ -17,6 +17,9 @@
 
 #define WBEC_PWRKEY_POLL_PERIOD_NS		100000000
 
+#define WBEC_IRQ_PWRON_RISE_MSK			BIT(0)
+#define WBEC_IRQ_PWRON_FALL_MSK			BIT(1)
+
 struct wbec_pwrkey {
 	struct input_dev *pwr;
 	struct hrtimer poll_timer;
@@ -30,17 +33,17 @@ static enum hrtimer_restart pwrkey_poll_cb(struct hrtimer *hrtimer)
 	struct input_dev *pwr = wbec_pwrkey->pwr;
 
 	int val;
-	int ret = regmap_read(wbec_pwrkey->regmap, 49, &val);
+	int ret = regmap_read(wbec_pwrkey->regmap, WBEC_REG_IRQ_FLAGS, &val);
 
-	if (ret == 0) {
-		if (val == 0x01) {
-			// TODO Remove debug
-			dev_info(&pwr->dev, "Power key press detected\n");
-			input_report_key(pwr, KEY_POWER, 1);
-			input_sync(pwr);
+	if ((ret == 0) && (val & WBEC_IRQ_PWRON_FALL_MSK)) {
+		// TODO Remove debug
+		dev_info(&pwr->dev, "Power key press detected\n");
+		// Clear irq flag
+		regmap_update_bits(wbec_pwrkey->regmap, WBEC_REG_IRQ_MSK, WBEC_IRQ_PWRON_FALL_MSK, 1);
+		input_report_key(pwr, KEY_POWER, 1);
+		input_sync(pwr);
 
-			return HRTIMER_NORESTART;
-		}
+		return HRTIMER_NORESTART;
 	}
 
 	hrtimer_forward_now(hrtimer,
@@ -49,31 +52,10 @@ static enum hrtimer_restart pwrkey_poll_cb(struct hrtimer *hrtimer)
 	return HRTIMER_RESTART;
 }
 
-static irqreturn_t pwrkey_fall_irq(int irq, void *_pwr)
-{
-	struct input_dev *pwr = _pwr;
-
-	input_report_key(pwr, KEY_POWER, 1);
-	input_sync(pwr);
-
-	return IRQ_HANDLED;
-}
-
-static irqreturn_t pwrkey_rise_irq(int irq, void *_pwr)
-{
-	struct input_dev *pwr = _pwr;
-
-	input_report_key(pwr, KEY_POWER, 0);
-	input_sync(pwr);
-
-	return IRQ_HANDLED;
-}
-
 static int wbec_pwrkey_probe(struct platform_device *pdev)
 {
 	struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
 	struct wbec_pwrkey *wbec_pwrkey;
-	int fall_irq, rise_irq;
 	int err;
 
 	// TODO Remove debug
@@ -96,32 +78,6 @@ static int wbec_pwrkey_probe(struct platform_device *pdev)
 	wbec_pwrkey->pwr->phys = "wbec_pwrkey/input0";
 	wbec_pwrkey->pwr->id.bustype = BUS_HOST;
 	input_set_capability(wbec_pwrkey->pwr, EV_KEY, KEY_POWER);
-
-	fall_irq = platform_get_irq(pdev, 0);
-	if (fall_irq < 0)
-		return fall_irq;
-
-	rise_irq = platform_get_irq(pdev, 1);
-	if (rise_irq < 0)
-		return rise_irq;
-
-	err = devm_request_any_context_irq(&pwr->dev, fall_irq,
-					   pwrkey_fall_irq,
-					   IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
-					   "wbec_pwrkey_fall", pwr);
-	if (err < 0) {
-		dev_err(&pdev->dev, "Can't register fall irq: %d\n", err);
-		return err;
-	}
-
-	err = devm_request_any_context_irq(&pwr->dev, rise_irq,
-					   pwrkey_rise_irq,
-					   IRQF_TRIGGER_RISING | IRQF_ONESHOT,
-					   "wbec_pwrkey_rise", pwr);
-	if (err < 0) {
-		dev_err(&pdev->dev, "Can't register rise irq: %d\n", err);
-		return err;
-	}
 
 	hrtimer_init(&wbec_pwrkey->poll_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	wbec_pwrkey->poll_timer.function = pwrkey_poll_cb;
