@@ -163,6 +163,9 @@ static int wbec_probe(struct i2c_client *client)
 		return ret;
 	}
 
+	wbec_i2c_client = client;
+	pm_power_off = wbec_pm_power_off;
+
 	return ret;
 }
 
