@@ -87,6 +87,10 @@ static void wbec_pm_power_off(void)
 	ret = regmap_update_bits(wbec->regmap_8, DEV_POWER_REG, DEV_OFF, 1);
 	if (ret)
 		dev_err(&wbec_i2c_client->dev, "Failed to shutdown device!\n");
+
+	/* Give capacitors etc. time to drain to avoid kernel panic msg. */
+	msleep(1000);
+	dev_err(&wbec_i2c_client->dev, "Device not actually shutdown. Check EC and FETs!\n");
 }
 
 static int wbec_restart_notify(struct notifier_block *this, unsigned long mode, void *cmd)
