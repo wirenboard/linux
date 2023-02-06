@@ -98,11 +98,24 @@ static int wbec_pwrkey_probe(struct platform_device *pdev)
 	return 0;
 }
 
+static int wbec_pwrkey_remove(struct platform_device *pdev)
+{
+	struct wbec_pwrkey *wbec_pwrkey = platform_get_drvdata(pdev);
+
+	dev_info(&pdev->dev, "%s function\n", __func__);
+
+	hrtimer_cancel(&wbec_pwrkey->poll_timer);
+	input_unregister_device(wbec_pwrkey->pwr);
+
+	return 0;
+}
+
 static struct platform_driver wbec_pwrkey_driver = {
-	.probe	= wbec_pwrkey_probe,
 	.driver	= {
 		.name = "wbec-pwrkey",
 	},
+	.probe	= wbec_pwrkey_probe,
+	.remove = wbec_pwrkey_remove,
 };
 module_platform_driver(wbec_pwrkey_driver);
 
