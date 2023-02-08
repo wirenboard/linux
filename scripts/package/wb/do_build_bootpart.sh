@@ -25,15 +25,6 @@ esac
 source scripts/package/wb/common.sh
 init_build_dir
 
-export DEBEMAIL="info@wirenboard.com"
-export DEBFULLNAME="Wirenboard robot"
-
-make_deb () {
-    fakeroot make -j${CORES} ARCH=arm KBUILD_DEBARCH=${DEBARCH} \
-        LOCALVERSION=$(get_kernel_revision) WB_VERSION_SUFFIX=${VERSION_SUFFIX} \
-        KDEB_WBTARGET=${KERNEL_FLAVOUR} binwbdeb-pkg
-}
-
 make_bootpart() {
     local tmpdir_rel="bootpart-tmp"
     local fstmpdir_rel="$tmpdir_rel/fs"
@@ -55,7 +46,7 @@ make_bootpart() {
 
     local imgfile="$tmpdir/bootpart.img"
     dd if=/dev/zero bs=1M count=16 of="$imgfile"
-    mkfs.ext2 $imgfile -L kernel+fdt
+    /sbin/mkfs.ext2 $imgfile -L kernel+fdt
     local loopdev=$(sudo losetup -f --show "$imgfile")
     echo "loopdev: $loopdev"
     mkdir -p $tmpdir/mnt
@@ -63,7 +54,7 @@ make_bootpart() {
     sudo rsync -a $tmpdir/fs/ $tmpdir/mnt/
     sudo umount $tmpdir/mnt
     sudo losetup -d $loopdev
-    resize2fs -M $imgfile
+    /sbin/resize2fs -M $imgfile
     ls -lh $imgfile
 
 
