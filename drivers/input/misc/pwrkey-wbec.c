@@ -35,11 +35,11 @@ static enum hrtimer_restart pwrkey_poll_cb(struct hrtimer *hrtimer)
 	int val;
 	int ret = regmap_read(wbec_pwrkey->regmap, WBEC_REG_IRQ_FLAGS, &val);
 
-	if ((ret == 0) && (val & WBEC_IRQ_PWRON_FALL_MSK)) {
+	if ((ret == 0) && (val & WBEC_IRQ_PWRON_RISE_MSK)) {
 		// TODO Remove debug
 		dev_info(&pwr->dev, "Power key press detected\n");
 		// Clear irq flag
-		regmap_update_bits(wbec_pwrkey->regmap, WBEC_REG_IRQ_MSK, WBEC_IRQ_PWRON_FALL_MSK, 1);
+		regmap_update_bits(wbec_pwrkey->regmap, WBEC_REG_IRQ_MSK, WBEC_IRQ_PWRON_RISE_MSK, 1);
 		input_report_key(pwr, KEY_POWER, 1);
 		input_sync(pwr);
 
