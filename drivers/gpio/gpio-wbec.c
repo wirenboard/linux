@@ -11,7 +11,7 @@
 #include <linux/pm.h>
 #include <linux/property.h>
 #include <linux/slab.h>
-
+#include <linux/regmap.h>
 #include "wbec.h"
 
 enum {
@@ -26,6 +26,7 @@ enum {
 
 struct wbec_gpio_info {
 	struct wbec *wbec;
+	struct regmap *regmap;
 	struct device *dev;
 	struct gpio_chip gpio_chip;
 };
@@ -40,7 +41,13 @@ static int wbec_gpio_get(struct gpio_chip *chip, unsigned int offset)
     // TODO Remove debug
 	dev_info(pci->dev, "%s function. offset=%u\n", __func__, offset);
 
-	return !!(offset & 0x01);
+	ret = regmap_read(pci->regmap, WBEC_REG_GPIO, &val);
+	if (ret < 0) {
+		dev_err(pci->dev, "error when read gpio %u\n", offset);
+		return ret;
+	}
+
+	return !!(val & BIT(offset));
 }
 
 static void wbec_gpio_set(struct gpio_chip *chip,
@@ -53,7 +60,9 @@ static void wbec_gpio_set(struct gpio_chip *chip,
 	// TODO Remove debug
 	dev_info(pci->dev, "%s function. offset=%u, value=%d\n", __func__, offset, value);
 
-	return;
+	ret = regmap_update_bits(pci->regmap, WBEC_REG_GPIO, BIT(offset), value);
+	if (ret < 0)
+		dev_err(pci->dev, "error when set gpio %u\n", offset);
 }
 
 static int wbec_gpio_get_direction(struct gpio_chip *chip, unsigned int offset)
