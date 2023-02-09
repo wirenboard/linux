@@ -34,6 +34,7 @@ static const struct mfd_cell wbec_cells[] = {
 	{ .name = "wbec-pwrkey", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-pinctrl", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-watchdog", .id = PLATFORM_DEVID_NONE, },
+	{ .name = "wbec-gpio", .id = PLATFORM_DEVID_NONE, },
 };
 
 static struct i2c_client *wbec_i2c_client;
