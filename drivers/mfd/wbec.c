@@ -32,7 +32,6 @@ static const struct mfd_cell wbec_cells[] = {
 	{ .name = "wbec-rtc", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-iio", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-pwrkey", .id = PLATFORM_DEVID_NONE, },
-	{ .name = "wbec-pinctrl", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-watchdog", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-gpio", .id = PLATFORM_DEVID_NONE, },
 };
