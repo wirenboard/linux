@@ -1,3 +1,11 @@
+linux-wb (5.10.35-wb132) stable; urgency=medium
+
+  * wb6: defconfig: add nftables nat support
+  * wb6: defconfig: add modules for ipsec support
+    see https://wiki.strongswan.org/projects/strongswan/wiki/KernelModules for details
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Tue, 14 Feb 2023 15:14:38 +0300
+
 linux-wb (5.10.35-wb131) stable; urgency=medium
 
   * wb7-initramfs: remove all unused USB gadget features
