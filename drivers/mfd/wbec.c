@@ -14,6 +14,8 @@
 #include <linux/reboot.h>
 #include "wbec.h"
 
+#define WBEC_ID			0xD2
+
 
 static const struct regmap_config wbec_regmap_config_8 = {
 	.name = "regmap_8",
@@ -36,6 +38,25 @@ static const struct mfd_cell wbec_cells[] = {
 	{ .name = "wbec-gpio", .id = PLATFORM_DEVID_NONE, },
 };
 
+static char *info_str = "wbec dev";
+
+static ssize_t wbec_fw_ver_read( struct file * file, char * buf,
+						size_t count, loff_t *ppos ) {
+	int len = strlen( info_str );
+	if( count < len ) return -EINVAL;
+	if( *ppos != 0 ) {
+		return 0;
+	}
+	if( copy_to_user( buf, info_str, len ) ) return -EINVAL;
+	*ppos = len;
+	return len;
+}
+
+static const struct file_operations wbec_fw_ver_file_ops = {
+	.owner  = THIS_MODULE,
+	.read   = wbec_fw_ver_read,
+};
+
 static struct i2c_client *wbec_i2c_client;
 
 static void wbec_pm_power_off(void)
@@ -46,7 +67,7 @@ static void wbec_pm_power_off(void)
 	// TODO Remove debug
 	dev_info(&wbec_i2c_client->dev, "%s function\n", __func__);
 
-	ret = regmap_update_bits(wbec->regmap_8, WBEC_REG_POWERCTRL, WBEC_REG_BIT_POWEROFF, 1);
+	ret = regmap_update_bits(wbec->regmap_8, WBEC_REG_POWER_CTRL_50, WBEC_REG_POWER_CTRL_50_OFF_MSK, 1);
 	if (ret)
 		dev_err(&wbec_i2c_client->dev, "Failed to shutdown device!\n");
 
@@ -82,6 +103,7 @@ static int wbec_probe(struct i2c_client *client)
 {
 	struct wbec *wbec;
 	int ret;
+	int wbec_id;
 
 	wbec = devm_kzalloc(&client->dev, sizeof(*wbec), GFP_KERNEL);
 	if (!wbec)
@@ -105,6 +127,18 @@ static int wbec_probe(struct i2c_client *client)
 		return PTR_ERR(wbec->regmap_16);
 	}
 
+	ret = regmap_read(wbec->regmap_8, WBEC_REG_INFO_WBEC_ID, &wbec_id);
+	if (ret < 0) {
+		dev_err(&client->dev, "failed to read the wbec id at 0x%X\n",
+			WBEC_REG_INFO_WBEC_ID);
+		return wbec_id;
+	}
+	if (wbec_id != WBEC_ID) {
+		dev_err(&client->dev, "wrong wbec ID at 0x%X. Get 0x%X istead of 0x%X\n",
+			WBEC_REG_INFO_WBEC_ID, wbec_id, WBEC_ID);
+		return -ENOTSUPP;
+	}
+
 	ret = devm_mfd_add_devices(&client->dev, PLATFORM_DEVID_NONE,
 			      wbec_cells, ARRAY_SIZE(wbec_cells), NULL, 0,
 			      NULL);
@@ -116,13 +150,27 @@ static int wbec_probe(struct i2c_client *client)
 	wbec_i2c_client = client;
 	pm_power_off = wbec_pm_power_off;
 
+	wbec->debug_dir = debugfs_create_dir(client->name, NULL);
+	if (!wbec->debug_dir) {
+		dev_warn(&client->dev, "falied to create debugfs directory\n");
+		return 0;
+	}
+
+	// debugfs_create_file("version", S_IRUGO, wbec->debug_dir, wbec,
+    //                                &wbec_fw_ver_file_ops);
+
 	return ret;
 }
 
 static int wbec_remove(struct i2c_client *client)
 {
+	struct wbec *wbec = i2c_get_clientdata(client);
+
 	// TODO Remove debug
 	dev_info(&client->dev, "%s function\n", __func__);
+
+	debugfs_remove_recursive(wbec->debug_dir);
+
 	return 0;
 }
 
