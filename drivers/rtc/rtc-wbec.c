@@ -96,23 +96,23 @@ static int wbec_rtc_set_time(struct device *dev, struct rtc_time *tm)
 static int wbec_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 {
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
-	u8 buf[4];
+	u8 buf[5];
 	int ret;
 
 	// TODO Remove debug
 	dev_info(dev, "%s function\n", __func__);
 
-	ret = regmap_bulk_read(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_13,
+	ret = regmap_bulk_read(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_SECONDS,
 				   buf, sizeof(buf));
 	if (ret)
 		return ret;
 
-	alrm->time.tm_sec = buf[0] & WBEC_REG_RTC_ALARM_13_SECONDS_MSK;
+	alrm->time.tm_sec = buf[0];
 	alrm->time.tm_min = buf[1];
 	alrm->time.tm_hour = buf[2];
 	alrm->time.tm_mday = buf[3];
 
-	alrm->enabled =  !!(buf[0] & WBEC_REG_RTC_ALARM_13_EN_MSK);
+	alrm->enabled =  !!(buf[4] & WBEC_REG_RTC_ALARM_17_EN_MSK);
 
 	return 0;
 }
@@ -120,10 +120,11 @@ static int wbec_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 static int wbec_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 {
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
-	u8 buf[4];
+	u8 buf[5] = {};
 
 	// TODO Remove debug
-	dev_info(dev, "%s function\n", __func__);
+	dev_info(dev, "%s function, mday=%d, hour=%d, min=%d, sec=%d, en=%d\n", __func__,
+		alrm->time.tm_mday, alrm->time.tm_hour, alrm->time.tm_min, alrm->time.tm_sec, alrm->enabled);
 
 	buf[0] = alrm->time.tm_sec;
 	buf[1] = alrm->time.tm_min;
@@ -131,10 +132,34 @@ static int wbec_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 	buf[3] = alrm->time.tm_mday;
 
 	if (alrm->enabled)
-		buf[0] |= WBEC_REG_RTC_ALARM_13_EN_MSK;
+		buf[4] |= WBEC_REG_RTC_ALARM_17_EN_MSK;
 
-	return regmap_bulk_write(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_13,
+	return regmap_bulk_write(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_SECONDS,
 				buf, sizeof(buf));
+}
+
+static int wbec_rtc_alarm_irq_enable(struct device *dev,
+					 unsigned int enabled)
+{
+	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
+
+	// TODO Remove debug
+	dev_info(dev, "%s function, en=%d\n", __func__, enabled);
+
+	return regmap_update_bits(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_17,
+				  WBEC_REG_RTC_ALARM_17_EN_MSK,
+				  enabled ? WBEC_REG_RTC_ALARM_17_EN_MSK : 0);
+}
+
+static irqreturn_t wbec_rtc_handle_irq(int irq, void *dev_id)
+{
+	struct wbec_rtc *wbec_rtc = dev_id;
+	unsigned int val;
+	int err;
+
+	// TODO Remove debug
+	dev_info(regmap_get_device(wbec_rtc->regmap), "%s function\n", __func__);
+	return IRQ_HANDLED;
 }
 
 static int wbec_rtc_read_offset(struct device *dev, long *offset)
@@ -162,6 +187,7 @@ static const struct rtc_class_ops wbec_rtc_ops = {
 	.set_offset	= wbec_rtc_set_offset,
 	.read_alarm = wbec_rtc_read_alarm,
 	.set_alarm = wbec_rtc_set_alarm,
+	.alarm_irq_enable = wbec_rtc_alarm_irq_enable,
 };
 
 static int wbec_rtc_probe(struct platform_device *pdev)
@@ -191,6 +217,9 @@ static int wbec_rtc_probe(struct platform_device *pdev)
 	}
 
 	wbec_rtc->rtc = devm_rtc_allocate_device(&pdev->dev);
+
+	device_init_wakeup(&pdev->dev, true);
+
 	if (IS_ERR(wbec_rtc->rtc))
 		return PTR_ERR(wbec_rtc->rtc);
 
