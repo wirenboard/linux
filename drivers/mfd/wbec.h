@@ -24,57 +24,59 @@
 #define WBEC_REG_RTC_TIME_YEARS                             12
 
 /* Region RTC_ALARM: RW */
-#define WBEC_REG_RTC_ALARM_13                               13
-   #define WBEC_REG_RTC_ALARM_13_SECONDS_MSK                GENMASK(6, 0)
-   #define WBEC_REG_RTC_ALARM_13_EN_MSK                     GENMASK(7, 7)
+#define WBEC_REG_RTC_ALARM_SECONDS                          13
 #define WBEC_REG_RTC_ALARM_MINUTES                          14
 #define WBEC_REG_RTC_ALARM_HOURS                            15
 #define WBEC_REG_RTC_ALARM_DAYS                             16
+#define WBEC_REG_RTC_ALARM_17                               17
+   #define WBEC_REG_RTC_ALARM_17_EN_MSK                     GENMASK(0, 0)
+   #define WBEC_REG_RTC_ALARM_17_FLAG_MSK                   GENMASK(1, 1)
 
 /* Region RTC_CFG: RW */
-#define WBEC_REG_RTC_CFG_OFFSET                             17
+#define WBEC_REG_RTC_CFG_OFFSET                             18
+#define WBEC_REG_RTC_CFG_RES                                19
 
 /* Region ADC_DATA: RW */
-#define WBEC_REG_ADC_DATA_V_IN                              18
-#define WBEC_REG_ADC_DATA_V_BAT                             20
-#define WBEC_REG_ADC_DATA_V_3_3                             22
-#define WBEC_REG_ADC_DATA_V_5_0                             24
-#define WBEC_REG_ADC_DATA_V_A1                              26
-#define WBEC_REG_ADC_DATA_V_A2                              28
-#define WBEC_REG_ADC_DATA_V_A3                              30
-#define WBEC_REG_ADC_DATA_V_A4                              32
-#define WBEC_REG_ADC_DATA_TEMP                              34
-#define WBEC_REG_ADC_DATA_V_USB_DEBUG_CONSOLE               36
-#define WBEC_REG_ADC_DATA_V_USB_DEBUG_NETWORK               38
+#define WBEC_REG_ADC_DATA_V_IN                              20
+#define WBEC_REG_ADC_DATA_V_BAT                             22
+#define WBEC_REG_ADC_DATA_V_3_3                             24
+#define WBEC_REG_ADC_DATA_V_5_0                             26
+#define WBEC_REG_ADC_DATA_V_A1                              28
+#define WBEC_REG_ADC_DATA_V_A2                              30
+#define WBEC_REG_ADC_DATA_V_A3                              32
+#define WBEC_REG_ADC_DATA_V_A4                              34
+#define WBEC_REG_ADC_DATA_TEMP                              36
+#define WBEC_REG_ADC_DATA_V_USB_DEBUG_CONSOLE               38
+#define WBEC_REG_ADC_DATA_V_USB_DEBUG_NETWORK               40
 
 /* Region ADC_CFG: RW */
-#define WBEC_REG_ADC_CFG_LOWPASS_RC_A1                      40
-#define WBEC_REG_ADC_CFG_LOWPASS_RC_A2                      41
-#define WBEC_REG_ADC_CFG_LOWPASS_RC_A3                      42
-#define WBEC_REG_ADC_CFG_LOWPASS_RC_A4                      43
-#define WBEC_REG_ADC_CFG_V_IN_UVP                           44
-#define WBEC_REG_ADC_CFG_V_IN_OVP                           45
-#define WBEC_REG_ADC_CFG_V_OUT_UVP                          46
-#define WBEC_REG_ADC_CFG_V_OUT_OVP                          47
+#define WBEC_REG_ADC_CFG_LOWPASS_RC_A1                      42
+#define WBEC_REG_ADC_CFG_LOWPASS_RC_A2                      43
+#define WBEC_REG_ADC_CFG_LOWPASS_RC_A3                      44
+#define WBEC_REG_ADC_CFG_LOWPASS_RC_A4                      45
+#define WBEC_REG_ADC_CFG_V_IN_UVP                           46
+#define WBEC_REG_ADC_CFG_V_IN_OVP                           47
+#define WBEC_REG_ADC_CFG_V_OUT_UVP                          48
+#define WBEC_REG_ADC_CFG_V_OUT_OVP                          49
 
 /* Region GPIO: RW */
-#define WBEC_REG_GPIO_48                                    48
-   #define WBEC_REG_GPIO_48_A1_MSK                          GENMASK(0, 0)
-   #define WBEC_REG_GPIO_48_A2_MSK                          GENMASK(1, 1)
-   #define WBEC_REG_GPIO_48_A3_MSK                          GENMASK(2, 2)
-   #define WBEC_REG_GPIO_48_A4_MSK                          GENMASK(3, 3)
-   #define WBEC_REG_GPIO_48_V_OUT_MSK                       GENMASK(4, 4)
+#define WBEC_REG_GPIO_50                                    50
+   #define WBEC_REG_GPIO_50_A1_MSK                          GENMASK(0, 0)
+   #define WBEC_REG_GPIO_50_A2_MSK                          GENMASK(1, 1)
+   #define WBEC_REG_GPIO_50_A3_MSK                          GENMASK(2, 2)
+   #define WBEC_REG_GPIO_50_A4_MSK                          GENMASK(3, 3)
+   #define WBEC_REG_GPIO_50_V_OUT_MSK                       GENMASK(4, 4)
 
 /* Region WDT: RW */
-#define WBEC_REG_WDT_49                                     49
-   #define WBEC_REG_WDT_49_TIMEOUT_MSK                      GENMASK(3, 0)
-   #define WBEC_REG_WDT_49_RESET_MSK                        GENMASK(4, 4)
-   #define WBEC_REG_WDT_49_RUN_MSK                          GENMASK(5, 5)
+#define WBEC_REG_WDT_51                                     51
+   #define WBEC_REG_WDT_51_TIMEOUT_MSK                      GENMASK(3, 0)
+   #define WBEC_REG_WDT_51_RESET_MSK                        GENMASK(4, 4)
+   #define WBEC_REG_WDT_51_RUN_MSK                          GENMASK(5, 5)
 
 /* Region POWER_CTRL: RW */
-#define WBEC_REG_POWER_CTRL_50                              50
-   #define WBEC_REG_POWER_CTRL_50_OFF_MSK                   GENMASK(0, 0)
-   #define WBEC_REG_POWER_CTRL_50_PWRKEY_PRESSED_MSK        GENMASK(1, 1)
+#define WBEC_REG_POWER_CTRL_52                              52
+   #define WBEC_REG_POWER_CTRL_52_OFF_MSK                   GENMASK(0, 0)
+   #define WBEC_REG_POWER_CTRL_52_PWRKEY_PRESSED_MSK        GENMASK(1, 1)
 
 
 struct wbec {

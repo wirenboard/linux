@@ -67,7 +67,7 @@ static void wbec_pm_power_off(void)
 	// TODO Remove debug
 	dev_info(&wbec_i2c_client->dev, "%s function\n", __func__);
 
-	ret = regmap_update_bits(wbec->regmap_8, WBEC_REG_POWER_CTRL_50, WBEC_REG_POWER_CTRL_50_OFF_MSK, 1);
+	ret = regmap_update_bits(wbec->regmap_8, WBEC_REG_POWER_CTRL_52, WBEC_REG_POWER_CTRL_52_OFF_MSK, 1);
 	if (ret)
 		dev_err(&wbec_i2c_client->dev, "Failed to shutdown device!\n");
 
