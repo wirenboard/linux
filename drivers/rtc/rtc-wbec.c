@@ -24,6 +24,7 @@ struct wbec_rtc_config {
 struct wbec_rtc {
 	struct rtc_device	*rtc;
 	struct regmap		*regmap;
+	int irq;
 };
 
 static int wbec_rtc_read_time(struct device *dev, struct rtc_time *tm)
@@ -156,11 +157,14 @@ static int wbec_rtc_alarm_irq_enable(struct device *dev,
 static irqreturn_t wbec_rtc_handle_irq(int irq, void *dev_id)
 {
 	struct wbec_rtc *wbec_rtc = dev_id;
-	unsigned int val;
-	int err;
 
 	// TODO Remove debug
 	dev_info(regmap_get_device(wbec_rtc->regmap), "%s function\n", __func__);
+
+	rtc_update_irq(wbec_rtc->rtc, 1, RTC_IRQF | RTC_AF);
+	dev_dbg(regmap_get_device(wbec_rtc->regmap),
+		 "%s:irq=%d\n", __func__, irq);
+
 	return IRQ_HANDLED;
 }
 
@@ -222,9 +226,23 @@ static int wbec_rtc_probe(struct platform_device *pdev)
 	if (IS_ERR(wbec_rtc->rtc))
 		return PTR_ERR(wbec_rtc->rtc);
 
+	wbec_rtc->rtc->ops = &wbec_rtc_ops;
+
 	device_init_wakeup(&pdev->dev, true);
 
-	wbec_rtc->rtc->ops = &wbec_rtc_ops;
+	wbec_rtc->irq = platform_get_irq(pdev, 0);
+	if (wbec_rtc->irq < 0)
+		return wbec_rtc->irq;
+
+	/* request alarm irq of rk808 */
+	err = devm_request_threaded_irq(&pdev->dev, wbec_rtc->irq, NULL,
+					wbec_rtc_handle_irq, 0,
+					"WBEC RTC alarm", wbec_rtc);
+	if (err) {
+		dev_err(&pdev->dev, "Failed to request alarm IRQ %d: %d\n",
+			wbec_rtc->irq, err);
+		return err;
+	}
 
 	return rtc_register_device(wbec_rtc->rtc);
 }
