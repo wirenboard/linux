@@ -16,6 +16,8 @@
 
 #define WBEC_ID			0xD2
 
+#define WBEC_IRQ_RTC_ALARM			0
+#define WBEC_IRQ_PWROFF_REQ			1
 
 static const struct regmap_config wbec_regmap_config_8 = {
 	.name = "regmap_8",
@@ -30,12 +32,30 @@ static const struct regmap_config wbec_regmap_config_16 = {
 	.val_bits = 16,
 };
 
+static const struct resource rtc_resources[] = {
+	DEFINE_RES_IRQ(WBEC_IRQ_RTC_ALARM),
+};
+
+static const struct resource pwrkey_resources[] = {
+	DEFINE_RES_IRQ(WBEC_IRQ_PWROFF_REQ),
+};
+
 static const struct mfd_cell wbec_cells[] = {
-	{ .name = "wbec-rtc", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-iio", .id = PLATFORM_DEVID_NONE, },
-	{ .name = "wbec-pwrkey", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-watchdog", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-gpio", .id = PLATFORM_DEVID_NONE, },
+	{
+		.name = "wbec-rtc",
+		.id = PLATFORM_DEVID_NONE,
+		.resources = rtc_resources,
+		.num_resources = ARRAY_SIZE(rtc_resources),
+	},
+	{
+		.name = "wbec-pwrkey",
+		.id = PLATFORM_DEVID_NONE,
+		.resources = pwrkey_resources,
+		.num_resources = ARRAY_SIZE(pwrkey_resources),
+	},
 };
 
 static char *info_str = "wbec dev";
@@ -99,11 +119,38 @@ static void wbec_shutdown(struct i2c_client *client)
 	dev_info(&client->dev, "%s function\n", __func__);
 }
 
+static const struct regmap_irq wbec_irqs[] = {
+	[WBEC_IRQ_RTC_ALARM] = {
+		.mask = WBEC_REG_IRQ_FLAGS_53_RTC_ALARM_MSK,
+		.reg_offset = 0,
+	},
+	[WBEC_IRQ_PWROFF_REQ] = {
+		.mask = WBEC_REG_IRQ_MSK_54_PWROFF_REQ_MSK,
+		.reg_offset = 0,
+	},
+};
+
+static const struct regmap_irq_chip wbec_irq_chip = {
+	.name = "wbec",
+	.irqs = wbec_irqs,
+	.num_irqs = ARRAY_SIZE(wbec_irqs),
+	.num_regs = 1,
+	// .irq_reg_stride = 2,
+	.status_base = WBEC_REG_IRQ_FLAGS_53,
+	.mask_base = WBEC_REG_IRQ_MSK_54,
+	.ack_base = WBEC_REG_IRQ_FLAGS_53,
+	.ack_invert = true,
+	// .init_ack_masked = true,
+};
+
 static int wbec_probe(struct i2c_client *client)
 {
 	struct wbec *wbec;
 	int ret;
 	int wbec_id;
+
+	// TODO Remove debug
+	dev_info(&client->dev, "%s function. irq=%d\n", __func__, client->irq);
 
 	wbec = devm_kzalloc(&client->dev, sizeof(*wbec), GFP_KERNEL);
 	if (!wbec)
@@ -131,7 +178,7 @@ static int wbec_probe(struct i2c_client *client)
 	if (ret < 0) {
 		dev_err(&client->dev, "failed to read the wbec id at 0x%X\n",
 			WBEC_REG_INFO_WBEC_ID);
-		return wbec_id;
+		return ret;
 	}
 	if (wbec_id != WBEC_ID) {
 		dev_err(&client->dev, "wrong wbec ID at 0x%X. Get 0x%X istead of 0x%X\n",
@@ -139,9 +186,23 @@ static int wbec_probe(struct i2c_client *client)
 		return -ENOTSUPP;
 	}
 
+	if (client->irq) {
+		ret = regmap_add_irq_chip(wbec->regmap_8, client->irq,
+					IRQF_ONESHOT, -1,
+					&wbec_irq_chip, &wbec->irq_data);
+		if (ret) {
+			dev_err(&client->dev, "Failed to add irq_chip %d\n", ret);
+			return ret;
+		}
+	} else {
+		dev_err(&client->dev, "No interrupt support, no core IRQ\n");
+		// return -EINVAL;
+	}
+
+
 	ret = devm_mfd_add_devices(&client->dev, PLATFORM_DEVID_NONE,
 			      wbec_cells, ARRAY_SIZE(wbec_cells), NULL, 0,
-			      NULL);
+			      regmap_irq_get_domain(wbec->irq_data));
 	if (ret) {
 		dev_err(&client->dev, "failed to add MFD devices %d\n", ret);
 		return ret;
@@ -150,14 +211,17 @@ static int wbec_probe(struct i2c_client *client)
 	wbec_i2c_client = client;
 	pm_power_off = wbec_pm_power_off;
 
-	wbec->debug_dir = debugfs_create_dir(client->name, NULL);
+	/*wbec->debug_dir = debugfs_create_dir(client->name, NULL);
 	if (!wbec->debug_dir) {
 		dev_warn(&client->dev, "falied to create debugfs directory\n");
 		return 0;
-	}
+	}*/
 
 	// debugfs_create_file("version", S_IRUGO, wbec->debug_dir, wbec,
     //                                &wbec_fw_ver_file_ops);
+
+	// TODO Remove debug
+	dev_info(&client->dev, "%s function: WBEC device added\n", __func__);
 
 	return ret;
 }
@@ -169,7 +233,14 @@ static int wbec_remove(struct i2c_client *client)
 	// TODO Remove debug
 	dev_info(&client->dev, "%s function\n", __func__);
 
-	debugfs_remove_recursive(wbec->debug_dir);
+	regmap_del_irq_chip(client->irq, wbec->irq_data);
+
+	/**
+	 * pm_power_off may points to a function from another module.
+	 * Check if the pointer is set by us and only then overwrite it.
+	 */
+	if (pm_power_off == wbec_pm_power_off)
+		pm_power_off = NULL;
 
 	return 0;
 }
