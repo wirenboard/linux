@@ -14,11 +14,6 @@
 #include <linux/regmap.h>
 #include "wbec.h"
 
-#define WBEC_PWRKEY_POLL_PERIOD_NS		100000000
-
-#define WBEC_IRQ_PWRON_RISE_MSK			BIT(0)
-#define WBEC_IRQ_PWRON_FALL_MSK			BIT(1)
-
 struct wbec_pwrkey {
 	struct input_dev *pwr;
 	struct regmap *regmap;
