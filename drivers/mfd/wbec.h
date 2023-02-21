@@ -6,6 +6,7 @@
 #include <linux/debugfs.h>
 
 
+
 /* Region INFO: RW */
 #define WBEC_REG_INFO_WBEC_ID                               0
 #define WBEC_REG_INFO_BOARD_REV                             1
@@ -78,6 +79,17 @@
    #define WBEC_REG_POWER_CTRL_52_OFF_MSK                   GENMASK(0, 0)
    #define WBEC_REG_POWER_CTRL_52_PWRKEY_PRESSED_MSK        GENMASK(1, 1)
 
+/* Region IRQ_FLAGS: RW */
+#define WBEC_REG_IRQ_FLAGS_53                               53
+   #define WBEC_REG_IRQ_FLAGS_53_RTC_ALARM_MSK              GENMASK(0, 0)
+   #define WBEC_REG_IRQ_FLAGS_53_PWROFF_REQ_MSK             GENMASK(1, 1)
+
+/* Region IRQ_MSK: RW */
+#define WBEC_REG_IRQ_MSK_54                                 54
+   #define WBEC_REG_IRQ_MSK_54_RTC_ALARM_MSK                GENMASK(0, 0)
+   #define WBEC_REG_IRQ_MSK_54_PWROFF_REQ_MSK               GENMASK(1, 1)
+
+
 
 struct wbec {
 	struct i2c_client		*i2c;
@@ -86,6 +98,8 @@ struct wbec {
 	const struct regmap_config	*regmap_cfg_8;
 	const struct regmap_config	*regmap_cfg_16;
 	struct dentry 			*debug_dir;
+
+   struct regmap_irq_chip_data	*irq_data;
 };
 
 #endif
