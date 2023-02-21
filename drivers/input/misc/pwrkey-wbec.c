@@ -11,7 +11,6 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
-#include <linux/hrtimer.h>
 #include <linux/regmap.h>
 #include "wbec.h"
 
@@ -22,41 +21,28 @@
 
 struct wbec_pwrkey {
 	struct input_dev *pwr;
-	struct hrtimer poll_timer;
 	struct regmap *regmap;
 };
 
-static enum hrtimer_restart pwrkey_poll_cb(struct hrtimer *hrtimer)
+
+static irqreturn_t pwrkey_poweroff_req_irq(int irq, void *_pwr)
 {
-	struct wbec_pwrkey *wbec_pwrkey =
-		container_of(hrtimer, typeof(*wbec_pwrkey), poll_timer);
-	struct input_dev *pwr = wbec_pwrkey->pwr;
+	struct input_dev *pwr = _pwr;
 
-	int val;
-	int ret = regmap_read(wbec_pwrkey->regmap, WBEC_REG_IRQ_FLAGS, &val);
+	// TODO Remove debug
+	dev_info(&pwr->dev, "pwrkey irq handled\n");
 
-	if ((ret == 0) && (val & WBEC_IRQ_PWRON_RISE_MSK)) {
-		// TODO Remove debug
-		dev_info(&pwr->dev, "Power key press detected\n");
-		// Clear irq flag
-		regmap_update_bits(wbec_pwrkey->regmap, WBEC_REG_IRQ_MSK, WBEC_IRQ_PWRON_RISE_MSK, 1);
-		input_report_key(pwr, KEY_POWER, 1);
-		input_sync(pwr);
+	input_report_key(pwr, KEY_POWER, 1);
+	input_sync(pwr);
 
-		return HRTIMER_NORESTART;
-	}
-
-	hrtimer_forward_now(hrtimer,
-			    ns_to_ktime(WBEC_PWRKEY_POLL_PERIOD_NS));
-
-	return HRTIMER_RESTART;
+	return IRQ_HANDLED;
 }
 
 static int wbec_pwrkey_probe(struct platform_device *pdev)
 {
 	struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
 	struct wbec_pwrkey *wbec_pwrkey;
-	int err;
+	int err, poff_irq;
 
 	// TODO Remove debug
 	dev_info(&pdev->dev, "%s function\n", __func__);
@@ -79,8 +65,18 @@ static int wbec_pwrkey_probe(struct platform_device *pdev)
 	wbec_pwrkey->pwr->id.bustype = BUS_HOST;
 	input_set_capability(wbec_pwrkey->pwr, EV_KEY, KEY_POWER);
 
-	hrtimer_init(&wbec_pwrkey->poll_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	wbec_pwrkey->poll_timer.function = pwrkey_poll_cb;
+	poff_irq = platform_get_irq(pdev, 0);
+	if (poff_irq < 0)
+		return poff_irq;
+
+	err = devm_request_any_context_irq(&wbec_pwrkey->pwr->dev, poff_irq,
+					   pwrkey_poweroff_req_irq,
+					   IRQF_TRIGGER_RISING | IRQF_ONESHOT,
+					   "wbec_pwrkey_pressed", wbec_pwrkey->pwr);
+	if (err < 0) {
+		dev_err(&pdev->dev, "Can't register pwrkey press irq: %d\n", err);
+		return err;
+	}
 
 	err = input_register_device(wbec_pwrkey->pwr);
 	if (err) {
@@ -91,22 +87,6 @@ static int wbec_pwrkey_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, wbec_pwrkey);
 	device_init_wakeup(&pdev->dev, true);
 
-	hrtimer_start(&wbec_pwrkey->poll_timer,
-			      ns_to_ktime(WBEC_PWRKEY_POLL_PERIOD_NS),
-			      HRTIMER_MODE_REL_PINNED);
-
-	return 0;
-}
-
-static int wbec_pwrkey_remove(struct platform_device *pdev)
-{
-	struct wbec_pwrkey *wbec_pwrkey = platform_get_drvdata(pdev);
-
-	dev_info(&pdev->dev, "%s function\n", __func__);
-
-	hrtimer_cancel(&wbec_pwrkey->poll_timer);
-	input_unregister_device(wbec_pwrkey->pwr);
-
 	return 0;
 }
 
@@ -115,7 +95,6 @@ static struct platform_driver wbec_pwrkey_driver = {
 		.name = "wbec-pwrkey",
 	},
 	.probe	= wbec_pwrkey_probe,
-	.remove = wbec_pwrkey_remove,
 };
 module_platform_driver(wbec_pwrkey_driver);
 
