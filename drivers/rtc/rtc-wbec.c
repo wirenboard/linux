@@ -13,7 +13,6 @@
 #include <linux/time.h>
 #include <linux/regmap.h>
 #include <linux/of_device.h>
-#include <linux/hrtimer.h>
 #include "wbec.h"
 
 #define WBEC_RTC_ALARM_FLAG_POLL_PERIOD_MS		500
@@ -25,7 +24,6 @@ struct wbec_rtc_config {
 struct wbec_rtc {
 	struct rtc_device	*rtc;
 	struct regmap		*regmap;
-	struct hrtimer poll_timer;
 };
 
 static int wbec_rtc_read_time(struct device *dev, struct rtc_time *tm)
@@ -125,7 +123,6 @@ static int wbec_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 {
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
 	u8 buf[5] = {};
-	int ret;
 
 	// TODO Remove debug
 	dev_info(dev, "%s function, mday=%d, hour=%d, min=%d, sec=%d, en=%d\n", __func__,
@@ -139,49 +136,21 @@ static int wbec_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 	if (alrm->enabled)
 		buf[4] |= WBEC_REG_RTC_ALARM_17_EN_MSK;
 
-	ret = regmap_bulk_write(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_SECONDS,
+	return regmap_bulk_write(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_SECONDS,
 				buf, sizeof(buf));
-	if (ret < 0)
-		return ret;
-
-	if (alrm->enabled) {
-		dev_info(dev, "%s function: start poll timer\n", __func__);
-		hrtimer_start(&wbec_rtc->poll_timer,
-						ns_to_ktime(WBEC_RTC_ALARM_FLAG_POLL_PERIOD_MS * 1000000),
-						HRTIMER_MODE_REL_PINNED);
-	} else {
-		hrtimer_cancel(&wbec_rtc->poll_timer);
-	}
-
-	return 0;
 }
 
 static int wbec_rtc_alarm_irq_enable(struct device *dev,
 					 unsigned int enabled)
 {
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
-	int ret;
 
 	// TODO Remove debug
 	dev_info(dev, "%s function, en=%d\n", __func__, enabled);
 
-	ret = regmap_update_bits(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_17,
+	return regmap_update_bits(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_17,
 				  WBEC_REG_RTC_ALARM_17_EN_MSK,
 				  enabled ? WBEC_REG_RTC_ALARM_17_EN_MSK : 0);
-
-	if (ret < 0) {
-		return ret;
-	}
-
-	if (enabled) {
-		hrtimer_start(&wbec_rtc->poll_timer,
-					ns_to_ktime(WBEC_RTC_ALARM_FLAG_POLL_PERIOD_MS * 1000000),
-					HRTIMER_MODE_REL_PINNED);
-	} else {
-		hrtimer_cancel(&wbec_rtc->poll_timer);
-	}
-
-	return 0;
 }
 
 static irqreturn_t wbec_rtc_handle_irq(int irq, void *dev_id)
@@ -193,48 +162,6 @@ static irqreturn_t wbec_rtc_handle_irq(int irq, void *dev_id)
 	// TODO Remove debug
 	dev_info(regmap_get_device(wbec_rtc->regmap), "%s function\n", __func__);
 	return IRQ_HANDLED;
-}
-
-static enum hrtimer_restart wbec_rtc_poll_cb(struct hrtimer *hrtimer)
-{
-	struct wbec_rtc *wbec_rtc =
-		container_of(hrtimer, typeof(*wbec_rtc), poll_timer);
-	int ret, val;
-
-	dev_info(regmap_get_device(wbec_rtc->regmap), "%s function\n", __func__);
-	// rtc_update_irq(wbec_rtc->rtc, 1, RTC_IRQF | RTC_AF);
-
-	// return HRTIMER_NORESTART;
-
-	/* Read alarm flag */
-	ret = regmap_read(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_17, &val);
-
-	if (ret < 0) {
-		dev_err(regmap_get_device(wbec_rtc->regmap), "Error when reading ALARM flag\n");
-		return HRTIMER_NORESTART;
-	}
-
-	return HRTIMER_NORESTART;
-
-	if (val & WBEC_REG_RTC_ALARM_17_FLAG_MSK) {
-		// TODO Remove debug
-		dev_info(regmap_get_device(wbec_rtc->regmap), "Alarm flag is set\n");
-		// Clear flag
-		ret = regmap_update_bits(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_17, WBEC_REG_RTC_ALARM_17_FLAG_MSK, 0);
-		if (ret < 0) {
-			dev_err(regmap_get_device(wbec_rtc->regmap), "Error when clearing ALARM flag\n");
-			return HRTIMER_NORESTART;
-		}
-
-		rtc_update_irq(wbec_rtc->rtc, 1, RTC_IRQF | RTC_AF);
-
-		return HRTIMER_NORESTART;
-	}
-
-	hrtimer_forward_now(hrtimer,
-			    ns_to_ktime(WBEC_RTC_ALARM_FLAG_POLL_PERIOD_MS * 1000000));
-
-	return HRTIMER_RESTART;
 }
 
 static int wbec_rtc_read_offset(struct device *dev, long *offset)
@@ -298,24 +225,6 @@ static int wbec_rtc_probe(struct platform_device *pdev)
 	device_init_wakeup(&pdev->dev, true);
 
 	wbec_rtc->rtc->ops = &wbec_rtc_ops;
-
-
-	/* Alarm flag poll timer */
-
-	hrtimer_init(&wbec_rtc->poll_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	wbec_rtc->poll_timer.function = wbec_rtc_poll_cb;
-
-	/* Check alarm flag */
-	err = regmap_test_bits(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_17, WBEC_REG_RTC_ALARM_17_FLAG_MSK);
-	if (err < 0) {
-		dev_err(&pdev->dev, "Error when reading alarm flag\n");
-		return err;
-	} else if (err) {
-		hrtimer_start(&wbec_rtc->poll_timer,
-					ns_to_ktime(WBEC_RTC_ALARM_FLAG_POLL_PERIOD_MS * 1000000),
-					HRTIMER_MODE_REL_PINNED);
-	}
-
 
 	return rtc_register_device(wbec_rtc->rtc);
 }
