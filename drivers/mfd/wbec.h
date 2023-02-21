@@ -3,7 +3,6 @@
 
 #include <linux/regulator/machine.h>
 #include <linux/regmap.h>
-#include <linux/debugfs.h>
 
 
 
@@ -96,7 +95,6 @@ struct wbec {
 	struct regmap			*regmap_16;
 	const struct regmap_config	*regmap_cfg_8;
 	const struct regmap_config	*regmap_cfg_16;
-	struct dentry 			*debug_dir;
 
    struct regmap_irq_chip_data	*irq_data;
 };

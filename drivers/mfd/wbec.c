@@ -58,25 +58,6 @@ static const struct mfd_cell wbec_cells[] = {
 	},
 };
 
-static char *info_str = "wbec dev";
-
-static ssize_t wbec_fw_ver_read( struct file * file, char * buf,
-						size_t count, loff_t *ppos ) {
-	int len = strlen( info_str );
-	if( count < len ) return -EINVAL;
-	if( *ppos != 0 ) {
-		return 0;
-	}
-	if( copy_to_user( buf, info_str, len ) ) return -EINVAL;
-	*ppos = len;
-	return len;
-}
-
-static const struct file_operations wbec_fw_ver_file_ops = {
-	.owner  = THIS_MODULE,
-	.read   = wbec_fw_ver_read,
-};
-
 static struct i2c_client *wbec_i2c_client;
 
 static void wbec_pm_power_off(void)
@@ -135,7 +116,6 @@ static const struct regmap_irq_chip wbec_irq_chip = {
 	.irqs = wbec_irqs,
 	.num_irqs = ARRAY_SIZE(wbec_irqs),
 	.num_regs = 1,
-	// .irq_reg_stride = 2,
 	.status_base = WBEC_REG_IRQ_FLAGS_53,
 	.mask_base = WBEC_REG_IRQ_MSK_54,
 	.ack_base = WBEC_REG_IRQ_FLAGS_53,
@@ -210,15 +190,6 @@ static int wbec_probe(struct i2c_client *client)
 
 	wbec_i2c_client = client;
 	pm_power_off = wbec_pm_power_off;
-
-	/*wbec->debug_dir = debugfs_create_dir(client->name, NULL);
-	if (!wbec->debug_dir) {
-		dev_warn(&client->dev, "falied to create debugfs directory\n");
-		return 0;
-	}*/
-
-	// debugfs_create_file("version", S_IRUGO, wbec->debug_dir, wbec,
-    //                                &wbec_fw_ver_file_ops);
 
 	// TODO Remove debug
 	dev_info(&client->dev, "%s function: WBEC device added\n", __func__);
