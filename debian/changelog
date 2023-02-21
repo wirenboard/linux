@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb133) stable; urgency=medium
+
+  * rtl8723bu: Move powersave logs to debug.
+    This patch move nolinked powersave mode enter/leave notifications and RTW_ADAPTIVITY notifications to debug. These messages are repeated every minute and confuse regular users
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.com>  Mon, 20 Feb 2023 17:44:30 +0500
+
 linux-wb (5.10.35-wb132) stable; urgency=medium
 
   * wb6: defconfig: add nftables nat support
