@@ -39,7 +39,6 @@
 
 /* Region ADC_DATA: RW */
 #define WBEC_REG_ADC_DATA_V_IN                              20
-#define WBEC_REG_ADC_DATA_V_BAT                             22
 #define WBEC_REG_ADC_DATA_V_3_3                             24
 #define WBEC_REG_ADC_DATA_V_5_0                             26
 #define WBEC_REG_ADC_DATA_V_A1                              28
@@ -47,8 +46,8 @@
 #define WBEC_REG_ADC_DATA_V_A3                              32
 #define WBEC_REG_ADC_DATA_V_A4                              34
 #define WBEC_REG_ADC_DATA_TEMP                              36
-#define WBEC_REG_ADC_DATA_V_USB_DEBUG_CONSOLE               38
-#define WBEC_REG_ADC_DATA_V_USB_DEBUG_NETWORK               40
+#define WBEC_REG_ADC_DATA_V_USB_CONSOLE                     38
+#define WBEC_REG_ADC_DATA_V_USB_NETWORK                     40
 
 /* Region ADC_CFG: RW */
 #define WBEC_REG_ADC_CFG_LOWPASS_RC_A1                      42
