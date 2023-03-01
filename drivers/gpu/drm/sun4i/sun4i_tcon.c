@@ -1478,7 +1478,7 @@ static void sun8i_r40_tcon_setup_lvds_phy(struct sun4i_tcon *tcon,
 
 	regmap_write(tcon->regs, lvds_ana_reg,
 		     SUN6I_TCON0_LVDS_ANA0_C(2) |
-		     SUN6I_TCON0_LVDS_ANA0_V(3) |
+		     SUN6I_TCON0_LVDS_ANA0_V(2) |
 		     SUN6I_TCON0_LVDS_ANA0_PD(2) |
 		     SUN6I_TCON0_LVDS_ANA0_EN_LDO);
 	udelay(2);
