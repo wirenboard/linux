@@ -1028,6 +1028,19 @@ even if no battery module is installed.
 	x-powers,charge-high-temp-microvolt = <499200>;
 };
 
+
+&tcon_lcd0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&lcd0_lvds_pins>;
+	status = "okay";
+};
+
+&tcon_lcd0_out {
+	tcon_lcd0_out_panel0_in: endpoint {
+		remote-endpoint = <&panel0_input>;
+	};
+};
+
 // labels used by overlays to control generic peripherals
 ethernet0: &emac {};
 ethernet1: &gmac {};
