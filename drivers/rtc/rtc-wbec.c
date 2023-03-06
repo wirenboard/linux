@@ -230,19 +230,7 @@ static int wbec_rtc_probe(struct platform_device *pdev)
 
 	device_init_wakeup(&pdev->dev, true);
 
-	wbec_rtc->irq = platform_get_irq(pdev, 0);
-	if (wbec_rtc->irq < 0)
-		return wbec_rtc->irq;
-
-	/* request alarm irq of rk808 */
-	err = devm_request_threaded_irq(&pdev->dev, wbec_rtc->irq, NULL,
-					wbec_rtc_handle_irq, 0,
-					"WBEC RTC alarm", wbec_rtc);
-	if (err) {
-		dev_err(&pdev->dev, "Failed to request alarm IRQ %d: %d\n",
-			wbec_rtc->irq, err);
-		return err;
-	}
+	wbec_rtc->rtc->uie_unsupported = 1;
 
 	return rtc_register_device(wbec_rtc->rtc);
 }
