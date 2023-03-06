@@ -16,8 +16,7 @@
 
 #define WBEC_ID			0xD2
 
-#define WBEC_IRQ_RTC_ALARM			0
-#define WBEC_IRQ_PWROFF_REQ			1
+#define WBEC_IRQ_PWROFF_REQ			0
 
 static const struct regmap_config wbec_regmap_config_8 = {
 	.name = "regmap_8",
@@ -32,10 +31,6 @@ static const struct regmap_config wbec_regmap_config_16 = {
 	.val_bits = 16,
 };
 
-static const struct resource rtc_resources[] = {
-	DEFINE_RES_IRQ(WBEC_IRQ_RTC_ALARM),
-};
-
 static const struct resource pwrkey_resources[] = {
 	DEFINE_RES_IRQ(WBEC_IRQ_PWROFF_REQ),
 };
@@ -44,12 +39,7 @@ static const struct mfd_cell wbec_cells[] = {
 	{ .name = "wbec-iio", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-watchdog", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-gpio", .id = PLATFORM_DEVID_NONE, },
-	{
-		.name = "wbec-rtc",
-		.id = PLATFORM_DEVID_NONE,
-		.resources = rtc_resources,
-		.num_resources = ARRAY_SIZE(rtc_resources),
-	},
+	{ .name = "wbec-rtc", .id = PLATFORM_DEVID_NONE, },
 	{
 		.name = "wbec-pwrkey",
 		.id = PLATFORM_DEVID_NONE,
@@ -68,7 +58,7 @@ static void wbec_pm_power_off(void)
 	// TODO Remove debug
 	dev_info(&wbec_i2c_client->dev, "%s function\n", __func__);
 
-	ret = regmap_update_bits(wbec->regmap_8, WBEC_REG_POWER_CTRL_52, WBEC_REG_POWER_CTRL_52_OFF_MSK, 1);
+	ret = regmap_update_bits(wbec->regmap_8, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_OFF_MSK, 1);
 	if (ret)
 		dev_err(&wbec_i2c_client->dev, "Failed to shutdown device!\n");
 
@@ -101,12 +91,8 @@ static void wbec_shutdown(struct i2c_client *client)
 }
 
 static const struct regmap_irq wbec_irqs[] = {
-	[WBEC_IRQ_RTC_ALARM] = {
-		.mask = WBEC_REG_IRQ_FLAGS_53_RTC_ALARM_MSK,
-		.reg_offset = 0,
-	},
 	[WBEC_IRQ_PWROFF_REQ] = {
-		.mask = WBEC_REG_IRQ_MSK_54_PWROFF_REQ_MSK,
+		.mask = WBEC_REG_IRQ_PWROFF_REQ_MSK,
 		.reg_offset = 0,
 	},
 };
@@ -116,11 +102,9 @@ static const struct regmap_irq_chip wbec_irq_chip = {
 	.irqs = wbec_irqs,
 	.num_irqs = ARRAY_SIZE(wbec_irqs),
 	.num_regs = 1,
-	.status_base = WBEC_REG_IRQ_FLAGS_53,
-	.mask_base = WBEC_REG_IRQ_MSK_54,
-	.ack_base = WBEC_REG_IRQ_FLAGS_53,
-	.ack_invert = true,
-	// .init_ack_masked = true,
+	.status_base = WBEC_REG_IRQ_FLAGS,
+	.mask_base = WBEC_REG_IRQ_MSK,
+	.ack_base = WBEC_REG_IRQ_CLEAR,
 };
 
 static int wbec_probe(struct i2c_client *client)
