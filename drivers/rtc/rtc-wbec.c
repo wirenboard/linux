@@ -115,7 +115,7 @@ static int wbec_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 	alrm->time.tm_hour = buf[2];
 	alrm->time.tm_mday = buf[3];
 
-	alrm->enabled =  !!(buf[4] & WBEC_REG_RTC_ALARM_17_EN_MSK);
+	alrm->enabled =  !!(buf[4] & WBEC_REG_RTC_ALARM_STATUS_EN_MSK);
 
 	return 0;
 }
@@ -135,7 +135,7 @@ static int wbec_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 	buf[3] = alrm->time.tm_mday;
 
 	if (alrm->enabled)
-		buf[4] |= WBEC_REG_RTC_ALARM_17_EN_MSK;
+		buf[4] |= WBEC_REG_RTC_ALARM_STATUS_EN_MSK;
 
 	return regmap_bulk_write(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_SECONDS,
 				buf, sizeof(buf));
@@ -149,9 +149,9 @@ static int wbec_rtc_alarm_irq_enable(struct device *dev,
 	// TODO Remove debug
 	dev_info(dev, "%s function, en=%d\n", __func__, enabled);
 
-	return regmap_update_bits(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_17,
-				  WBEC_REG_RTC_ALARM_17_EN_MSK,
-				  enabled ? WBEC_REG_RTC_ALARM_17_EN_MSK : 0);
+	return regmap_update_bits(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_STATUS,
+				  WBEC_REG_RTC_ALARM_STATUS_EN_MSK,
+				  enabled ? WBEC_REG_RTC_ALARM_STATUS_EN_MSK : 0);
 }
 
 static irqreturn_t wbec_rtc_handle_irq(int irq, void *dev_id)
