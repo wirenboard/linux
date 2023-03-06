@@ -167,7 +167,7 @@ static int wbec_probe(struct i2c_client *client)
 	}
 
 	if (client->irq) {
-		ret = regmap_add_irq_chip(wbec->regmap_8, client->irq,
+		ret = devm_regmap_add_irq_chip(&client->dev, wbec->regmap_8, client->irq,
 					IRQF_ONESHOT, -1,
 					&wbec_irq_chip, &wbec->irq_data);
 		if (ret) {
@@ -203,8 +203,6 @@ static int wbec_remove(struct i2c_client *client)
 
 	// TODO Remove debug
 	dev_info(&client->dev, "%s function\n", __func__);
-
-	regmap_del_irq_chip(client->irq, wbec->irq_data);
 
 	/**
 	 * pm_power_off may points to a function from another module.
