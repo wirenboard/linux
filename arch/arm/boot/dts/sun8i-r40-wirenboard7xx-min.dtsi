@@ -1,0 +1,45 @@
+/* disable eth1 */
+&ethernet1 {
+    status = "disabled";
+};
+
+/* disable 1-Wire on both pins */
+
+&onewire_w1 {
+    status = "disabled";
+};
+
+&onewire_w2 {
+    status = "disabled";
+};
+
+/ {
+    regulators {
+        reg_pu_dummy_w1 {
+            compatible = "regulator-fixed";
+            regulator-name = "reg_pu_dummy_w1";
+            pinctrl-names = "default";
+            pinctrl-0 = &pinctrl_w1_gpio;
+            gpio = <&pio 1 13 GPIO_ACTIVE_HIGH>;
+            enable-active-high;
+        };
+
+        reg_pu_dummy_w2 {
+            compatible = "regulator-fixed";
+            regulator-name = "reg_pu_dummy_w2";
+            pinctrl-names = "default";
+            pinctrl-0 = &pinctrl_w2_gpio;
+            gpio = <&pio 4 3 GPIO_ACTIVE_HIGH>;
+            enable-active-high;
+        };
+    };
+};
+
+/* enable RS-485 */
+&uart2 {
+    status = "okay";
+};
+
+&uart4 {
+    status = "okay";
+};
