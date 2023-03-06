@@ -1,3 +1,18 @@
+linux-wb (5.10.35-wb133) stable; urgency=medium
+
+  * rtl8723bu: Move powersave logs to debug.
+    This patch move nolinked powersave mode enter/leave notifications and RTW_ADAPTIVITY notifications to debug. These messages are repeated every minute and confuse regular users
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.com>  Mon, 20 Feb 2023 17:44:30 +0500
+
+linux-wb (5.10.35-wb132) stable; urgency=medium
+
+  * wb6: defconfig: add nftables nat support
+  * wb6: defconfig: add modules for ipsec support
+    see https://wiki.strongswan.org/projects/strongswan/wiki/KernelModules for details
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Tue, 14 Feb 2023 15:14:38 +0300
+
 linux-wb (5.10.35-wb131) stable; urgency=medium
 
   * wb7-initramfs: remove all unused USB gadget features
