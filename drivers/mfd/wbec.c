@@ -31,21 +31,12 @@ static const struct regmap_config wbec_regmap_config_16 = {
 	.val_bits = 16,
 };
 
-static const struct resource pwrkey_resources[] = {
-	DEFINE_RES_IRQ(WBEC_IRQ_PWROFF_REQ),
-};
-
 static const struct mfd_cell wbec_cells[] = {
 	{ .name = "wbec-iio", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-watchdog", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-gpio", .id = PLATFORM_DEVID_NONE, },
 	{ .name = "wbec-rtc", .id = PLATFORM_DEVID_NONE, },
-	{
-		.name = "wbec-pwrkey",
-		.id = PLATFORM_DEVID_NONE,
-		.resources = pwrkey_resources,
-		.num_resources = ARRAY_SIZE(pwrkey_resources),
-	},
+	{ .name = "wbec-pwrkey", .id = PLATFORM_DEVID_NONE, },
 };
 
 static struct i2c_client *wbec_i2c_client;
@@ -90,23 +81,6 @@ static void wbec_shutdown(struct i2c_client *client)
 	dev_info(&client->dev, "%s function\n", __func__);
 }
 
-static const struct regmap_irq wbec_irqs[] = {
-	[WBEC_IRQ_PWROFF_REQ] = {
-		.mask = WBEC_REG_IRQ_PWROFF_REQ_MSK,
-		.reg_offset = 0,
-	},
-};
-
-static const struct regmap_irq_chip wbec_irq_chip = {
-	.name = "wbec",
-	.irqs = wbec_irqs,
-	.num_irqs = ARRAY_SIZE(wbec_irqs),
-	.num_regs = 1,
-	.status_base = WBEC_REG_IRQ_FLAGS,
-	.mask_base = WBEC_REG_IRQ_MSK,
-	.ack_base = WBEC_REG_IRQ_CLEAR,
-};
-
 static int wbec_probe(struct i2c_client *client)
 {
 	struct wbec *wbec;
@@ -150,23 +124,9 @@ static int wbec_probe(struct i2c_client *client)
 		return -ENOTSUPP;
 	}
 
-	if (client->irq) {
-		ret = devm_regmap_add_irq_chip(&client->dev, wbec->regmap_8, client->irq,
-					IRQF_ONESHOT, -1,
-					&wbec_irq_chip, &wbec->irq_data);
-		if (ret) {
-			dev_err(&client->dev, "Failed to add irq_chip %d\n", ret);
-			return ret;
-		}
-	} else {
-		dev_err(&client->dev, "No interrupt support, no core IRQ\n");
-		// return -EINVAL;
-	}
-
 
 	ret = devm_mfd_add_devices(&client->dev, PLATFORM_DEVID_NONE,
-			      wbec_cells, ARRAY_SIZE(wbec_cells), NULL, 0,
-			      regmap_irq_get_domain(wbec->irq_data));
+			      wbec_cells, ARRAY_SIZE(wbec_cells), NULL, 0, NULL);
 	if (ret) {
 		dev_err(&client->dev, "failed to add MFD devices %d\n", ret);
 		return ret;
