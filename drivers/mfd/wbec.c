@@ -12,6 +12,7 @@
 #include <linux/mfd/core.h>
 #include <linux/interrupt.h>
 #include <linux/reboot.h>
+#include <linux/notifier.h>
 #include "wbec.h"
 
 #define WBEC_ID			0xD2
@@ -49,7 +50,7 @@ static void wbec_pm_power_off(void)
 	// TODO Remove debug
 	dev_info(&wbec_i2c_client->dev, "%s function\n", __func__);
 
-	ret = regmap_update_bits(wbec->regmap_8, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_OFF_MSK, 1);
+	ret = regmap_update_bits(wbec->regmap_8, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_OFF_MSK, WBEC_REG_POWER_CTRL_OFF_MSK);
 	if (ret)
 		dev_err(&wbec_i2c_client->dev, "Failed to shutdown device!\n");
 
@@ -61,16 +62,25 @@ static void wbec_pm_power_off(void)
 static int wbec_restart_notify(struct notifier_block *this, unsigned long mode, void *cmd)
 {
 	struct wbec *wbec = i2c_get_clientdata(wbec_i2c_client);
+	int ret;
 
 	// TODO Remove debug
 	dev_info(&wbec_i2c_client->dev, "%s function\n", __func__);
+
+	ret = regmap_update_bits(wbec->regmap_8, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_REBOOT_MSK, WBEC_REG_POWER_CTRL_REBOOT_MSK);
+	if (ret)
+		dev_err(&wbec_i2c_client->dev, "Failed to reboot device!\n");
+
+	/* Give capacitors etc. time to drain to avoid kernel panic msg. */
+	msleep(500);
+	dev_err(&wbec_i2c_client->dev, "Device not actually rebooted. Check EC and FETs!\n");
 
 	return NOTIFY_DONE;
 }
 
 static struct notifier_block wbec_restart_handler = {
 	.notifier_call = wbec_restart_notify,
-	.priority = 192,
+	.priority = 255,
 };
 
 static void wbec_shutdown(struct i2c_client *client)
@@ -135,6 +145,10 @@ static int wbec_probe(struct i2c_client *client)
 	wbec_i2c_client = client;
 	pm_power_off = wbec_pm_power_off;
 
+	ret = register_restart_handler(&wbec_restart_handler);
+	if (ret)
+		dev_warn(&client->dev, "failed to register restart handler\n");
+
 	// TODO Remove debug
 	dev_info(&client->dev, "%s function: WBEC device added\n", __func__);
 
@@ -152,8 +166,10 @@ static int wbec_remove(struct i2c_client *client)
 	 * pm_power_off may points to a function from another module.
 	 * Check if the pointer is set by us and only then overwrite it.
 	 */
-	if (pm_power_off == wbec_pm_power_off)
+	if (pm_power_off == wbec_pm_power_off) {
 		pm_power_off = NULL;
+		unregister_restart_handler(&wbec_restart_handler);
+	}
 
 	return 0;
 }
