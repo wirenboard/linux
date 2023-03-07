@@ -73,6 +73,7 @@
 /* Region POWER_CTRL: RW */
 #define WBEC_REG_POWER_CTRL                                 0xA0
    #define WBEC_REG_POWER_CTRL_OFF_MSK                      GENMASK(0, 0)
+   #define WBEC_REG_POWER_CTRL_REBOOT_MSK                   GENMASK(1, 1)
 
 /* Region IRQ_FLAGS: RW */
 #define WBEC_REG_IRQ_FLAGS                                  0xB0
