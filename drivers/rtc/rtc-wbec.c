@@ -173,6 +173,13 @@ static int wbec_rtc_read_offset(struct device *dev, long *offset)
 	// TODO Remove debug
 	dev_info(dev, "%s function\n", __func__);
 
+	/* Linux units is ppb
+	 * 1 lsb in wbec is 0.9537 ppm
+	 * CALP: Increase frequency of RTC by 488.5ppm
+	 * CALM[8:0]: decreases the frequency of the calendar with a resolution of 0.9537 ppm
+	*/
+
+
 	*offset = 0;
 
 	return 0;
