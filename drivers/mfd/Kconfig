@@ -1848,6 +1848,18 @@ config MFD_CS47L24
 	help
 	  Support for Cirrus Logic CS47L24 and WM1831 low power audio SoC
 
+config MFD_WBEC
+	tristate "Wirenboard Embedded Controller"
+	depends on I2C && OF
+	select MFD_CORE
+	select REGMAP_I2C
+	help
+	  If you say yes here you get support for the Wirenboard Embedded
+	  Controller.
+	  This driver provides common support for accessing the device
+	  through I2C interface. The device supports multiple sub-devices
+	  including RTC, WDT, onkey, GPIO, IIO.
+
 config MFD_WM5102
 	bool "Wolfson Microelectronics WM5102"
 	depends on MFD_ARIZONA
