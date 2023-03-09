@@ -33,10 +33,10 @@ setup_kernel_vars() {
 			KERNEL_DEFCONFIG=wirenboard7_defconfig
 			KDEB_WBDESC="Wiren Board 7"
 			;;
-		wb7min)
+		wb7-38071cb)
 			DEBARCH=armhf
-			KERNEL_DEFCONFIG=wirenboard7_min_defconfig
-			KDEB_WBDESC="Wiren Board 7 min no modules, no wireless"
+			KERNEL_DEFCONFIG=wirenboard7_38071cb_defconfig
+			KDEB_WBDESC="Wiren Board 7 38071cb no modules, no wireless"
 			;;
 		*)
 			echo "Unsupported KERNEL_FLAVOUR, please specify one of: wb2, wb6, wb7"

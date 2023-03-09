@@ -39,7 +39,7 @@ make_bootpart() {
     echo "$fstmpdir"
     cp $KBUILD_OUTPUT/arch/arm/boot/zImage "$fstmpdir/boot/zImage"
     cp $KBUILD_OUTPUT/.config "$fstmpdir/boot/config"
-    cp $KBUILD_OUTPUT/arch/arm/boot/dts/*wirenboard7*-wb7min.dtb "$fstmpdir/boot/dtbs/"
+    cp $KBUILD_OUTPUT/arch/arm/boot/dts/*wirenboard7*-38071cb.dtb "$fstmpdir/boot/dtbs/"
 
     echo "$(get_kernel_full_version)" > $fstmpdir/version.txt
     cp debian/changelog $fstmpdir/changelog.txt
