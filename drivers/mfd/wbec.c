@@ -30,6 +30,7 @@ static const struct regmap_config wbec_regmap_config_16 = {
 	.name = "regmap_16",
 	.reg_bits = 8,
 	.val_bits = 16,
+	.val_format_endian = REGMAP_ENDIAN_LITTLE,
 };
 
 static const struct mfd_cell wbec_cells[] = {
