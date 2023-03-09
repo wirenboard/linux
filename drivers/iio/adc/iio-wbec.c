@@ -25,8 +25,8 @@ enum wbec_iio_channel {
 	WBEC_IIO_CH_V_IN,
 	WBEC_IIO_CH_V_3_3,
 	WBEC_IIO_CH_V_5_0,
-	WBEC_IIO_CH_V_USB_CONSOLE,
-	WBEC_IIO_CH_V_USB_NETWORK,
+	WBEC_IIO_CH_VBUS_CONSOLE,
+	WBEC_IIO_CH_VBUS_NETWORK,
 	WBEC_IIO_CH_TEMP,
 };
 
@@ -49,26 +49,41 @@ static int wbec_read_raw(struct iio_dev *indio_dev,
 	s32 ret;
 
 	// TODO Remove debug
-	dev_info(&indio_dev->dev, "%s function\n", __func__);
+	dev_info(&indio_dev->dev, "%s function. addr=0x%lX\n", __func__, channel->address);
 
 	switch (mask) {
 	case IIO_CHAN_INFO_PROCESSED:
-		if ((channel->type == IIO_VOLTAGE) || (channel->type == IIO_TEMP)) {
+		if (channel->type == IIO_VOLTAGE) {
 			/* Voltage in mV */
-			/* Temperature in deg C x100 */
 			ret = regmap_read(wbec_iio->regmap, channel->address, val);
-			if (ret < 0)
+			if (ret < 0) {
+				dev_err(&indio_dev->dev, "error reading value from reg 0x%lX", channel->address);
 				return ret;
+			}
 		} else {
 			break;
 		}
 		return IIO_VAL_INT;
+
+	case IIO_CHAN_INFO_RAW:
+		if (channel->type == IIO_TEMP) {
+			/* Temperature in deg C x100 */
+			ret = regmap_read(wbec_iio->regmap, channel->address, val);
+			if (ret < 0) {
+				dev_err(&indio_dev->dev, "error reading value from reg 0x%lX", channel->address);
+				return ret;
+			}
+		} else {
+			break;
+		}
+		return IIO_VAL_INT;
+
 	case IIO_CHAN_INFO_SCALE:
 		if (channel->type == IIO_VOLTAGE) {
 			*val = 1000;
 			*val2 = 0;
 		} else if (channel->type == IIO_TEMP) {
-			*val = 10;
+			*val = 100;
 			*val2 = 0;
 		} else {
 			break;
@@ -102,8 +117,8 @@ static const struct iio_chan_spec wbec_iio_channels[] = {
 	WBEC_IIO_CHANNEL(V_IN, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "IN"),
 	WBEC_IIO_CHANNEL(V_3_3, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "3V3"),
 	WBEC_IIO_CHANNEL(V_5_0, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "5V"),
-	WBEC_IIO_CHANNEL(V_USB_CONSOLE, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "USB_CONSOLE"),
-	WBEC_IIO_CHANNEL(V_USB_NETWORK, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "USB_DEBUG"),
+	WBEC_IIO_CHANNEL(VBUS_CONSOLE, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "VBUS_CONSOLE"),
+	WBEC_IIO_CHANNEL(VBUS_NETWORK, IIO_VOLTAGE, BIT(IIO_CHAN_INFO_PROCESSED), "VBUS_DEBUG"),
 	WBEC_IIO_CHANNEL(TEMP, IIO_TEMP, BIT(IIO_CHAN_INFO_RAW) | BIT(IIO_CHAN_INFO_SCALE), "BOARD"),
 };
 
