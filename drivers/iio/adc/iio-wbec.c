@@ -15,7 +15,7 @@
 
 #include <linux/iio/iio.h>
 #include <linux/iio/sysfs.h>
-#include "wbec.h"
+#include <linux/mfd/wbec.h>
 
 enum wbec_iio_channel {
 	WBEC_IIO_CH_V_A1,

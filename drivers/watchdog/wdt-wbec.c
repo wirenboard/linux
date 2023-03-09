@@ -16,7 +16,7 @@
 #include <linux/property.h>
 #include <linux/regmap.h>
 #include <linux/of.h>
-#include "wbec.h"
+#include <linux/mfd/wbec.h>
 
 
 #define WBEC_WDT_MIN_TIMEOUT		1

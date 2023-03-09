@@ -15,7 +15,7 @@
 #include <linux/hrtimer.h>
 #include <linux/i2c.h>
 #include <linux/workqueue.h>
-#include "wbec.h"
+#include <linux/mfd/wbec.h>
 
 #define WBEC_PWRKEY_POLL_PERIOD_NS		1000000000
 

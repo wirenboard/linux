@@ -13,7 +13,7 @@
 #include <linux/time.h>
 #include <linux/regmap.h>
 #include <linux/of_device.h>
-#include "wbec.h"
+#include <linux/mfd/wbec.h>
 
 #define WBEC_RTC_ALARM_FLAG_POLL_PERIOD_MS		500
 

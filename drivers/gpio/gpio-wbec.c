@@ -13,7 +13,7 @@
 #include <linux/slab.h>
 #include <linux/regmap.h>
 #include <linux/gpio/regmap.h>
-#include "wbec.h"
+#include <linux/mfd/wbec.h>
 
 static int wbec_gpio_probe(struct platform_device *pdev)
 {

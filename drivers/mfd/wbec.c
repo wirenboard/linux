@@ -13,7 +13,7 @@
 #include <linux/interrupt.h>
 #include <linux/reboot.h>
 #include <linux/notifier.h>
-#include "wbec.h"
+#include <linux/mfd/wbec.h>
 
 #define WBEC_ID			0xD2
 
