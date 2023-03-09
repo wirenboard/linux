@@ -34,17 +34,17 @@
 /* Region RTC_CFG: RW */
 #define WBEC_REG_RTC_CFG_OFFSET                             0x30
 
-/* Region ADC_DATA: RW */
+/* Region ADC_DATA: RO, 16bit */
 #define WBEC_REG_ADC_DATA_V_IN                              0x40
-#define WBEC_REG_ADC_DATA_V_3_3                             0x41
-#define WBEC_REG_ADC_DATA_V_5_0                             0x42
-#define WBEC_REG_ADC_DATA_V_A1                              0x43
-#define WBEC_REG_ADC_DATA_V_A2                              0x44
-#define WBEC_REG_ADC_DATA_V_A3                              0x45
-#define WBEC_REG_ADC_DATA_V_A4                              0x46
-#define WBEC_REG_ADC_DATA_TEMP                              0x47
-#define WBEC_REG_ADC_DATA_V_USB_CONSOLE                     0x48
-#define WBEC_REG_ADC_DATA_V_USB_NETWORK                     0x49
+#define WBEC_REG_ADC_DATA_V_3_3                             0x42
+#define WBEC_REG_ADC_DATA_V_5_0                             0x44
+#define WBEC_REG_ADC_DATA_V_A1                              0x46
+#define WBEC_REG_ADC_DATA_V_A2                              0x48
+#define WBEC_REG_ADC_DATA_V_A3                              0x4A
+#define WBEC_REG_ADC_DATA_V_A4                              0x4C
+#define WBEC_REG_ADC_DATA_TEMP                              0x4E
+#define WBEC_REG_ADC_DATA_VBUS_CONSOLE                      0x50
+#define WBEC_REG_ADC_DATA_VBUS_NETWORK                      0x52
 
 /* Region ADC_CFG: RW */
 #define WBEC_REG_ADC_CFG_LOWPASS_RC_A1                      0x60
