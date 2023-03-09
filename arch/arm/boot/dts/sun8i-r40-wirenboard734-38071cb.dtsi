@@ -1,5 +1,5 @@
 /dts-v1/;
-#include "sun8i-r40-wirenboard734.dts"
+#include "sun8i-r40-wirenboard733.dts"
 #include "sun8i-r40-wirenboard7xx-38071cb.dtsi"
 
 / {
