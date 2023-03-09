@@ -3,8 +3,7 @@
     status = "disabled";
 };
 
-/* disable 1-Wire on both pins */
-
+/* disable 1-Wire on both pins to use these pins as GPIO */
 &onewire_w1 {
     status = "disabled";
 };
@@ -13,6 +12,10 @@
     status = "disabled";
 };
 
+/* disable forced 1-Wire pull-ups and map them to regulators
+ * in order to make them unavailable from userspace
+ * and thus to protect W1 and W2 GPIOs
+ */
 / {
     regulators {
         reg_pu_dummy_w1 {
@@ -35,11 +38,7 @@
     };
 };
 
-/* enable RS-485 */
-&uart2 {
-    status = "okay";
-};
-
+/* enable RS-485-2 which is usually enabled by hwconf */
 &uart4 {
     status = "okay";
 };
