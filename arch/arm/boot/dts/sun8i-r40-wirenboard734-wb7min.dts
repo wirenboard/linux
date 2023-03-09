@@ -1,9 +1,0 @@
-/dts-v1/;
-#include "sun8i-r40-wirenboard734.dts"
-#include "sun8i-r40-wirenboard7xx-min.dtsi"
-
-/ {
-	model = "Wiren Board rev. 7.3.4 (A40i) minimal";
-	/* wirenboard-720 is left for userspace compatibility */
-	compatible = "wirenboard,wirenboard-734-min", "wirenboard,wirenboard-7xx", "allwinner,sun8i-r40";
-};
