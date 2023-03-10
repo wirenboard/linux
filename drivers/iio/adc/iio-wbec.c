@@ -155,18 +155,7 @@ static int wbec_iio_probe(struct platform_device *pdev)
 	indio_dev->channels = wbec_iio_channels;
 	indio_dev->num_channels = ARRAY_SIZE(wbec_iio_channels);
 
-	return iio_device_register(indio_dev);
-}
-
-static int wbec_iio_remove(struct platform_device *pdev)
-{
-	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
-
-	dev_info(&pdev->dev, "%s function\n", __func__);
-
-	iio_device_unregister(indio_dev);
-
-	return 0;
+	return devm_iio_device_register(&pdev->dev, indio_dev);
 }
 
 static struct platform_driver wbec_iio_driver = {
@@ -174,7 +163,6 @@ static struct platform_driver wbec_iio_driver = {
 		.name	= "wbec-iio",
 	},
 	.probe = wbec_iio_probe,
-	.remove = wbec_iio_remove,
 };
 
 module_platform_driver(wbec_iio_driver);
