@@ -178,7 +178,7 @@ static int wbec_remove(struct i2c_client *client)
 #ifdef CONFIG_OF
 static const struct of_device_id wbec_of_match[] = {
 	// TODO DT compatible string "wbec" appears un-documented -- check ./Documentation/devicetree/bindings/
-	{ .compatible = "wbec" },
+	{ .compatible = "wirenboard,wbec" },
 	{}
 };
 MODULE_DEVICE_TABLE(of, wbec_of_match);
