@@ -84,13 +84,11 @@
 
 
 struct wbec {
-	struct i2c_client		*i2c;
-	struct regmap			*regmap_8;
-	struct regmap			*regmap_16;
+	struct device *dev;
+	struct regmap *regmap_8;
+	struct regmap *regmap_16;
 	const struct regmap_config	*regmap_cfg_8;
 	const struct regmap_config	*regmap_cfg_16;
-
-   struct regmap_irq_chip_data	*irq_data;
 };
 
 #endif
