@@ -7,7 +7,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
-#include <linux/i2c.h>
+#include <linux/spi/spi.h>
 #include <linux/rtc.h>
 #include <linux/mfd/core.h>
 #include <linux/interrupt.h>
@@ -21,14 +21,18 @@
 
 static const struct regmap_config wbec_regmap_config_8 = {
 	.name = "regmap_8",
-	.reg_bits = 8,
+	.reg_bits = 7,
+	.pad_bits = 9,
+	.read_flag_mask = BIT(0),
 	.val_bits = 8,
 	// .cache_type = REGCACHE_RBTREE,
 };
 
 static const struct regmap_config wbec_regmap_config_16 = {
 	.name = "regmap_16",
-	.reg_bits = 8,
+	.reg_bits = 7,
+	.pad_bits = 9,
+	.read_flag_mask = BIT(0),
 	.val_bits = 16,
 	.val_format_endian = REGMAP_ENDIAN_LITTLE,
 };
@@ -41,40 +45,46 @@ static const struct mfd_cell wbec_cells[] = {
 	{ .name = "wbec-pwrkey", .id = PLATFORM_DEVID_NONE, },
 };
 
-static struct i2c_client *wbec_i2c_client;
+static struct wbec *wbec_pm;
 
 static void wbec_pm_power_off(void)
 {
 	int ret;
-	struct wbec *wbec = i2c_get_clientdata(wbec_i2c_client);
+	struct wbec *wbec = wbec_pm;
+
+	if (!wbec)
+		return;
 
 	// TODO Remove debug
-	dev_info(&wbec_i2c_client->dev, "%s function\n", __func__);
+	dev_info(wbec->dev, "%s function\n", __func__);
 
 	ret = regmap_update_bits(wbec->regmap_8, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_OFF_MSK, WBEC_REG_POWER_CTRL_OFF_MSK);
 	if (ret)
-		dev_err(&wbec_i2c_client->dev, "Failed to shutdown device!\n");
+		dev_err(wbec->dev, "Failed to shutdown device!\n");
 
 	/* Give capacitors etc. time to drain to avoid kernel panic msg. */
 	msleep(1000);
-	dev_err(&wbec_i2c_client->dev, "Device not actually shutdown. Check EC and FETs!\n");
+	dev_err(wbec->dev, "Device not actually shutdown. Check EC and FETs!\n");
 }
 
 static int wbec_restart_notify(struct notifier_block *this, unsigned long mode, void *cmd)
 {
-	struct wbec *wbec = i2c_get_clientdata(wbec_i2c_client);
+	struct wbec *wbec = wbec_pm;
 	int ret;
 
+	if (!wbec)
+		return NOTIFY_STOP;
+
 	// TODO Remove debug
-	dev_info(&wbec_i2c_client->dev, "%s function\n", __func__);
+	dev_info(wbec->dev, "%s function\n", __func__);
 
 	ret = regmap_update_bits(wbec->regmap_8, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_REBOOT_MSK, WBEC_REG_POWER_CTRL_REBOOT_MSK);
 	if (ret)
-		dev_err(&wbec_i2c_client->dev, "Failed to reboot device!\n");
+		dev_err(wbec->dev, "Failed to reboot device!\n");
 
 	/* Give capacitors etc. time to drain to avoid kernel panic msg. */
 	msleep(500);
-	dev_err(&wbec_i2c_client->dev, "Device not actually rebooted. Check EC and FETs!\n");
+	dev_err(wbec->dev, "Device not actually rebooted. Check EC and FETs!\n");
 
 	return NOTIFY_DONE;
 }
@@ -84,84 +94,79 @@ static struct notifier_block wbec_restart_handler = {
 	.priority = 255,
 };
 
-static void wbec_shutdown(struct i2c_client *client)
-{
-	struct wbec *wbec = i2c_get_clientdata(client);
-
-	// TODO Remove debug
-	dev_info(&client->dev, "%s function\n", __func__);
-}
-
-static int wbec_probe(struct i2c_client *client)
+static int wbec_probe(struct spi_device *spi)
 {
 	struct wbec *wbec;
 	int ret;
 	int wbec_id;
 
 	// TODO Remove debug
-	dev_info(&client->dev, "%s function. irq=%d\n", __func__, client->irq);
+	dev_info(&spi->dev, "%s function. irq=%d\n", __func__, spi->irq);
 
-	wbec = devm_kzalloc(&client->dev, sizeof(*wbec), GFP_KERNEL);
+	wbec = devm_kzalloc(&spi->dev, sizeof(*wbec), GFP_KERNEL);
 	if (!wbec)
 		return -ENOMEM;
 
-	wbec->i2c = client;
-	i2c_set_clientdata(client, wbec);
+	wbec->dev = &spi->dev;
+
+	spi->mode = SPI_MODE_0;
+	spi->bits_per_word = 8;
+	spi_setup(spi);
+
+	spi_set_drvdata(spi, wbec);
 
 	wbec->regmap_cfg_8 = &wbec_regmap_config_8;
 	wbec->regmap_cfg_16 = &wbec_regmap_config_16;
 
-	wbec->regmap_8 = devm_regmap_init_i2c(client, wbec->regmap_cfg_8);
+	wbec->regmap_8 = devm_regmap_init_spi(spi, wbec->regmap_cfg_8);
 	if (IS_ERR(wbec->regmap_8)) {
-		dev_err(&client->dev, "regmap initialization failed\n");
+		dev_err(&spi->dev, "regmap initialization failed\n");
 		return PTR_ERR(wbec->regmap_8);
 	}
 
-	wbec->regmap_16 = devm_regmap_init_i2c(client, wbec->regmap_cfg_16);
+	wbec->regmap_16 = devm_regmap_init_spi(spi, wbec->regmap_cfg_16);
 	if (IS_ERR(wbec->regmap_16)) {
-		dev_err(&client->dev, "regmap initialization failed\n");
+		dev_err(&spi->dev, "regmap initialization failed\n");
 		return PTR_ERR(wbec->regmap_16);
 	}
 
 	ret = regmap_read(wbec->regmap_8, WBEC_REG_INFO_WBEC_ID, &wbec_id);
 	if (ret < 0) {
-		dev_err(&client->dev, "failed to read the wbec id at 0x%X\n",
+		dev_err(&spi->dev, "failed to read the wbec id at 0x%X\n",
 			WBEC_REG_INFO_WBEC_ID);
 		return ret;
 	}
 	if (wbec_id != WBEC_ID) {
-		dev_err(&client->dev, "wrong wbec ID at 0x%X. Get 0x%X istead of 0x%X\n",
+		dev_err(&spi->dev, "wrong wbec ID at 0x%X. Get 0x%X istead of 0x%X\n",
 			WBEC_REG_INFO_WBEC_ID, wbec_id, WBEC_ID);
 		return -ENOTSUPP;
 	}
 
 
-	ret = devm_mfd_add_devices(&client->dev, PLATFORM_DEVID_NONE,
+	ret = devm_mfd_add_devices(&spi->dev, PLATFORM_DEVID_NONE,
 			      wbec_cells, ARRAY_SIZE(wbec_cells), NULL, 0, NULL);
 	if (ret) {
-		dev_err(&client->dev, "failed to add MFD devices %d\n", ret);
+		dev_err(&spi->dev, "failed to add MFD devices %d\n", ret);
 		return ret;
 	}
 
-	wbec_i2c_client = client;
+	wbec_pm = wbec;
 	pm_power_off = wbec_pm_power_off;
 
 	ret = register_restart_handler(&wbec_restart_handler);
 	if (ret)
-		dev_warn(&client->dev, "failed to register restart handler\n");
+		dev_warn(&spi->dev, "failed to register restart handler\n");
 
 	// TODO Remove debug
-	dev_info(&client->dev, "%s function: WBEC device added\n", __func__);
+	dev_info(&spi->dev, "%s function: WBEC device added\n", __func__);
 
 	return ret;
 }
 
-static int wbec_remove(struct i2c_client *client)
+static int wbec_remove(struct spi_device *spi)
 {
-	struct wbec *wbec = i2c_get_clientdata(client);
-
 	// TODO Remove debug
-	dev_info(&client->dev, "%s function\n", __func__);
+	dev_info(&spi->dev, "%s function\n", __func__);
 
 	/**
 	 * pm_power_off may points to a function from another module.
@@ -175,27 +180,24 @@ static int wbec_remove(struct i2c_client *client)
 	return 0;
 }
 
-#ifdef CONFIG_OF
 static const struct of_device_id wbec_of_match[] = {
 	// TODO DT compatible string "wbec" appears un-documented -- check ./Documentation/devicetree/bindings/
 	{ .compatible = "wirenboard,wbec" },
 	{}
 };
 MODULE_DEVICE_TABLE(of, wbec_of_match);
-#endif
 
-static struct i2c_driver wbec_driver = {
+static struct spi_driver wbec_driver = {
 	.driver = {
 		.name = "wbec",
-		.of_match_table = of_match_ptr(wbec_of_match),
+		.of_match_table = wbec_of_match,
 	},
-	.probe_new = wbec_probe,
+	.probe = wbec_probe,
 	.remove = wbec_remove,
-	.shutdown = wbec_shutdown,
 };
 
 
-module_i2c_driver(wbec_driver);
+module_spi_driver(wbec_driver);
 
 MODULE_AUTHOR("Pavel Gasheev <pavel.gasheev@wirenboard.ru>");
 MODULE_DESCRIPTION("Wiren Board 7 Embedded Controller MFD driver");
