@@ -979,6 +979,13 @@
 	status = "okay";
 };
 
+&spi2 {
+	pinctrl-0 = <&spi2_pb_pins>,
+			<&spi2_cs0_pb_pin>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
 /*
 Neither MFD core, nor AXP driver doesn't support dynamic device-tree
 modification. So we have to enable the battery driver on boot time
