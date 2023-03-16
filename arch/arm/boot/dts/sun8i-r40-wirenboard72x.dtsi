@@ -1005,6 +1005,23 @@
 			<&spi2_cs0_pb_pin>;
 	pinctrl-names = "default";
 	status = "okay";
+
+	wbec: wbec@0 {
+		spi-max-frequency = <1000000>;
+
+		compatible = "wirenboard,wbec";
+		reg = <0>;
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		wakeup-source;
+
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <5>;
+		gpio-line-names = "WBEC A1", "WBEC A2", "WBEC A3", "WBEC A4", "WBEC V OUT";
+	};
 };
 
 /*
