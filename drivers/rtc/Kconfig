@@ -1954,8 +1954,8 @@ config RTC_DRV_WILCO_EC
 	  This can also be built as a module. If so, the module will
 	  be named "rtc_wilco_ec".
 
-config CONFIG_RTC_DRV_WBEC
-	tristate "Wirenboard Embedded Controller Power Button"
+config RTC_DRV_WBEC
+	tristate "Wirenboard Embedded Controller RTC"
 	depends on MFD_WBEC
 	help
 	  If you say yes here, you get read/write support for the Real Time
