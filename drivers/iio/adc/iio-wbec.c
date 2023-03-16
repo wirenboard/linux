@@ -129,24 +129,20 @@ static const struct iio_info wbec_iio_info = {
 static int wbec_iio_probe(struct platform_device *pdev)
 {
 	struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
-	struct i2c_client *client = wbec->i2c;
 	struct iio_dev *indio_dev;
 	struct wbec_iio *wbec_iio;
 
 	dev_info(&pdev->dev, "%s function\n", __func__);
 	dev_dbg(&pdev->dev, "%s\n", __func__);
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_WORD_DATA))
-		return -EOPNOTSUPP;
-
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*wbec_iio));
+	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*wbec_iio));
 	if (!indio_dev)
 		return -ENOMEM;
 
 	wbec_iio = iio_priv(indio_dev);
 
 	platform_set_drvdata(pdev, indio_dev);
-	wbec_iio->regmap = wbec->regmap_16;
+	wbec_iio->regmap = wbec->regmap;
 
 	indio_dev->name = "wbec";
 	indio_dev->modes = INDIO_DIRECT_MODE;

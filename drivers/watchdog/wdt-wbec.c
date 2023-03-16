@@ -142,7 +142,7 @@ static int wbec_wdt_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	wdt->dev = dev;
-	wdt->regmap = wbec->regmap_8;
+	wdt->regmap = wbec->regmap;
 
 	wdt->wdtdev.info = &wbec_watchdog_info;
 	wdt->wdtdev.ops = &wbec_watchdog_ops;

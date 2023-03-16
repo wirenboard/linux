@@ -34,11 +34,11 @@ static int wbec_gpio_probe(struct platform_device *pdev)
 	}
 
 	config.ngpio = ngpios;
-	config.regmap = wbec->regmap_8;
+	config.regmap = wbec->regmap;
 	config.parent = pdev->dev.parent;
 	config.reg_dat_base = WBEC_REG_GPIO;
 	config.reg_set_base = WBEC_REG_GPIO;
-	config.ngpio_per_reg = 8;
+	config.ngpio_per_reg = 16;
 	config.reg_stride = 1;
 
 	return PTR_ERR_OR_ZERO(devm_gpio_regmap_register(&pdev->dev, &config));

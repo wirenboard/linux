@@ -32,7 +32,7 @@ static int wbec_rtc_read_time(struct device *dev, struct rtc_time *tm)
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
 
 	int rc;
-	u8 regs[7];
+	u16 regs[4];
 
 	/*
 	 * while reading, the time/date registers are blocked and not updated
@@ -40,8 +40,8 @@ static int wbec_rtc_read_time(struct device *dev, struct rtc_time *tm)
 	 * event, the access must be finished within one second. So, read all
 	 * time/date registers in one turn.
 	 */
-	rc = regmap_bulk_read(wbec_rtc->regmap, WBEC_REG_RTC_TIME_SECONDS, regs,
-				  sizeof(regs));
+	rc = regmap_bulk_read(wbec_rtc->regmap, WBEC_REG_RTC_TIME_SECS_MINS, regs,
+				  ARRAY_SIZE(regs));
 	if (rc)
 		return rc;
 
@@ -49,13 +49,13 @@ static int wbec_rtc_read_time(struct device *dev, struct rtc_time *tm)
 	// TODO Check power loss?
 
 
-	tm->tm_sec = regs[0];
-	tm->tm_min = regs[1];
-	tm->tm_hour = regs[2];
-	tm->tm_mday = regs[3];
-	tm->tm_wday = regs[4];
-	tm->tm_mon = regs[5];
-	tm->tm_year = regs[6];
+	tm->tm_sec = regs[0] & 0x00FF;
+	tm->tm_min = regs[0] >> 8;
+	tm->tm_hour = regs[1] & 0x00FF;
+	tm->tm_mday = regs[1] >> 8;
+	tm->tm_wday = regs[2] & 0x00FF;
+	tm->tm_mon = regs[2] >> 8;
+	tm->tm_year = regs[3];
 	tm->tm_year += 100;
 
 	return 0;
@@ -65,31 +65,31 @@ static int wbec_rtc_set_time(struct device *dev, struct rtc_time *tm)
 {
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
 	int rc;
-	u8 regs[7];
+	u16 regs[4];
 
 	// TODO Remove debug
 	dev_info(dev, "%s function\n", __func__);
 
 	/* hours, minutes and seconds */
 	regs[0] = tm->tm_sec;
-	regs[1] = tm->tm_min;
-	regs[2] = tm->tm_hour;
+	regs[0] |= tm->tm_min << 8;
+	regs[1] = tm->tm_hour;
 
 	/* Day of month, 1 - 31 */
-	regs[3] = tm->tm_mday;
+	regs[1] |= tm->tm_mday << 8;
 
 	/* Day, 0 - 6 */
-	regs[4] = tm->tm_wday & 0x07;
+	regs[2] = tm->tm_wday & 0x07;
 
 	/* month, 1 - 12 */
-	regs[5] = tm->tm_mon + 1;
+	regs[2] = (tm->tm_mon + 1) << 8;
 
 	/* year and century */
-	regs[6] = tm->tm_year - 100;
+	regs[3] = tm->tm_year - 100;
 
 	/* write all registers at once */
-	rc = regmap_bulk_write(wbec_rtc->regmap, WBEC_REG_RTC_TIME_SECONDS,
-				   regs, sizeof(regs));
+	rc = regmap_bulk_write(wbec_rtc->regmap, WBEC_REG_RTC_TIME_SECS_MINS,
+				   regs, ARRAY_SIZE(regs));
 	if (rc)
 		return rc;
 
@@ -99,23 +99,23 @@ static int wbec_rtc_set_time(struct device *dev, struct rtc_time *tm)
 static int wbec_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 {
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
-	u8 buf[5];
+	u16 buf[4];
 	int ret;
 
 	// TODO Remove debug
 	dev_info(dev, "%s function\n", __func__);
 
-	ret = regmap_bulk_read(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_SECONDS,
-				   buf, sizeof(buf));
+	ret = regmap_bulk_read(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_SECS_MINS,
+				   buf, ARRAY_SIZE(buf));
 	if (ret)
 		return ret;
 
-	alrm->time.tm_sec = buf[0];
-	alrm->time.tm_min = buf[1];
-	alrm->time.tm_hour = buf[2];
-	alrm->time.tm_mday = buf[3];
+	alrm->time.tm_sec = buf[0] & 0x00FF;
+	alrm->time.tm_min = buf[0] >> 8;
+	alrm->time.tm_hour = buf[1] & 0x00FF;
+	alrm->time.tm_mday = buf[1] >> 8;
 
-	alrm->enabled =  !!(buf[4] & WBEC_REG_RTC_ALARM_STATUS_EN_MSK);
+	alrm->enabled =  !!(buf[2] & WBEC_REG_RTC_ALARM_STATUS_EN_MSK);
 
 	return 0;
 }
@@ -123,22 +123,22 @@ static int wbec_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 static int wbec_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 {
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
-	u8 buf[5] = {};
+	u16 buf[4] = {};
 
 	// TODO Remove debug
 	dev_info(dev, "%s function, mday=%d, hour=%d, min=%d, sec=%d, en=%d\n", __func__,
 		alrm->time.tm_mday, alrm->time.tm_hour, alrm->time.tm_min, alrm->time.tm_sec, alrm->enabled);
 
 	buf[0] = alrm->time.tm_sec;
-	buf[1] = alrm->time.tm_min;
-	buf[2] = alrm->time.tm_hour;
-	buf[3] = alrm->time.tm_mday;
+	buf[0] |= alrm->time.tm_min << 8;
+	buf[1] = alrm->time.tm_hour;
+	buf[1] |= alrm->time.tm_mday << 8;
 
 	if (alrm->enabled)
-		buf[4] |= WBEC_REG_RTC_ALARM_STATUS_EN_MSK;
+		buf[2] |= WBEC_REG_RTC_ALARM_STATUS_EN_MSK;
 
-	return regmap_bulk_write(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_SECONDS,
-				buf, sizeof(buf));
+	return regmap_bulk_write(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_SECS_MINS,
+				buf, ARRAY_SIZE(buf));
 }
 
 static int wbec_rtc_alarm_irq_enable(struct device *dev,
@@ -154,20 +154,6 @@ static int wbec_rtc_alarm_irq_enable(struct device *dev,
 				  enabled ? WBEC_REG_RTC_ALARM_STATUS_EN_MSK : 0);
 }
 
-static irqreturn_t wbec_rtc_handle_irq(int irq, void *dev_id)
-{
-	struct wbec_rtc *wbec_rtc = dev_id;
-
-	// TODO Remove debug
-	dev_info(regmap_get_device(wbec_rtc->regmap), "%s function\n", __func__);
-
-	rtc_update_irq(wbec_rtc->rtc, 1, RTC_IRQF | RTC_AF);
-	dev_dbg(regmap_get_device(wbec_rtc->regmap),
-		 "%s:irq=%d\n", __func__, irq);
-
-	return IRQ_HANDLED;
-}
-
 static int wbec_rtc_read_offset(struct device *dev, long *offset)
 {
 	// TODO Remove debug
@@ -177,7 +163,7 @@ static int wbec_rtc_read_offset(struct device *dev, long *offset)
 	 * 1 lsb in wbec is 0.9537 ppm
 	 * CALP: Increase frequency of RTC by 488.5ppm
 	 * CALM[8:0]: decreases the frequency of the calendar with a resolution of 0.9537 ppm
-	*/
+	 */
 
 
 	*offset = 0;
@@ -221,9 +207,9 @@ static int wbec_rtc_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	platform_set_drvdata(pdev, wbec_rtc);
-	wbec_rtc->regmap = wbec->regmap_8;
+	wbec_rtc->regmap = wbec->regmap;
 
-	err = regmap_read(wbec_rtc->regmap, WBEC_REG_RTC_TIME_SECONDS, &tmp);
+	err = regmap_read(wbec_rtc->regmap, WBEC_REG_RTC_TIME_SECS_MINS, &tmp);
 	if (err) {
 		dev_err(&pdev->dev, "RTC chip is not present\n");
 		return err;

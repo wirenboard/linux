@@ -15,26 +15,13 @@
 #include <linux/notifier.h>
 #include <linux/mfd/wbec.h>
 
-#define WBEC_ID			0xD2
+#define WBEC_ID						0xD2
 
-#define WBEC_IRQ_PWROFF_REQ			0
-
-static const struct regmap_config wbec_regmap_config_8 = {
-	.name = "regmap_8",
-	.reg_bits = 7,
-	.pad_bits = 9,
-	.read_flag_mask = BIT(0),
-	.val_bits = 8,
-	// .cache_type = REGCACHE_RBTREE,
-};
-
-static const struct regmap_config wbec_regmap_config_16 = {
-	.name = "regmap_16",
-	.reg_bits = 7,
-	.pad_bits = 9,
-	.read_flag_mask = BIT(0),
+static const struct regmap_config wbec_regmap_config = {
+	.reg_bits = 16,
+	.read_flag_mask = BIT(7),
 	.val_bits = 16,
-	.val_format_endian = REGMAP_ENDIAN_LITTLE,
+	// .cache_type = REGCACHE_RBTREE,
 };
 
 static const struct mfd_cell wbec_cells[] = {
@@ -58,7 +45,7 @@ static void wbec_pm_power_off(void)
 	// TODO Remove debug
 	dev_info(wbec->dev, "%s function\n", __func__);
 
-	ret = regmap_update_bits(wbec->regmap_8, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_OFF_MSK, WBEC_REG_POWER_CTRL_OFF_MSK);
+	ret = regmap_update_bits(wbec->regmap, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_OFF_MSK, WBEC_REG_POWER_CTRL_OFF_MSK);
 	if (ret)
 		dev_err(wbec->dev, "Failed to shutdown device!\n");
 
@@ -78,7 +65,7 @@ static int wbec_restart_notify(struct notifier_block *this, unsigned long mode, 
 	// TODO Remove debug
 	dev_info(wbec->dev, "%s function\n", __func__);
 
-	ret = regmap_update_bits(wbec->regmap_8, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_REBOOT_MSK, WBEC_REG_POWER_CTRL_REBOOT_MSK);
+	ret = regmap_update_bits(wbec->regmap, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_REBOOT_MSK, WBEC_REG_POWER_CTRL_REBOOT_MSK);
 	if (ret)
 		dev_err(wbec->dev, "Failed to reboot device!\n");
 
@@ -99,6 +86,7 @@ static int wbec_probe(struct spi_device *spi)
 	struct wbec *wbec;
 	int ret;
 	int wbec_id;
+	u16 test[4];
 
 	// TODO Remove debug
 	dev_info(&spi->dev, "%s function. irq=%d\n", __func__, spi->irq);
@@ -115,22 +103,15 @@ static int wbec_probe(struct spi_device *spi)
 
 	spi_set_drvdata(spi, wbec);
 
-	wbec->regmap_cfg_8 = &wbec_regmap_config_8;
-	wbec->regmap_cfg_16 = &wbec_regmap_config_16;
-
-	wbec->regmap_8 = devm_regmap_init_spi(spi, wbec->regmap_cfg_8);
-	if (IS_ERR(wbec->regmap_8)) {
+	wbec->regmap = devm_regmap_init_spi(spi, &wbec_regmap_config);
+	if (IS_ERR(wbec->regmap)) {
 		dev_err(&spi->dev, "regmap initialization failed\n");
-		return PTR_ERR(wbec->regmap_8);
+		return PTR_ERR(wbec->regmap);
 	}
 
-	wbec->regmap_16 = devm_regmap_init_spi(spi, wbec->regmap_cfg_16);
-	if (IS_ERR(wbec->regmap_16)) {
-		dev_err(&spi->dev, "regmap initialization failed\n");
-		return PTR_ERR(wbec->regmap_16);
-	}
+	ret = regmap_bulk_read(wbec->regmap, 0, test, ARRAY_SIZE(test));
 
-	ret = regmap_read(wbec->regmap_8, WBEC_REG_INFO_WBEC_ID, &wbec_id);
+	ret = regmap_read(wbec->regmap, WBEC_REG_INFO_WBEC_ID, &wbec_id);
 	if (ret < 0) {
 		dev_err(&spi->dev, "failed to read the wbec id at 0x%X\n",
 			WBEC_REG_INFO_WBEC_ID);
@@ -141,7 +122,6 @@ static int wbec_probe(struct spi_device *spi)
 			WBEC_REG_INFO_WBEC_ID, wbec_id, WBEC_ID);
 		return -ENOTSUPP;
 	}
-
 
 	ret = devm_mfd_add_devices(&spi->dev, PLATFORM_DEVID_NONE,
 			      wbec_cells, ARRAY_SIZE(wbec_cells), NULL, 0, NULL);

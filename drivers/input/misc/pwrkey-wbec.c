@@ -75,7 +75,7 @@ static int wbec_pwrkey_probe(struct platform_device *pdev)
 	if (!wbec_pwrkey)
 		return -ENOMEM;
 
-	wbec_pwrkey->regmap = wbec->regmap_8;
+	wbec_pwrkey->regmap = wbec->regmap;
 
 	wbec_pwrkey->pwr = devm_input_allocate_device(&pdev->dev);
 	if (!wbec_pwrkey->pwr) {
