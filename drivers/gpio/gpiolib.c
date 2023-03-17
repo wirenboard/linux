@@ -180,14 +180,15 @@ EXPORT_SYMBOL_GPL(gpiod_to_chip);
 static int gpiochip_find_base(int ngpio)
 {
 	struct gpio_device *gdev;
-	int base = ARCH_NR_GPIOS_DYNALLOC;
+	int base = ARCH_NR_GPIOS_DYNALLOC - ngpio;
 
-	list_for_each_entry(gdev, &gpio_devices, list) {
+	list_for_each_entry_reverse(gdev, &gpio_devices, list) {
 		/* found a free space? */
-		if (gdev->base >= base + ngpio)
+		if (gdev->base + gdev->ngpio <= base)
 			break;
-		/* nope, check the space right after the chip */
-		base = gdev->base + gdev->ngpio;
+		else
+			/* nope, check the space right before the chip */
+			base = gdev->base - ngpio;
 	}
 
 	if (gpio_is_valid(base)) {
