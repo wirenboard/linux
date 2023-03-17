@@ -45,7 +45,7 @@ static void wbec_pm_power_off(void)
 	// TODO Remove debug
 	dev_info(wbec->dev, "%s function\n", __func__);
 
-	ret = regmap_update_bits(wbec->regmap, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_OFF_MSK, WBEC_REG_POWER_CTRL_OFF_MSK);
+	ret = regmap_write(wbec->regmap, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_OFF_MSK);
 	if (ret)
 		dev_err(wbec->dev, "Failed to shutdown device!\n");
 
@@ -65,7 +65,7 @@ static int wbec_restart_notify(struct notifier_block *this, unsigned long mode, 
 	// TODO Remove debug
 	dev_info(wbec->dev, "%s function\n", __func__);
 
-	ret = regmap_update_bits(wbec->regmap, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_REBOOT_MSK, WBEC_REG_POWER_CTRL_REBOOT_MSK);
+	ret = regmap_write(wbec->regmap, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_REBOOT_MSK);
 	if (ret)
 		dev_err(wbec->dev, "Failed to reboot device!\n");
 
