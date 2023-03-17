@@ -26,6 +26,10 @@
 
 /* Region RTC_CFG: RW */
 #define WBEC_REG_RTC_CFG_OFFSET                             0x30
+   #define WBEC_REG_RTC_CFG_OFFSET_CALM_MASK                GENMASK(8, 0)
+   #define WBEC_REG_RTC_CFG_OFFSET_CALP_BIT                 BIT(15)
+   #define WBEC_REG_RTC_CFG_OFFSET_CALW8_BIT                BIT(14)
+   #define WBEC_REG_RTC_CFG_OFFSET_CALW16_BIT               BIT(13)
 
 /* Region ADC_DATA: RO */
 #define WBEC_REG_ADC_DATA_V_IN                              0x40

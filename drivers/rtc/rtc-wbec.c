@@ -24,7 +24,6 @@ struct wbec_rtc_config {
 struct wbec_rtc {
 	struct rtc_device	*rtc;
 	struct regmap		*regmap;
-	int irq;
 };
 
 static int wbec_rtc_read_time(struct device *dev, struct rtc_time *tm)
@@ -156,27 +155,56 @@ static int wbec_rtc_alarm_irq_enable(struct device *dev,
 
 static int wbec_rtc_read_offset(struct device *dev, long *offset)
 {
+	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
+	int ret;
+	long tmp = 0;
+	int reg;
+
 	// TODO Remove debug
 	dev_info(dev, "%s function\n", __func__);
 
+	ret = regmap_read(wbec_rtc->regmap, WBEC_REG_RTC_CFG_OFFSET, &reg);
+	if (ret)
+		return ret;
+
 	/* Linux units is ppb
+	 * wbec offset register represents STM32G0 RTC_CALR register:
+	 * Bit 15 CALP: Increase frequency of RTC by 488.5ppm
+	 * Bit 14 CALW8: Use an 8-second calibration cycle period
+	 * Bit 13 CALW16: Use a 16-second calibration cycle period
+	 * Bits 8:0 CALM[8:0]: Calibration minus
 	 * 1 lsb in wbec is 0.9537 ppm
-	 * CALP: Increase frequency of RTC by 488.5ppm
-	 * CALM[8:0]: decreases the frequency of the calendar with a resolution of 0.9537 ppm
 	 */
 
+	if (reg & WBEC_REG_RTC_CFG_OFFSET_CALP_BIT)
+		tmp = 488500;
 
-	*offset = 0;
+	tmp -= ((reg & WBEC_REG_RTC_CFG_OFFSET_CALM_MASK) * 9537) / 10;
+
+	/* CALW8 and CALW16 unused */
+	*offset = tmp;
 
 	return 0;
 }
 
 static int wbec_rtc_set_offset(struct device *dev, long offset)
 {
+	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
+	u16 reg = 0;
+
 	// TODO Remove debug
 	dev_info(dev, "%s function\n", __func__);
 
-	return 0;
+	if (offset > 0) {
+		reg = (488500 - offset) * 10 / 9537;
+		reg &= WBEC_REG_RTC_CFG_OFFSET_CALM_MASK;
+		reg |= WBEC_REG_RTC_CFG_OFFSET_CALP_BIT;
+	} else if (offset < 0) {
+		reg = -offset;
+		reg &= WBEC_REG_RTC_CFG_OFFSET_CALM_MASK;
+	}
+
+	return regmap_write(wbec_rtc->regmap, WBEC_REG_RTC_CFG_OFFSET, reg);
 }
 
 static const struct rtc_class_ops wbec_rtc_ops = {
