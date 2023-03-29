@@ -33,39 +33,21 @@ struct wbec_watchdog {
 static int wbec_wdt_start(struct watchdog_device *wdd)
 {
 	struct wbec_watchdog *wdt = watchdog_get_drvdata(wdd);
-	int ret;
 
-	// TODO Remove debug
-	dev_info(wdt->dev, "%s function\n", __func__);
+	dev_info(wdt->dev, "start watchdog, but actually EC watchdog is always running\n");
 
-	ret = regmap_update_bits(wdt->regmap,
-				 WBEC_REG_WDT_STATUS,
-				 WBEC_REG_WDT_STATUS_RUN_MSK,
-				 WBEC_REG_WDT_STATUS_RUN_MSK);
-	if (ret)
-		dev_err(wdt->dev, "Watchdog failed to start (err = %d)\n",
-			ret);
-
-	return ret;
+	// Nothing to do here, watchdog always running
+	return 0;
 }
 
 static int wbec_wdt_stop(struct watchdog_device *wdd)
 {
 	struct wbec_watchdog *wdt = watchdog_get_drvdata(wdd);
-	int ret;
 
-	// TODO Remove debug
-	dev_info(wdt->dev, "%s function\n", __func__);
+	dev_info(wdt->dev, "stop watchdog, but actually EC watchdog is always running\n");
 
-	ret = regmap_update_bits(wdt->regmap,
-				 WBEC_REG_WDT_STATUS,
-				 WBEC_REG_WDT_STATUS_RUN_MSK,
-				 0);
-	if (ret)
-		dev_err(wdt->dev, "Watchdog failed to stop (err = %d)\n",
-			ret);
-
-	return ret;
+	// Nothing to do here, watchdog always running
+	return 0;
 }
 
 static int wbec_wdt_ping(struct watchdog_device *wdd)
