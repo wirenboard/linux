@@ -11,6 +11,7 @@
 #define WBEC_REG_INFO_BOARD_REV                             0x01
 #define WBEC_REG_INFO_FW_VER_MAJOR_MINOR                    0x02
 #define WBEC_REG_INFO_FW_VER_PATCH_SUFFIX                   0x03
+#define WBEC_REG_INFO_POWERON_REASON                        0x04
 
 /* Region RTC_TIME: RW */
 #define WBEC_REG_RTC_TIME_SECS_MINS                         0x10
@@ -60,12 +61,12 @@
    #define WBEC_REG_GPIO_A3_MSK                             BIT(2)
    #define WBEC_REG_GPIO_A4_MSK                             BIT(3)
    #define WBEC_REG_GPIO_V_OUT_MSK                          BIT(4)
+   #define WBEC_REG_GPIO_STATUS_BAT_MSK                     BIT(5)
 
 /* Region WDT: RW */
 #define WBEC_REG_WDT_TIMEOUT                                0x90
 #define WBEC_REG_WDT_STATUS                                 0x91
    #define WBEC_REG_WDT_STATUS_RESET_MSK                    BIT(0)
-   #define WBEC_REG_WDT_STATUS_RUN_MSK                      BIT(1)
 
 /* Region POWER_CTRL: RW */
 #define WBEC_REG_POWER_CTRL                                 0xA0
