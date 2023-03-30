@@ -15,7 +15,7 @@
 #include <linux/notifier.h>
 #include <linux/mfd/wbec.h>
 
-#define WBEC_ID						0xD2
+#define WBEC_ID						0x3CD2
 
 static const struct regmap_config wbec_regmap_config = {
 	.reg_bits = 16,
