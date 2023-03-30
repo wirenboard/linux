@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * TODO
- * Write description
+ * pwrkey-wbec.c - Wiren Board Embedded Controller power key driver
+ *
+ * Copyright (c) 2023 Wiren Board LLC
+ *
+ * Author: Pavel Gasheev <pavel.gasheev@wirenboard.ru>
  */
 
 #include <linux/errno.h>
