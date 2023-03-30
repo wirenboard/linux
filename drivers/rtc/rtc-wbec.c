@@ -218,7 +218,6 @@ static int wbec_rtc_probe(struct platform_device *pdev)
 	unsigned int tmp;
 	int err;
 
-	// TODO Remove debug
 	dev_dbg(&pdev->dev, "%s function\n", __func__);
 
 	wbec_rtc = devm_kzalloc(&pdev->dev, sizeof(struct wbec_rtc),
