@@ -139,18 +139,6 @@
 		};
 	};
 
-	discrete-watchdog {
-		/* external watchdog timer using mcp6542  */
-		compatible = "linux,wdt-gpio";
-
-		gpios = <PIN_PD 21 GPIO_ACTIVE_HIGH>;
-		hw_algo = "toggle";
-		hw_margin_ms = <100>;
-		always-running;
-		timeout-sec = <30>;
-		status = "okay";
-	};
-
 	wirenboard {
 		adc-type = <3>;
 		pwm-buzzer = <1>;
