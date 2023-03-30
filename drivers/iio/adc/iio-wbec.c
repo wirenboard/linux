@@ -51,8 +51,7 @@ static int wbec_read_raw(struct iio_dev *indio_dev,
 	struct wbec_iio *wbec_iio = iio_priv(indio_dev);
 	s32 ret;
 
-	// TODO Remove debug
-	dev_info(&indio_dev->dev, "%s function. addr=0x%lX\n", __func__, channel->address);
+	dev_dbg(&indio_dev->dev, "%s function. addr=0x%lX\n", __func__, channel->address);
 
 	switch (mask) {
 	case IIO_CHAN_INFO_PROCESSED:

@@ -51,7 +51,6 @@ void pwrkey_poll_wq(struct work_struct *work)
 	int val = regmap_test_bits(wbec_pwrkey->regmap, WBEC_REG_IRQ_FLAGS, WBEC_REG_IRQ_PWROFF_REQ_MSK);
 
 	if (val > 0) {
-		// TODO Remove debug
 		dev_info(&pwr->dev, "Power key press detected\n");
 		// Clear irq flag
 		regmap_write(wbec_pwrkey->regmap, WBEC_REG_IRQ_CLEAR, WBEC_REG_IRQ_PWROFF_REQ_MSK);
@@ -70,8 +69,7 @@ static int wbec_pwrkey_probe(struct platform_device *pdev)
 	struct wbec_pwrkey *wbec_pwrkey;
 	int err;
 
-	// TODO Remove debug
-	dev_info(&pdev->dev, "%s function\n", __func__);
+	dev_dbg(&pdev->dev, "%s function\n", __func__);
 
 	wbec_pwrkey = devm_kzalloc(&pdev->dev, sizeof(struct wbec_pwrkey),
 				GFP_KERNEL);

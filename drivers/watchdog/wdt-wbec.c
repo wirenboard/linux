@@ -58,8 +58,7 @@ static int wbec_wdt_ping(struct watchdog_device *wdd)
 	struct wbec_watchdog *wdt = watchdog_get_drvdata(wdd);
 	int ret;
 
-	// TODO Remove debug
-	dev_info(wdt->dev, "%s function\n", __func__);
+	dev_dbg(wdt->dev, "%s function\n", __func__);
 
 	ret = regmap_update_bits(wdt->regmap,
 				 WBEC_REG_WDT_STATUS,
@@ -78,8 +77,7 @@ static int wbec_wdt_set_timeout(struct watchdog_device *wdd,
 	struct wbec_watchdog *wdt = watchdog_get_drvdata(wdd);
 	int ret;
 
-	// TODO Remove debug
-	dev_info(wdt->dev, "%s function, timeout=%d\n", __func__, timeout);
+	dev_info(wdt->dev, "%s: timeout=%d\n", __func__, timeout);
 
 	if (timeout > WBEC_WDT_MAX_TIMEOUT) {
 		timeout = WBEC_WDT_MAX_TIMEOUT;
@@ -115,8 +113,7 @@ static int wbec_wdt_probe(struct platform_device *pdev)
 	struct wbec_watchdog *wdt;
 	int ret;
 
-	// TODO Remove debug
-	dev_info(&pdev->dev, "%s function\n", __func__);
+	dev_dbg(&pdev->dev, "%s function\n", __func__);
 
 	wbec = dev_get_drvdata(dev->parent);
 	if (!wbec)

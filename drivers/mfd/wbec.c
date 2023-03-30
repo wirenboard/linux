@@ -45,8 +45,7 @@ static void wbec_pm_power_off(void)
 	if (!wbec)
 		return;
 
-	// TODO Remove debug
-	dev_info(wbec->dev, "%s function\n", __func__);
+	dev_dbg(wbec->dev, "%s function\n", __func__);
 
 	ret = regmap_write(wbec->regmap, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_OFF_MSK);
 	if (ret)
@@ -65,8 +64,7 @@ static int wbec_restart_notify(struct notifier_block *this, unsigned long mode, 
 	if (!wbec)
 		return NOTIFY_STOP;
 
-	// TODO Remove debug
-	dev_info(wbec->dev, "%s function\n", __func__);
+	dev_dbg(wbec->dev, "%s function\n", __func__);
 
 	ret = regmap_write(wbec->regmap, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_REBOOT_MSK);
 	if (ret)
@@ -91,8 +89,7 @@ static int wbec_probe(struct spi_device *spi)
 	int wbec_id;
 	u16 test[4];
 
-	// TODO Remove debug
-	dev_info(&spi->dev, "%s function. irq=%d\n", __func__, spi->irq);
+	dev_dbg(&spi->dev, "%s function. irq=%d\n", __func__, spi->irq);
 
 	wbec = devm_kzalloc(&spi->dev, sizeof(*wbec), GFP_KERNEL);
 	if (!wbec)
@@ -140,16 +137,14 @@ static int wbec_probe(struct spi_device *spi)
 	if (ret)
 		dev_warn(&spi->dev, "failed to register restart handler\n");
 
-	// TODO Remove debug
-	dev_info(&spi->dev, "%s function: WBEC device added\n", __func__);
+	dev_info(&spi->dev, "WBEC device added\n");
 
 	return ret;
 }
 
 static int wbec_remove(struct spi_device *spi)
 {
-	// TODO Remove debug
-	dev_info(&spi->dev, "%s function\n", __func__);
+	dev_dbg(&spi->dev, "%s function\n", __func__);
 
 	/**
 	 * pm_power_off may points to a function from another module.
@@ -164,7 +159,6 @@ static int wbec_remove(struct spi_device *spi)
 }
 
 static const struct of_device_id wbec_of_match[] = {
-	// TODO DT compatible string "wbec" appears un-documented -- check ./Documentation/devicetree/bindings/
 	{ .compatible = "wirenboard,wbec" },
 	{}
 };

@@ -47,10 +47,6 @@ static int wbec_rtc_read_time(struct device *dev, struct rtc_time *tm)
 	if (rc)
 		return rc;
 
-	/* if the clock has lost its power it makes no sense to use its time */
-	// TODO Check power loss?
-
-
 	tm->tm_sec = regs[0] & 0x00FF;
 	tm->tm_min = regs[0] >> 8;
 	tm->tm_hour = regs[1] & 0x00FF;
@@ -69,8 +65,7 @@ static int wbec_rtc_set_time(struct device *dev, struct rtc_time *tm)
 	int rc;
 	u16 regs[4];
 
-	// TODO Remove debug
-	dev_info(dev, "%s function\n", __func__);
+	dev_dbg(dev, "%s function\n", __func__);
 
 	/* hours, minutes and seconds */
 	regs[0] = tm->tm_sec;
@@ -104,8 +99,7 @@ static int wbec_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 	u16 buf[4];
 	int ret;
 
-	// TODO Remove debug
-	dev_info(dev, "%s function\n", __func__);
+	dev_dbg(dev, "%s function\n", __func__);
 
 	ret = regmap_bulk_read(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_SECS_MINS,
 				   buf, ARRAY_SIZE(buf));
@@ -127,8 +121,7 @@ static int wbec_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
 	u16 buf[4] = {};
 
-	// TODO Remove debug
-	dev_info(dev, "%s function, mday=%d, hour=%d, min=%d, sec=%d, en=%d\n", __func__,
+	dev_dbg(dev, "%s function, mday=%d, hour=%d, min=%d, sec=%d, en=%d\n", __func__,
 		alrm->time.tm_mday, alrm->time.tm_hour, alrm->time.tm_min, alrm->time.tm_sec, alrm->enabled);
 
 	buf[0] = alrm->time.tm_sec;
@@ -148,8 +141,7 @@ static int wbec_rtc_alarm_irq_enable(struct device *dev,
 {
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
 
-	// TODO Remove debug
-	dev_info(dev, "%s function, en=%d\n", __func__, enabled);
+	dev_dbg(dev, "%s function, en=%d\n", __func__, enabled);
 
 	return regmap_update_bits(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_STATUS,
 				  WBEC_REG_RTC_ALARM_STATUS_EN_MSK,
@@ -163,8 +155,7 @@ static int wbec_rtc_read_offset(struct device *dev, long *offset)
 	long tmp = 0;
 	int reg;
 
-	// TODO Remove debug
-	dev_info(dev, "%s function\n", __func__);
+	dev_dbg(dev, "%s function\n", __func__);
 
 	ret = regmap_read(wbec_rtc->regmap, WBEC_REG_RTC_CFG_OFFSET, &reg);
 	if (ret)
@@ -195,8 +186,7 @@ static int wbec_rtc_set_offset(struct device *dev, long offset)
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
 	u16 reg = 0;
 
-	// TODO Remove debug
-	dev_info(dev, "%s function\n", __func__);
+	dev_dbg(dev, "%s function\n", __func__);
 
 	if (offset > 0) {
 		reg = (488500 - offset) * 10 / 9537;
@@ -229,8 +219,7 @@ static int wbec_rtc_probe(struct platform_device *pdev)
 	int err;
 
 	// TODO Remove debug
-	dev_info(&pdev->dev, "%s function\n", __func__);
-	dev_dbg(&pdev->dev, "%s\n", __func__);
+	dev_dbg(&pdev->dev, "%s function\n", __func__);
 
 	wbec_rtc = devm_kzalloc(&pdev->dev, sizeof(struct wbec_rtc),
 				GFP_KERNEL);
