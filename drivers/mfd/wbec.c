@@ -19,6 +19,7 @@
 #include <linux/mfd/wbec.h>
 
 #define WBEC_ID						0x3CD2
+#define WBEC_POWER_RESET_DELAY_MS	500
 
 static const struct regmap_config wbec_regmap_config = {
 	.reg_bits = 16,
@@ -53,7 +54,7 @@ static void wbec_pm_power_off(void)
 		dev_err(wbec->dev, "Failed to shutdown device!\n");
 
 	/* Give capacitors etc. time to drain to avoid kernel panic msg. */
-	msleep(1000);
+	msleep(WBEC_POWER_RESET_DELAY_MS);
 	dev_err(wbec->dev, "Device not actually shutdown. Check EC and FETs!\n");
 }
 
@@ -73,7 +74,7 @@ static int wbec_restart_notify(struct notifier_block *this, unsigned long mode, 
 		dev_err(wbec->dev, "Failed to reboot device!\n");
 
 	/* Give capacitors etc. time to drain to avoid kernel panic msg. */
-	msleep(500);
+	msleep(WBEC_POWER_RESET_DELAY_MS);
 	dev_err(wbec->dev, "Device not actually rebooted. Check EC and FETs!\n");
 
 	return NOTIFY_DONE;
