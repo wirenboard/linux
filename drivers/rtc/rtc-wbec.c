@@ -84,7 +84,7 @@ static int wbec_rtc_set_time(struct device *dev, struct rtc_time *tm)
 	regs[2] = tm->tm_wday & 0x07;
 
 	/* month, 1 - 12 */
-	regs[2] = (tm->tm_mon + 1) << 8;
+	regs[2] |= (tm->tm_mon + 1) << 8;
 
 	/* year and century */
 	regs[3] = tm->tm_year - 100;
