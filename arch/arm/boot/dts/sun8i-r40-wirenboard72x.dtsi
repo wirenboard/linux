@@ -266,7 +266,7 @@
 
 			pcbtemp {
 				title = "Board Temperature";
-				hwmon-node-name = "pcb-temp";
+				hwmon-node-name = "iio-hwmon-pcb-temp";
 				hwmon-channel = "temp1";
 			};
 		};
@@ -280,6 +280,11 @@
 	iio-hwmon-axp {
 		compatible = "iio-hwmon";
 		io-channels = <&axp_adc 0>, <&axp_adc 1>, <&axp_adc 2>;
+	};
+
+	iio-hwmon-pcb-temp {
+		compatible = "iio-hwmon";
+		io-channels = <&wbec 9>;
 	};
 
 	/*
@@ -303,7 +308,7 @@
 
 	a1_volt: a1-volt {
 		compatible = "voltage-divider";
-		io-channels = <&gpadc 0 0>;
+		io-channels = <&wbec 0>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <2700>;
@@ -313,7 +318,7 @@
 
 	a2_volt: a2-volt {
 		compatible = "voltage-divider";
-		io-channels = <&gpadc 3>;
+		io-channels = <&wbec 1>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <2700>;
@@ -321,7 +326,7 @@
 	};
 	a3_volt: a3-volt {
 		compatible = "voltage-divider";
-		io-channels = <&gpadc 2>;
+		io-channels = <&wbec 2>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <2700>;
@@ -330,7 +335,7 @@
 
 	vin_volt: vin-volt {
 		compatible = "voltage-divider";
-		io-channels = <&gpadc 1>;
+		io-channels = <&wbec 4>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <2700>;
@@ -1007,6 +1012,8 @@
 		#gpio-cells = <2>;
 		ngpios = <6>;
 		gpio-line-names = "EC A1", "EC A2", "EC A3", "EC A4", "EC V OUT", "EC WBMZ STATUS";
+
+		#io-channel-cells = <1>;
 	};
 };
 
