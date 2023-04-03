@@ -284,7 +284,7 @@
 
 	iio-hwmon-pcb-temp {
 		compatible = "iio-hwmon";
-		io-channels = <&wbec 9>;
+		io-channels = <&wbec_iio 9>;
 	};
 
 	/*
@@ -308,7 +308,7 @@
 
 	a1_volt: a1-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec 0>;
+		io-channels = <&wbec_iio 0>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <2700>;
@@ -318,7 +318,7 @@
 
 	a2_volt: a2-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec 1>;
+		io-channels = <&wbec_iio 1>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <2700>;
@@ -326,7 +326,7 @@
 	};
 	a3_volt: a3-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec 2>;
+		io-channels = <&wbec_iio 2>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <2700>;
@@ -335,11 +335,11 @@
 
 	vin_volt: vin-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec 4>;
+		io-channels = <&wbec_iio 4>;
 		#io-channel-cells = <1>;
 
-		output-ohms = <2700>;
-		full-ohms = <49700>;
+		output-ohms = <1>;
+		full-ohms = <1>;
 	};
 };
 
@@ -1013,7 +1013,11 @@
 		ngpios = <6>;
 		gpio-line-names = "EC A1", "EC A2", "EC A3", "EC A4", "EC V OUT", "EC WBMZ STATUS";
 
-		#io-channel-cells = <1>;
+		wbec_iio: wbec-iio@0 {
+			compatible = "wirenboard,wbec-iio";
+			reg = <0>;
+			#io-channel-cells = <1>;
+		};
 	};
 };
 
