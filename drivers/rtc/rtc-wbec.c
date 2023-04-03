@@ -56,7 +56,7 @@ static int wbec_rtc_read_time(struct device *dev, struct rtc_time *tm)
 	tm->tm_hour = regs[1] & 0x00FF;
 	tm->tm_mday = regs[1] >> 8;
 	tm->tm_wday = regs[2] & 0x00FF;
-	tm->tm_mon = regs[2] >> 8;
+	tm->tm_mon = (regs[2] >> 8) - 1;
 	tm->tm_year = regs[3];
 	tm->tm_year += 100;
 
