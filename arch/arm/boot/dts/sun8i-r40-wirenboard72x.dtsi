@@ -461,9 +461,9 @@
 		"SOM PMIC SCL", "SOM PMIC SDA", "SIM_SELECT", "BUZZER", /*  0 - 3 */
 		"MOD1 RTS", "SODIMM:111 [NC]", "SODIMM:113 [NC]", "SODIMM:121 [NC]", /*  4 - 7 */
 		"SODIMM:123 [NC]", "RED LED", "GREEN LED", "[NC]", /*  8 - 11 */
-		"SODIMM:125 [NC]", "W1 UP", "EEPROM-2 SDA", "EEPROM-2 SCL", /* 12 - 15 */
-		"EEPROM-1 SDA", "EEPROM-1 SCL", "WBIO SCL", "WBIO SDA", /* 16 - 19 */
-		"SODIMM:52 [NC]", "SODIMM:50 [NC]", "DEBUG UART TX", "DEBUG UART RX", /* 20 - 23 */
+		"SODIMM:125 [NC]", "ON PERIPH", "EC CS", "EC CLK", /* 12 - 15 */
+		"EC MOSI", "EC MISO", "WBIO SCL", "WBIO SDA", /* 16 - 19 */
+		"RS-485-2 FAILSAFE MOD3 RTS", "CAN TXRX ON", "DEBUG UART TX", "DEBUG UART RX", /* 20 - 23 */
 		"", "", "", "", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
 		/* PC */
@@ -480,14 +480,14 @@
 		"LVDS D2 P", "LVDS D2 N", "LVDS DCK P", "LVDS DCK N", /*  4 - 7 */
 		"LVDS D3 P", "LVDS D3 N", "D1 OUT", "A3 OUT", /*  8 - 11 */
 		"A2 OUT", "A1 OUT", "PUSHBUTTON", "[NC]", /* 12 - 15 */
-		"[NC]", "[NC]", "[NC]", "WBMZ STATUS", /* 16 - 19 */
-		"USB0 ID", "WATCHDOG OUT", "[NC]", "[NC]", /* 20 - 23 */
+		"[NC]", "[NC]", "SWCLK/BOOT0", "EC RESET", /* 16 - 19 */
+		"USB0 ID", "SODIMM:182 [NC]", "[NC]", "[NC]", /* 20 - 23 */
 		"WI-FI ON", "GSM STATUS", "GSM PWRKEY", "GSM ON", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
 		/* PE */
-		"USB0 ON", "5V_OUT ON", "V_OUT ON", "W2 UP",  /*  0 - 3 */
-		"SODIMM:79 [NC]", "RS-485-2 TERMINATION", "RS-485-1 TERMINATION", "RS-485-2 FAILSAFE", /*  4 - 7 */
-		"RS-485-1 FAILSAFE", "[NC]", "MOD3 RTS", "CAN TXRX ON", /*  8 - 11 */
+		"USB0 ON", "5V_OUT ON", "SODIMM:84 [NC]", "SODIMM:82 [NC]",  /*  0 - 3 */
+		"RS-485-2 TERMINATION", "SODIMM:68 [NC]", "SODIMM:66 [NC]", "SODIMM:64 [NC]", /*  4 - 7 */
+		"SODIMM:62 [NC]", "RS-485-1 TERMINATION", "RS-485-2 FAILSAFE", "RS-485-1 FAILSAFE", /*  8 - 11 */
 		"", "", "", "", /* 12 - 15 */
 		"", "", "", "", /* 16 - 19 */
 		"", "", "", "", /* 20 - 23 */
@@ -521,11 +521,11 @@
 		"SOM ETH0 TXCK", "SOM ETH0 CRS", "SOM ETH0 COL", "SOM LCD BACKLIGHT ON", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
 		/* PI PI10-PI19 interrupts*/
-		"RTC SCK", "RTC SDA", "SODIMM: 76 [NC]", "[NC]", /*  0 - 3 */
+		"W1 UP", "W2 UP", "CR+RTC SCL", "CR+RTC SDA", /*  0 - 3 */
 		"SODIMM: 75 [NC]", "SODIMM: 77 [NC]", "SODIMM: 79 [NC]", "SODIMM: 81 [NC]", /*  4 - 7 */
 		"SODIMM: 83 [NC]", "SODIMM: 85 [NC]", "MOD3 TX", "MOD3 RX", /*  8 - 11 */
-		"MOD2 TX", "MOD2 RX", "MOD4 RTS", "W2", /* 12 - 15 */
-		"WBIO INT", "RTC OUT", "RS-485-1 TX", "RS-485-1 RX", /* 16 - 19 */
+		"MOD2 TX", "MOD2 RX", "MOD4 RTS", "INT EC", /* 12 - 15 */
+		"WBIO INT", "W2", "RS-485-1 TX", "RS-485-1 RX", /* 16 - 19 */
 		"MOD1 TX", "MOD1 RX", "", "", /* 20 - 23 */
 		"", "", "", "", /* 24 - 27 */
 		"", "", "", ""; /* 28 - 31 */
