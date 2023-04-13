@@ -279,7 +279,7 @@
 			};
 
 			V_OUT {
-				io-gpios = <&wbec 4 GPIO_ACTIVE_HIGH>;
+				io-gpios = <&wbec_gpio 4 GPIO_ACTIVE_HIGH>;
 				output-high;
 				sort-order = <9>;
 			};
@@ -331,7 +331,7 @@
 	vin: vin {
 		compatible = "gpio-charger";
 		charger-type = "mains";
-		gpios = <&wbec 5 GPIO_ACTIVE_HIGH>;
+		gpios = <&wbec_gpio 5 GPIO_ACTIVE_HIGH>;
 	};
 
 	a1_volt: a1-volt {
@@ -1072,10 +1072,16 @@
 
 		wakeup-source;
 
-		gpio-controller;
-		#gpio-cells = <2>;
-		ngpios = <6>;
-		gpio-line-names = "EC A1", "EC A2", "EC A3", "EC A4", "EC V OUT", "EC WBMZ STATUS";
+		wbec_gpio: wbec-gpio@0 {
+			compatible = "wirenboard,wbec-gpio";
+			reg = <0>;
+
+			gpio-controller;
+			#gpio-cells = <2>;
+			linux,base = <384>;
+			ngpios = <6>;
+			gpio-line-names = "EC A1", "EC A2", "EC A3", "EC A4", "EC V OUT", "EC WBMZ STATUS";
+		};
 
 		wbec_iio: wbec-iio@0 {
 			compatible = "wirenboard,wbec-iio";
