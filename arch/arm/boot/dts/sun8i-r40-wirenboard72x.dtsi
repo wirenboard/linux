@@ -171,9 +171,37 @@
 
 			Vin {
 				iio-device = <&vin_volt>;
-				decimal-places = <1>;
+				decimal-places = <2>;
 				averaging-window = <1>;
 				sort-order = <3>;
+			};
+
+			V3_3 {
+				iio-device = <&v33_volt>;
+				decimal-places = <3>;
+				averaging-window = <1>;
+				sort-order = <4>;
+			};
+
+			V5_0 {
+				iio-device = <&v50_volt>;
+				decimal-places = <3>;
+				averaging-window = <1>;
+				sort-order = <5>;
+			};
+
+			Vbus_debug {
+				iio-device = <&vbus_debug_volt>;
+				decimal-places = <2>;
+				averaging-window = <1>;
+				sort-order = <6>;
+			};
+
+			Vbus_network {
+				iio-device = <&vbus_network_volt>;
+				decimal-places = <2>;
+				averaging-window = <1>;
+				sort-order = <7>;
 			};
 		};
 
@@ -336,6 +364,42 @@
 	vin_volt: vin-volt {
 		compatible = "voltage-divider";
 		io-channels = <&wbec_iio 4>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
+	};
+
+	v33_volt: v33-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_iio 5>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
+	};
+
+	v50_volt: v50-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_iio 6>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
+	};
+
+	vbus_debug_volt: vbus-debug-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_iio 7>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
+	};
+
+	vbus_network_volt: vbus-network-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_iio 8>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <1>;
