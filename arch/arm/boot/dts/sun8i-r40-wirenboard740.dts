@@ -106,6 +106,7 @@
 
 
 /* Onboard RTC is moved from i2c3 to i2c4 */
+/* Aslo added ECC chip and removed temp sensor */
 /delete-node/ &i2c3;
 &i2c4 {
 	atecc508a@60 {
@@ -133,9 +134,9 @@ ON_PERIPH 		???? -> PB13
 TERM-485-2		PE05 -> PE04
 TERM-485-1		PE06 -> PE09
 RAST-485-2		PE07 -> PE10
+RAST-485-1		PE08 -> PE11
+CAN-OFF			PE11 -> PB21
 
-
-Add SPI EC
-
+Add EC
 
 */
