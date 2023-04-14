@@ -91,3 +91,51 @@
 		"", "", "", ""; /* 28 - 31 */
 };
 
+&pinctrl_mod3_de_gpio {
+	pins = "PB20";
+};
+
+&onewire_w1 {
+	pu-gpios = <PIN_PI 0 GPIO_ACTIVE_HIGH>;
+};
+
+&onewire_w2 {
+	gpios = <PIN_PI 17 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+	pu-gpios = <PIN_PI 1 GPIO_ACTIVE_HIGH>;
+};
+
+
+/* Onboard RTC is moved from i2c3 to i2c4 */
+/delete-node/ &i2c3;
+&i2c4 {
+	atecc508a@60 {
+		compatible = "atmel,atecc508a";	// TODO compatible with ATECC608A ???
+		reg = <0x60>;
+	};
+
+	rtc_onboard: rtc@62 {
+		compatible = "whwave,sd3078";	// TODO compatible with SD3178 ???
+		reg = <0x62>;
+	};
+};
+
+
+/ {
+	/delete-node/ discrete-watchdog;
+};
+
+/delete-node/ &pinctrl_rtc_clkout_gpio;
+
+
+/** TODO
+
+ON_PERIPH 		???? -> PB13
+TERM-485-2		PE05 -> PE04
+TERM-485-1		PE06 -> PE09
+RAST-485-2		PE07 -> PE10
+
+
+Add SPI EC
+
+
+*/
