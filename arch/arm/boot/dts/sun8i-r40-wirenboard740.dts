@@ -109,15 +109,17 @@
 /* Aslo added ECC chip and removed temp sensor */
 /delete-node/ &i2c3;
 &i2c4 {
-	atecc508a@60 {
-		compatible = "atmel,atecc508a";	// TODO compatible with ATECC608A ???
-		reg = <0x60>;
-	};
+	status = "okay";
+	clock-frequency = <10000>;
 
 	rtc_onboard: rtc@62 {
 		compatible = "whwave,sd3078";	// TODO compatible with SD3178 ???
 		reg = <0x62>;
 	};
+};
+
+&i2c4_pins {
+	bias-pull-up;
 };
 
 
