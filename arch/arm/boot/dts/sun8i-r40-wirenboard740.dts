@@ -3,7 +3,7 @@
 
 / {
 	model = "Wiren Board rev. 7.4.0 (A40i)";
-	compatible = "wirenboard,wirenboard-740", "allwinner,sun8i-r40";
+	compatible = "wirenboard,wirenboard-740", "wirenboard,wirenboard-720", "wirenboard,wirenboard-700", "allwinner,sun8i-r40";
 };
 
 &pio {
