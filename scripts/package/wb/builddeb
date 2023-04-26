@@ -330,10 +330,12 @@ else
 	cat <<EOF >> debian/control
 
 Package: $packagename
-Provides: linux-image, linux-image-2.6, linux-modules-$version
+Provides: linux-image, linux-image-2.6, linux-modules-$version, linux-image-armmp, linux-image-armmp-lpae, linux-image-rt-armmp
 Breaks: linux-image-4.9.22-$wb_target (<< $packageversion)
-Replaces: linux-image-4.9.22-$wb_target (<< $packageversion), linux-image-4.1.15-imxv5-x0.1, linux-image-4.9.6-wb
-Conflicts: linux-image-4.1.15-imxv5-x0.1, linux-image-4.9.6-wb, wb-configs (<= 1.72), wb-hwconf-manager (<< 1.41.0~~), linux-image
+Replaces: linux-image-4.9.22-$wb_target (<< $packageversion), linux-image-4.1.15-imxv5-x0.1, linux-image-4.9.6-wb, linux-image-armmp,
+	linux-image-armmp-lpae, linux-image-rt-armmp
+Conflicts: linux-image-4.1.15-imxv5-x0.1, linux-image-4.9.6-wb, wb-configs (<= 1.72), wb-hwconf-manager (<< 1.41.0~~), linux-image,
+	linux-image-armmp, linux-image-armmp-lpae, linux-image-rt-armmp
 Suggests: $fwpackagename
 Architecture: any
 Description: Linux kernel, version $version, $wb_description
