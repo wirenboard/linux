@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb133+wb101) stable; urgency=medium
+
+  * wb builddeb: add wireguard-modules package to "Provides:" sections
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Mon, 29 May 2023 14:16:31 +0600
+
 linux-wb (5.10.35-wb133+wb100) stable; urgency=medium
 
   * wb7: enable exfat support
