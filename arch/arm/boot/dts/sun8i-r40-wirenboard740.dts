@@ -112,9 +112,9 @@
 	status = "okay";
 	clock-frequency = <10000>;
 
-	rtc_onboard: rtc@62 {
+	rtc_onboard: rtc@32 {
 		compatible = "whwave,sd3078";	// TODO compatible with SD3178 ???
-		reg = <0x62>;
+		reg = <0x32>;
 	};
 };
 
