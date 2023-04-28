@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb135) stable; urgency=medium
+
+  * wb74 add test dts
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Fri, 28 Apr 2023 10:49:12 +0300
+
 linux-wb (5.10.35-wb134) stable; urgency=medium
 
   * wb builddeb: add wireguard-modules package to "Provides:" sections
