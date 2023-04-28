@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb134) stable; urgency=medium
+
+  * wb builddeb: add wireguard-modules package to "Provides:" sections
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Wed, 26 Apr 2023 13:15:21 +0300
+
 linux-wb (5.10.35-wb133) stable; urgency=medium
 
   * rtl8723bu: Move powersave logs to debug.
