@@ -101,20 +101,6 @@
 		status = "okay";
 	};
 
-	i2c_wbec: i2c_wbec {
-		compatible = "i2c-gpio";
-		gpios = <PIN_PB 16 GPIO_ACTIVE_HIGH /* sda */
-				PIN_PB 17 GPIO_ACTIVE_HIGH /* scl */
-			>;
-		i2c-gpio,delay-us = <2>;	/* ~100 kHz */
-
-		pinctrl-0 = <&pinctrl_wbec_i2c_gpio>;
-		pinctrl-names = "default";
-		#address-cells = <1>;
-		#size-cells = <0>;
-		status = "disabled";
-	};
-
 	leds-pwm {
 		compatible = "pwm-leds";
 		pinctrl-names = "default";
@@ -137,6 +123,18 @@
 			max-brightness = <255>;
 			linux,default-trigger = "timer";
 		};
+	};
+
+	discrete-watchdog {
+		/* external watchdog timer using mcp6542  */
+		compatible = "linux,wdt-gpio";
+
+		gpios = <PIN_PD 21 GPIO_ACTIVE_HIGH>;
+		hw_algo = "toggle";
+		hw_margin_ms = <100>;
+		always-running;
+		timeout-sec = <30>;
+		status = "okay";
 	};
 
 	wirenboard {
@@ -171,37 +169,9 @@
 
 			Vin {
 				iio-device = <&vin_volt>;
-				decimal-places = <2>;
+				decimal-places = <1>;
 				averaging-window = <1>;
 				sort-order = <3>;
-			};
-
-			V3_3 {
-				iio-device = <&v33_volt>;
-				decimal-places = <3>;
-				averaging-window = <1>;
-				sort-order = <4>;
-			};
-
-			V5_0 {
-				iio-device = <&v50_volt>;
-				decimal-places = <3>;
-				averaging-window = <1>;
-				sort-order = <5>;
-			};
-
-			Vbus_debug {
-				iio-device = <&vbus_debug_volt>;
-				decimal-places = <2>;
-				averaging-window = <1>;
-				sort-order = <6>;
-			};
-
-			Vbus_network {
-				iio-device = <&vbus_network_volt>;
-				decimal-places = <2>;
-				averaging-window = <1>;
-				sort-order = <7>;
 			};
 		};
 
@@ -279,7 +249,9 @@
 			};
 
 			V_OUT {
-				io-gpios = <&wbec_gpio 4 GPIO_ACTIVE_HIGH>;
+				io-gpios = <PIN_PE 2 GPIO_ACTIVE_HIGH>;
+				gpio-xlate-type = "bank_pin";
+				gpio-pins-per-bank = <32>;
 				output-high;
 				sort-order = <9>;
 			};
@@ -294,7 +266,7 @@
 
 			pcbtemp {
 				title = "Board Temperature";
-				hwmon-node-name = "iio-hwmon-pcb-temp";
+				hwmon-node-name = "pcb-temp";
 				hwmon-channel = "temp1";
 			};
 		};
@@ -308,11 +280,6 @@
 	iio-hwmon-axp {
 		compatible = "iio-hwmon";
 		io-channels = <&axp_adc 0>, <&axp_adc 1>, <&axp_adc 2>;
-	};
-
-	iio-hwmon-pcb-temp {
-		compatible = "iio-hwmon";
-		io-channels = <&wbec_iio 9>;
 	};
 
 	/*
@@ -331,12 +298,12 @@
 	vin: vin {
 		compatible = "gpio-charger";
 		charger-type = "mains";
-		gpios = <&wbec_gpio 5 GPIO_ACTIVE_HIGH>;
+		gpios = <PIN_PD 19 GPIO_ACTIVE_HIGH>;
 	};
 
 	a1_volt: a1-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 0>;
+		io-channels = <&gpadc 0 0>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <2700>;
@@ -346,7 +313,7 @@
 
 	a2_volt: a2-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 1>;
+		io-channels = <&gpadc 3>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <2700>;
@@ -354,7 +321,7 @@
 	};
 	a3_volt: a3-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 2>;
+		io-channels = <&gpadc 2>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <2700>;
@@ -363,47 +330,11 @@
 
 	vin_volt: vin-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 4>;
+		io-channels = <&gpadc 1>;
 		#io-channel-cells = <1>;
 
-		output-ohms = <1>;
-		full-ohms = <1>;
-	};
-
-	v33_volt: v33-volt {
-		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 5>;
-		#io-channel-cells = <1>;
-
-		output-ohms = <1>;
-		full-ohms = <1>;
-	};
-
-	v50_volt: v50-volt {
-		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 6>;
-		#io-channel-cells = <1>;
-
-		output-ohms = <1>;
-		full-ohms = <1>;
-	};
-
-	vbus_debug_volt: vbus-debug-volt {
-		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 7>;
-		#io-channel-cells = <1>;
-
-		output-ohms = <1>;
-		full-ohms = <1>;
-	};
-
-	vbus_network_volt: vbus-network-volt {
-		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 8>;
-		#io-channel-cells = <1>;
-
-		output-ohms = <1>;
-		full-ohms = <1>;
+		output-ohms = <2700>;
+		full-ohms = <49700>;
 	};
 };
 
@@ -461,9 +392,9 @@
 		"SOM PMIC SCL", "SOM PMIC SDA", "SIM_SELECT", "BUZZER", /*  0 - 3 */
 		"MOD1 RTS", "SODIMM:111 [NC]", "SODIMM:113 [NC]", "SODIMM:121 [NC]", /*  4 - 7 */
 		"SODIMM:123 [NC]", "RED LED", "GREEN LED", "[NC]", /*  8 - 11 */
-		"SODIMM:125 [NC]", "ON PERIPH", "EC CS", "EC CLK", /* 12 - 15 */
-		"EC MOSI", "EC MISO", "WBIO SCL", "WBIO SDA", /* 16 - 19 */
-		"RS-485-2 FAILSAFE MOD3 RTS", "CAN TXRX ON", "DEBUG UART TX", "DEBUG UART RX", /* 20 - 23 */
+		"SODIMM:125 [NC]", "W1 UP", "EEPROM-2 SDA", "EEPROM-2 SCL", /* 12 - 15 */
+		"EEPROM-1 SDA", "EEPROM-1 SCL", "WBIO SCL", "WBIO SDA", /* 16 - 19 */
+		"SODIMM:52 [NC]", "SODIMM:50 [NC]", "DEBUG UART TX", "DEBUG UART RX", /* 20 - 23 */
 		"", "", "", "", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
 		/* PC */
@@ -480,14 +411,14 @@
 		"LVDS D2 P", "LVDS D2 N", "LVDS DCK P", "LVDS DCK N", /*  4 - 7 */
 		"LVDS D3 P", "LVDS D3 N", "D1 OUT", "A3 OUT", /*  8 - 11 */
 		"A2 OUT", "A1 OUT", "PUSHBUTTON", "[NC]", /* 12 - 15 */
-		"[NC]", "[NC]", "SWCLK/BOOT0", "EC RESET", /* 16 - 19 */
-		"USB0 ID", "SODIMM:182 [NC]", "[NC]", "[NC]", /* 20 - 23 */
+		"[NC]", "[NC]", "[NC]", "WBMZ STATUS", /* 16 - 19 */
+		"USB0 ID", "WATCHDOG OUT", "[NC]", "[NC]", /* 20 - 23 */
 		"WI-FI ON", "GSM STATUS", "GSM PWRKEY", "GSM ON", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
 		/* PE */
-		"USB0 ON", "5V_OUT ON", "SODIMM:84 [NC]", "SODIMM:82 [NC]",  /*  0 - 3 */
-		"RS-485-2 TERMINATION", "SODIMM:68 [NC]", "SODIMM:66 [NC]", "SODIMM:64 [NC]", /*  4 - 7 */
-		"SODIMM:62 [NC]", "RS-485-1 TERMINATION", "RS-485-2 FAILSAFE", "RS-485-1 FAILSAFE", /*  8 - 11 */
+		"USB0 ON", "5V_OUT ON", "V_OUT ON", "W2 UP",  /*  0 - 3 */
+		"SODIMM:79 [NC]", "RS-485-2 TERMINATION", "RS-485-1 TERMINATION", "RS-485-2 FAILSAFE", /*  4 - 7 */
+		"RS-485-1 FAILSAFE", "[NC]", "MOD3 RTS", "CAN TXRX ON", /*  8 - 11 */
 		"", "", "", "", /* 12 - 15 */
 		"", "", "", "", /* 16 - 19 */
 		"", "", "", "", /* 20 - 23 */
@@ -521,11 +452,11 @@
 		"SOM ETH0 TXCK", "SOM ETH0 CRS", "SOM ETH0 COL", "SOM LCD BACKLIGHT ON", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
 		/* PI PI10-PI19 interrupts*/
-		"W1 UP", "W2 UP", "CR+RTC SCL", "CR+RTC SDA", /*  0 - 3 */
+		"RTC SCK", "RTC SDA", "SODIMM: 76 [NC]", "[NC]", /*  0 - 3 */
 		"SODIMM: 75 [NC]", "SODIMM: 77 [NC]", "SODIMM: 79 [NC]", "SODIMM: 81 [NC]", /*  4 - 7 */
 		"SODIMM: 83 [NC]", "SODIMM: 85 [NC]", "MOD3 TX", "MOD3 RX", /*  8 - 11 */
-		"MOD2 TX", "MOD2 RX", "MOD4 RTS", "INT EC", /* 12 - 15 */
-		"WBIO INT", "W2", "RS-485-1 TX", "RS-485-1 RX", /* 16 - 19 */
+		"MOD2 TX", "MOD2 RX", "MOD4 RTS", "W2", /* 12 - 15 */
+		"WBIO INT", "RTC OUT", "RS-485-1 TX", "RS-485-1 RX", /* 16 - 19 */
 		"MOD1 TX", "MOD1 RX", "", "", /* 20 - 23 */
 		"", "", "", "", /* 24 - 27 */
 		"", "", "", ""; /* 28 - 31 */
@@ -547,13 +478,6 @@
 			"PC15", "PC24";
 		function = "mmc2";
 		drive-strength = <40>;
-		bias-pull-up;
-	};
-
-	/* WBEC */
-	pinctrl_wbec_i2c_gpio: wbec-i2c-pb-pins {
-		pins = "PB14", "PB15", "PB16", "PB17";
-		function = "gpio_in";
 		bias-pull-up;
 	};
 
@@ -1053,42 +977,6 @@
 
 &gpadc {
 	status = "okay";
-};
-
-&spi2 {
-	pinctrl-0 = <&spi2_pb_pins>,
-			<&spi2_cs0_pb_pin>;
-	pinctrl-names = "default";
-	status = "okay";
-
-	wbec: wbec@0 {
-		spi-max-frequency = <1000000>;
-
-		compatible = "wirenboard,wbec";
-		reg = <0>;
-		status = "okay";
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		wakeup-source;
-
-		wbec_gpio: wbec-gpio@0 {
-			compatible = "wirenboard,wbec-gpio";
-			reg = <0>;
-
-			gpio-controller;
-			#gpio-cells = <2>;
-			linux,base = <384>;
-			ngpios = <6>;
-			gpio-line-names = "EC A1", "EC A2", "EC A3", "EC A4", "EC V OUT", "EC WBMZ STATUS";
-		};
-
-		wbec_iio: wbec-iio@0 {
-			compatible = "wirenboard,wbec-iio";
-			reg = <0>;
-			#io-channel-cells = <1>;
-		};
-	};
 };
 
 /*
