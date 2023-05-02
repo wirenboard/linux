@@ -72,7 +72,7 @@ static int wbec_read_raw(struct iio_dev *indio_dev,
 			*val = 1;
 			*val2 = 0;
 		} else if (channel->type == IIO_TEMP) {
-			*val = 100;
+			*val = 10;
 			*val2 = 0;
 		} else {
 			break;
