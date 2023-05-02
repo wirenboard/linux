@@ -89,6 +89,13 @@
 		"MOD1 TX", "MOD1 RX", "", "", /* 20 - 23 */
 		"", "", "", "", /* 24 - 27 */
 		"", "", "", ""; /* 28 - 31 */
+
+	/* WBEC */
+	pinctrl_wbec_i2c_gpio: wbec-i2c-pb-pins {
+		pins = "PB14", "PB15", "PB16", "PB17";
+		function = "gpio_in";
+		bias-pull-up;
+	};
 };
 
 &pinctrl_mod3_de_gpio {
@@ -125,9 +132,228 @@
 
 / {
 	/delete-node/ discrete-watchdog;
+
+	i2c_wbec: i2c_wbec {
+		compatible = "i2c-gpio";
+		gpios = <PIN_PB 16 GPIO_ACTIVE_HIGH /* sda/mosi */
+				PIN_PB 17 GPIO_ACTIVE_HIGH /* scl/miso */
+			>;
+		i2c-gpio,delay-us = <2>;	/* ~100 kHz */
+
+		pinctrl-0 = <&pinctrl_wbec_i2c_gpio>;
+		pinctrl-names = "default";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "disabled";
+	};
+
+	wirenboard {
+		analog-inputs {
+			A4 {
+				iio-device = <&a4_volt>;
+				decimal-places = <1>;
+				averaging-window = <1>;
+				sort-order = <2>;
+			};
+
+			V3_3 {
+				iio-device = <&v33_volt>;
+				decimal-places = <3>;
+				averaging-window = <1>;
+				sort-order = <4>;
+			};
+
+			V5_0 {
+				iio-device = <&v50_volt>;
+				decimal-places = <3>;
+				averaging-window = <1>;
+				sort-order = <5>;
+			};
+
+			Vbus_debug {
+				iio-device = <&vbus_debug_volt>;
+				decimal-places = <2>;
+				averaging-window = <1>;
+				sort-order = <6>;
+			};
+
+			Vbus_network {
+				iio-device = <&vbus_network_volt>;
+				decimal-places = <2>;
+				averaging-window = <1>;
+				sort-order = <7>;
+			};
+		};
+
+		gpios {
+			/delete-node/ D1_OUT;
+			/delete-node/ D1_IN;
+
+			A4_OUT {
+				io-gpios = <PIN_PD 10 GPIO_ACTIVE_HIGH>;
+				gpio-xlate-type = "bank_pin";
+				gpio-pins-per-bank = <32>;
+				output-low;
+				sort-order = <3>;
+			};
+
+			A4_IN {
+				io-gpios = <PIN_PH 4 GPIO_ACTIVE_LOW>;
+				gpio-xlate-type = "bank_pin";
+				gpio-pins-per-bank = <32>;
+				input;
+				sort-order = <7>;
+			};
+
+			V_OUT {
+				/delete-property/ gpio-xlate-type;
+				/delete-property/ gpio-pins-per-bank;
+
+				io-gpios = <&wbec_gpio 4 GPIO_ACTIVE_HIGH>;
+				output-high;
+			};
+		};
+
+		hwmon-nodes {
+			pcbtemp {
+				hwmon-node-name = "iio-hwmon-pcb-temp";
+			};
+		};
+	};
+
+	iio-hwmon-pcb-temp {
+		compatible = "iio-hwmon";
+		io-channels = <&wbec_iio 9>;
+	};
+
+	a4_volt: a4-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_iio 3>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <6980>;
+		full-ohms = <95680>;
+	};
+
+	vin_volt: vin-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_iio 4>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
+	};
+
+	v33_volt: v33-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_iio 5>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
+	};
+
+	v50_volt: v50-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_iio 6>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
+	};
+
+	vbus_debug_volt: vbus-debug-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_iio 7>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
+	};
+
+	vbus_network_volt: vbus-network-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_iio 8>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
+	};
 };
 
 /delete-node/ &pinctrl_rtc_clkout_gpio;
+
+&vin {
+	gpios = <&wbec_gpio 5 GPIO_ACTIVE_HIGH>;
+};
+
+&a1_volt {
+	io-channels = <&wbec_iio 0>;
+
+	output-ohms = <6980>;
+	full-ohms = <95680>;
+};
+
+&a2_volt {
+	io-channels = <&wbec_iio 1>;
+
+	output-ohms = <6980>;
+	full-ohms = <95680>;
+};
+
+&a3_volt {
+	io-channels = <&wbec_iio 2>;
+
+	output-ohms = <6980>;
+	full-ohms = <95680>;
+};
+
+&vin_volt {
+	compatible = "voltage-divider";
+	io-channels = <&wbec_iio 4>;
+
+	output-ohms = <1>;
+	full-ohms = <1>;
+};
+
+
+&spi2 {
+	pinctrl-0 = <&spi2_pb_pins>,
+			<&spi2_cs0_pb_pin>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	wbec: wbec@0 {
+		spi-max-frequency = <1000000>;
+
+		compatible = "wirenboard,wbec";
+		reg = <0>;
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		wakeup-source;
+
+		wbec_gpio: wbec-gpio@0 {
+			compatible = "wirenboard,wbec-gpio";
+			reg = <0>;
+
+			gpio-controller;
+			#gpio-cells = <2>;
+			linux,base = <384>;
+			ngpios = <6>;
+			gpio-line-names = "EC A1", "EC A2", "EC A3", "EC A4", "EC V OUT", "EC WBMZ STATUS";
+		};
+
+		wbec_iio: wbec-iio@0 {
+			compatible = "wirenboard,wbec-iio";
+			reg = <0>;
+			#io-channel-cells = <1>;
+		};
+	};
+};
+
+
 
 
 /** TODO
