@@ -23,7 +23,7 @@
 		"SODIMM:123 [NC]", "RED LED", "GREEN LED", "", /*  8 - 11 */
 		"SODIMM:125 [NC]", "ON PERIPH", "EC CS", "EC CLK", /* 12 - 15 */
 		"EC MOSI", "EC MISO", "WBIO SCL", "WBIO SDA", /* 16 - 19 */
-		"RS-485-2 FAILSAFE MOD3 RTS", "CAN TXRX ON", "DEBUG UART TX", "DEBUG UART RX", /* 20 - 23 */
+		"MOD3 RTS", "CAN TXRX ON", "DEBUG UART TX", "DEBUG UART RX", /* 20 - 23 */
 		"", "", "", "", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
 		/* PC */
@@ -112,9 +112,9 @@
 	status = "okay";
 	clock-frequency = <10000>;
 
-	rtc_onboard: rtc@62 {
+	rtc_onboard: rtc@32 {
 		compatible = "whwave,sd3078";	// TODO compatible with SD3178 ???
-		reg = <0x62>;
+		reg = <0x32>;
 	};
 };
 
