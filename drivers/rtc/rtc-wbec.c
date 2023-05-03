@@ -18,7 +18,11 @@
 #include <linux/of_device.h>
 #include <linux/mfd/wbec.h>
 
-#define WBEC_RTC_ALARM_FLAG_POLL_PERIOD_MS		500
+#define WBEC_RTC_OFFSET_LSB_PPB_X10	9537	/* 0.9537 ppm */
+#define WBEC_RTC_CALM_TO_PPB(x)		((x) * WBEC_RTC_OFFSET_LSB_PPB_X10 / 10)
+#define WBEC_RTC_PPB_TO_CALM(x)		((x) * 10 / WBEC_RTC_OFFSET_LSB_PPB_X10)
+#define WBEC_RTC_MAX_PLUS_OFFSET	512
+#define WBEC_RTC_MAX_MINUS_OFFSET	-511
 
 struct wbec_rtc_config {
 	struct regmap_config regmap;
@@ -168,15 +172,16 @@ static int wbec_rtc_read_offset(struct device *dev, long *offset)
 	 * Bit 13 CALW16: Use a 16-second calibration cycle period
 	 * Bits 8:0 CALM[8:0]: Calibration minus
 	 * 1 lsb in wbec is 0.9537 ppm
+	 *
+	 * Formula is (512 × CALP) - CALM
+	 * CALW8 and CALW16 unused
 	 */
 
 	if (reg & WBEC_REG_RTC_CFG_OFFSET_CALP_BIT)
-		tmp = 488500;
+		tmp = WBEC_RTC_MAX_PLUS_OFFSET;
+	tmp -= reg & WBEC_REG_RTC_CFG_OFFSET_CALM_MASK;
 
-	tmp -= ((reg & WBEC_REG_RTC_CFG_OFFSET_CALM_MASK) * 9537) / 10;
-
-	/* CALW8 and CALW16 unused */
-	*offset = tmp;
+	*offset = WBEC_RTC_CALM_TO_PPB(tmp);
 
 	return 0;
 }
@@ -185,17 +190,23 @@ static int wbec_rtc_set_offset(struct device *dev, long offset)
 {
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
 	u16 reg = 0;
+	long tmp = 0;
 
 	dev_dbg(dev, "%s function\n", __func__);
 
-	if (offset > 0) {
-		reg = (488500 - offset) * 10 / 9537;
-		reg &= WBEC_REG_RTC_CFG_OFFSET_CALM_MASK;
-		reg |= WBEC_REG_RTC_CFG_OFFSET_CALP_BIT;
-	} else if (offset < 0) {
-		reg = -offset;
-		reg &= WBEC_REG_RTC_CFG_OFFSET_CALM_MASK;
-	}
+	/* Convert offset to EC units */
+	tmp = WBEC_RTC_PPB_TO_CALM(offset);
+
+	/* Limit min and max offset */
+	if (tmp > WBEC_RTC_MAX_PLUS_OFFSET)
+		tmp = WBEC_RTC_MAX_PLUS_OFFSET;
+	if (tmp < WBEC_RTC_MAX_MINUS_OFFSET)
+		tmp = WBEC_RTC_MAX_MINUS_OFFSET;
+
+	if (tmp > 0)
+		reg = WBEC_REG_RTC_CFG_OFFSET_CALP_BIT | (WBEC_RTC_MAX_PLUS_OFFSET - tmp);
+	else
+		reg = -tmp;
 
 	return regmap_write(wbec_rtc->regmap, WBEC_REG_RTC_CFG_OFFSET, reg);
 }
