@@ -367,6 +367,7 @@ static const struct ethtool_ops emac_ethtool_ops = {
 	.set_link_ksettings = phy_ethtool_set_link_ksettings,
 	.get_msglevel	= emac_get_msglevel,
 	.set_msglevel	= emac_set_msglevel,
+	.get_ts_info = ethtool_op_get_ts_info,
 };
 
 static unsigned int emac_setup(struct net_device *ndev)
@@ -565,6 +566,7 @@ static netdev_tx_t emac_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	writel(channel, db->membase + EMAC_TX_INS_REG);
 
+	skb_tx_timestamp(skb);
 	emac_outblk_32bit(db->membase + EMAC_TX_IO_DATA_REG,
 			skb->data, skb->len);
 	dev->stats.tx_bytes += skb->len;
