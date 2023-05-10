@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb133+wb100) stable; urgency=medium
+
+  * wb7: enable exfat support
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Wed, 10 May 2023 16:24:46 +0600
+
 linux-wb (5.10.35-wb133) stable; urgency=medium
 
   * rtl8723bu: Move powersave logs to debug.
