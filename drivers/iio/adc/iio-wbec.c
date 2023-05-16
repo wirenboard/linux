@@ -49,19 +49,25 @@ static int wbec_read_raw(struct iio_dev *indio_dev,
 				int *val2, long mask)
 {
 	struct wbec_iio *wbec_iio = iio_priv(indio_dev);
-	s32 ret;
+	int ret;
+	unsigned int read_val;
 
 	dev_dbg(&indio_dev->dev, "%s function. addr=0x%lX\n", __func__, channel->address);
 
 	switch (mask) {
 	case IIO_CHAN_INFO_RAW:
 		if ((channel->type == IIO_TEMP) || (channel->type == IIO_VOLTAGE)) {
-			/* Temperature in deg C x100 */
-			ret = regmap_read(wbec_iio->regmap, channel->address, val);
+			ret = regmap_read(wbec_iio->regmap, channel->address, &read_val);
 			if (ret < 0) {
 				dev_err(&indio_dev->dev, "error reading value from reg 0x%lX", channel->address);
 				return ret;
 			}
+			if (channel->type == IIO_TEMP)
+				/* Temperature in deg C x100, s16 type */
+				*val = (s16)read_val;
+			else
+				/* Voltage in mV, u16 type */
+				*val = (u16)read_val;
 		} else {
 			break;
 		}
