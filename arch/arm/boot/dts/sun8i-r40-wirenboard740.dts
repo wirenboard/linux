@@ -147,6 +147,19 @@
 		status = "disabled";
 	};
 
+	regulators {
+		reg_periph: vdd-periph-regulator {
+			compatible = "regulator-fixed";
+			regulator-name = "vdd-periph";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			regulator-always-on;
+
+			gpio = <PIN_PB 13 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+		};
+	};
+
 	wirenboard {
 		analog-inputs {
 			A4 {
