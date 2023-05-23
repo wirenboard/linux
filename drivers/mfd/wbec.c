@@ -19,7 +19,9 @@
 #include <linux/mfd/wbec.h>
 
 #define WBEC_ID						0x3CD2
-#define WBEC_POWER_RESET_DELAY_MS	500
+
+/* For power off WBEC activates PWON pin on PMIC for 6s */
+#define WBEC_POWER_RESET_DELAY_MS			10000
 
 static const struct regmap_config wbec_regmap_config = {
 	.reg_bits = 16,
