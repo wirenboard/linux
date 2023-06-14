@@ -23,8 +23,9 @@
 
 
 #define WBEC_WDT_MIN_TIMEOUT		1
-#define WBEC_WDT_MAX_TIMEOUT		255
-#define WBEC_WDG_DEFAULT_TIMEOUT	5
+#define WBEC_WDT_MAX_TIMEOUT		600
+#define WBEC_WDG_DEFAULT_TIMEOUT	60
+#define WBEC_WDG_STOP_TIMEOUT		300
 #define WBEC_RESET_PROTECTION_MS	300
 
 struct wbec_watchdog {
@@ -38,16 +39,6 @@ static int wbec_wdt_start(struct watchdog_device *wdd)
 	struct wbec_watchdog *wdt = watchdog_get_drvdata(wdd);
 
 	dev_info(wdt->dev, "start watchdog, but actually EC watchdog is always running\n");
-
-	// Nothing to do here, watchdog always running
-	return 0;
-}
-
-static int wbec_wdt_stop(struct watchdog_device *wdd)
-{
-	struct wbec_watchdog *wdt = watchdog_get_drvdata(wdd);
-
-	dev_info(wdt->dev, "stop watchdog, but actually EC watchdog is always running\n");
 
 	// Nothing to do here, watchdog always running
 	return 0;
@@ -90,6 +81,23 @@ static int wbec_wdt_set_timeout(struct watchdog_device *wdd,
 			ret);
 
 	return ret;
+}
+
+static int wbec_wdt_stop(struct watchdog_device *wdd)
+{
+	struct wbec_watchdog *wdt = watchdog_get_drvdata(wdd);
+	int ret;
+
+	dev_info(wdt->dev,
+		"stop watchdog, but actually EC watchdog is always running, timeout set to %d seconds\n",
+		WBEC_WDG_STOP_TIMEOUT);
+
+	ret = wbec_wdt_set_timeout(wdd, WBEC_WDG_STOP_TIMEOUT);
+	if (ret)
+		return ret;
+
+	// Reset watchdog after timeout updated
+	return wbec_wdt_ping(wdd);
 }
 
 static const struct watchdog_info wbec_watchdog_info = {
