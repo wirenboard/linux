@@ -297,7 +297,7 @@
 /delete-node/ &pinctrl_rtc_clkout_gpio;
 
 &vin {
-	gpios = <&wbec_gpio 5 GPIO_ACTIVE_HIGH>;
+	gpios = <&wbec_gpio 5 GPIO_ACTIVE_LOW>;
 };
 
 &a1_volt {
