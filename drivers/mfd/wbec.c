@@ -27,6 +27,7 @@ static const struct regmap_config wbec_regmap_config = {
 	.reg_bits = 16,
 	.read_flag_mask = BIT(7),
 	.val_bits = 16,
+	.max_register = 0xFF,
 };
 
 static const struct mfd_cell wbec_cells[] = {
