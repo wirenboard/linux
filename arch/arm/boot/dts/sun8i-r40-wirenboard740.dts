@@ -244,8 +244,8 @@
 		io-channels = <&wbec_iio 3>;
 		#io-channel-cells = <1>;
 
-		output-ohms = <6980>;
-		full-ohms = <95680>;
+		output-ohms = <10000>;
+		full-ohms = <98700>;
 	};
 
 	vin_volt: vin-volt {
@@ -303,22 +303,22 @@
 &a1_volt {
 	io-channels = <&wbec_iio 0>;
 
-	output-ohms = <6980>;
-	full-ohms = <95680>;
+	output-ohms = <10000>;
+	full-ohms = <98700>;
 };
 
 &a2_volt {
 	io-channels = <&wbec_iio 1>;
 
-	output-ohms = <6980>;
-	full-ohms = <95680>;
+	output-ohms = <10000>;
+	full-ohms = <98700>;
 };
 
 &a3_volt {
 	io-channels = <&wbec_iio 2>;
 
-	output-ohms = <6980>;
-	full-ohms = <95680>;
+	output-ohms = <10000>;
+	full-ohms = <98700>;
 };
 
 &vin_volt {
