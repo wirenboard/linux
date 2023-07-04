@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb138) stable; urgency=medium
+
+  * add 38071cb dts, defconfig and special build scripts
+
+ -- Evgeny Boger <boger@wirenboard.com>  Tue, 04 Jul 2023 22:09:19 +0300
+
 linux-wb (5.10.35-wb137) stable; urgency=medium
 
   * wb7: enable exfat support
