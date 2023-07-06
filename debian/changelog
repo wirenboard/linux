@@ -1,9 +1,9 @@
-linux-wb (5.10.35-wb138) stable; urgency=medium
+linux-wb (5.10.35-wb140) stable; urgency=medium
 
   * wb74: add dts
   * wb-ec: add drivers
 
- -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Tue, 16 May 2023 16:44:23 +0300
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Thu, 06 Jul 2023 11:52:49 +0300
 
 linux-wb (5.10.35-wb139) stable; urgency=medium
 
