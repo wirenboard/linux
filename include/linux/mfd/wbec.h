@@ -4,7 +4,7 @@
 #include <linux/regulator/machine.h>
 #include <linux/regmap.h>
 
-
+#define WBEC_ID                                             0x3CD2
 
 /* Region INFO: RW */
 #define WBEC_REG_INFO_WBEC_ID                               0x00

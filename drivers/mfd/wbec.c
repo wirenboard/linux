@@ -18,8 +18,6 @@
 #include <linux/notifier.h>
 #include <linux/mfd/wbec.h>
 
-#define WBEC_ID						0x3CD2
-
 /* For power off WBEC activates PWON pin on PMIC for 6s */
 #define WBEC_POWER_RESET_DELAY_MS			10000
 
