@@ -1,3 +1,11 @@
+/* SPDX-License-Identifier: GPL-2.0-only
+ * wbec.c - Wiren Board Embedded Controller MFD driver
+ *
+ * Copyright (c) 2023 Wiren Board LLC
+ *
+ * Author: Pavel Gasheev <pavel.gasheev@wirenboard.ru>
+ */
+
 #ifndef __WBEC_H
 #define __WBEC_H
 
