@@ -47,8 +47,22 @@ void pwrkey_poll_wq(struct work_struct *work)
 	struct wbec_pwrkey *wbec_pwrkey =
 		container_of(work, typeof(*wbec_pwrkey), wq);
 	struct input_dev *pwr = wbec_pwrkey->pwr;
+	int val, wbec_id;
 
-	int val = regmap_test_bits(wbec_pwrkey->regmap, WBEC_REG_IRQ_FLAGS, WBEC_REG_IRQ_PWROFF_REQ_MSK);
+	// Check that WBEC presented before read flag
+	val = regmap_read(wbec_pwrkey->regmap, WBEC_REG_INFO_WBEC_ID, &wbec_id);
+	if (val < 0) {
+		dev_err(&pwr->dev, "failed to read the wbec id at 0x%X\n",
+			WBEC_REG_INFO_WBEC_ID);
+		return;
+	}
+	if (wbec_id != WBEC_ID) {
+		dev_err(&pwr->dev, "wrong wbec ID at 0x%X. Get 0x%X istead of 0x%X\n",
+			WBEC_REG_INFO_WBEC_ID, wbec_id, WBEC_ID);
+		return;
+	}
+
+	val = regmap_test_bits(wbec_pwrkey->regmap, WBEC_REG_IRQ_FLAGS, WBEC_REG_IRQ_PWROFF_REQ_MSK);
 
 	if (val > 0) {
 		dev_info(&pwr->dev, "Power key press detected\n");
