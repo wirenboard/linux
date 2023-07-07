@@ -40,7 +40,7 @@
 		"LVDS D2 P", "LVDS D2 N", "LVDS DCK P", "LVDS DCK N", /*  4 - 7 */
 		"LVDS D3 P", "LVDS D3 N", "A4 OUT", "A3 OUT", /*  8 - 11 */
 		"A2 OUT", "A1 OUT", "PUSHBUTTON", "SODIMM:170 [NC]", /* 12 - 15 */
-		"SODIMM:172 [NC]", "SODIMM:174 [NC]", "SWCLK/BOOT0", "EC RESET", /* 16 - 19 */
+		"SODIMM:172 [NC]", "SODIMM:174 [NC]", "EC SWCLK/BOOT0", "EC RESET", /* 16 - 19 */
 		"USB0 ID", "SODIMM:182 [NC]", "SODIMM:184 [NC]", "[NC]", /* 20 - 23 */
 		"WI-FI ON", "GSM STATUS", "GSM PWRKEY", "GSM ON", /* 24 - 27 */
 		"", "", "", "", /* 28 - 31 */
