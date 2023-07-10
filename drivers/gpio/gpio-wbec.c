@@ -119,9 +119,16 @@ static int wbec_gpio_probe(struct platform_device *pdev)
 	return 0;
 }
 
+static const struct of_device_id wbec_gpio_of_match[] = {
+	{ .compatible = "wirenboard,wbec-gpio" },
+	{}
+};
+MODULE_DEVICE_TABLE(of, wbec_gpio_of_match);
+
 static struct platform_driver wbec_gpio_driver = {
 	.driver = {
 		.name = "wbec-gpio",
+		.of_match_table = wbec_gpio_of_match,
 	},
 	.probe = wbec_gpio_probe,
 };
@@ -130,3 +137,4 @@ module_platform_driver(wbec_gpio_driver);
 MODULE_AUTHOR("Pavel Gasheev <pavel.gasheev@wirenboard.ru>");
 MODULE_DESCRIPTION("Wiren Board 7 Embedded Controller GPIO driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:wbec-gpio");

@@ -149,9 +149,16 @@ static int wbec_iio_probe(struct platform_device *pdev)
 	return devm_iio_device_register(&pdev->dev, indio_dev);
 }
 
+static const struct of_device_id wbec_iio_of_match[] = {
+	{ .compatible = "wirenboard,wbec-iio" },
+	{}
+};
+MODULE_DEVICE_TABLE(of, wbec_iio_of_match);
+
 static struct platform_driver wbec_iio_driver = {
 	.driver = {
 		.name	= "wbec-iio",
+		.of_match_table = wbec_iio_of_match,
 	},
 	.probe = wbec_iio_probe,
 };
@@ -161,3 +168,4 @@ module_platform_driver(wbec_iio_driver);
 MODULE_AUTHOR("Pavel Gasheev <pavel.gasheev@wirenboard.ru>");
 MODULE_DESCRIPTION("Wiren Board 7 Embedded Controller IIO driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:wbec-iio");
