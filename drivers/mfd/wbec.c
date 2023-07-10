@@ -17,6 +17,7 @@
 #include <linux/reboot.h>
 #include <linux/notifier.h>
 #include <linux/mfd/wbec.h>
+#include <linux/mod_devicetable.h>
 
 /* For power off WBEC activates PWON pin on PMIC for 6s */
 #define WBEC_POWER_RESET_DELAY_MS			10000
@@ -167,6 +168,12 @@ static int wbec_remove(struct spi_device *spi)
 	return 0;
 }
 
+static const struct spi_device_id wbec_spi_id[] = {
+	{"wbec", 0},
+	{}
+};
+MODULE_DEVICE_TABLE(spi, wbec_spi_id);
+
 static const struct of_device_id wbec_of_match[] = {
 	{ .compatible = "wirenboard,wbec" },
 	{}
@@ -180,6 +187,7 @@ static struct spi_driver wbec_driver = {
 	},
 	.probe = wbec_probe,
 	.remove = wbec_remove,
+	.id_table = wbec_spi_id,
 };
 
 
