@@ -3,7 +3,7 @@ linux-wb (5.10.35-wb133+wb102) stable; urgency=medium
   * fix RTC bug on WB7: PCF85063 config register was not properly cleared
 leading to factory test failure
 
- -- Aleksandr Kazadaev <aleksandr.kazadaev@wirenboard.com> Mon, 10 May 2023 19:42 0600
+ -- Aleksandr Kazadaev <aleksandr.kazadaev@wirenboard.com> Mon, 10 May 2023 19:42 +0600
 
 linux-wb (5.10.35-wb133+wb101) stable; urgency=medium
 
