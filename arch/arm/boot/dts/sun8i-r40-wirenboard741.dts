@@ -120,7 +120,7 @@
 	clock-frequency = <10000>;
 
 	rtc_onboard: rtc@32 {
-		compatible = "whwave,sd3078";	// TODO compatible with SD3178 ???
+		compatible = "whwave,sd3078";
 		reg = <0x32>;
 	};
 };
@@ -365,19 +365,3 @@
 		};
 	};
 };
-
-
-
-
-/** TODO
-
-ON_PERIPH 		???? -> PB13
-TERM-485-2		PE05 -> PE04
-TERM-485-1		PE06 -> PE09
-RAST-485-2		PE07 -> PE10
-RAST-485-1		PE08 -> PE11
-CAN-OFF			PE11 -> PB21
-
-Add EC
-
-*/
