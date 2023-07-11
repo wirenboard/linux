@@ -157,7 +157,7 @@ static int wbec_remove(struct spi_device *spi)
 	dev_dbg(&spi->dev, "%s function\n", __func__);
 
 	/**
-	 * pm_power_off may points to a function from another module.
+	 * pm_power_off may point to a function from another module.
 	 * Check if the pointer is set by us and only then overwrite it.
 	 */
 	if (pm_power_off == wbec_pm_power_off) {
