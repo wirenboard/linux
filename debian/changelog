@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb140) stable; urgency=medium
+
+  * spi: spi-sun6i: enable autosuspend feature
+
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Tue, 11 Jul 2023 10:16:43 +0300
+
 linux-wb (5.10.35-wb139) stable; urgency=medium
 
   * fix RTC bug on WB7: PCF85063 config register was not properly cleared
