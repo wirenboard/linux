@@ -1363,13 +1363,13 @@ config GPIO_UCB1400
 	  The UCB1400 is an AC97 audio codec.
 
 config GPIO_WBEC
-	tristate "Wirenboard Embedded Controller GPIO"
+	tristate "Wiren Board Embedded Controller GPIO Driver"
 	depends on MFD_WBEC
-	select GPIO_REGMAP
 	select GPIOLIB_IRQCHIP
 	select REGMAP_IRQ
 	help
-	  This driver supports Wirenboard Embedded Controller GPIO
+	  This option enables support for GPIO connected to
+	  Wiren Board Embedded Controller.
 
 config GPIO_WHISKEY_COVE
 	tristate "GPIO support for Whiskey Cove PMIC"

@@ -870,11 +870,12 @@ config INPUT_STPMIC1_ONKEY
 	  module will be called stpmic1_onkey.
 
 config INPUT_WBEC_PWRBUTTON
-	tristate "Wirenboard Embedded Controller Power Button"
+	tristate "Wiren Board Embedded Controller Power Button Driver"
 	depends on MFD_WBEC
 	help
-	  Say Y to enable support of onkey embedded into WBEC. onkey
-	  can be used to power on from shutdown and force a shut-down on
-	  long press.
+	  This option enables support for power button connected to
+	  Wiren Board Embedded Controller.
+	  Power button can be used to power on from shutdown,
+	  safely power off and force a shutdown on long press.
 
 endif

@@ -1215,11 +1215,11 @@ config VIPERBOARD_ADC
 	  called viperboard_adc.
 
 config WBEC_IIO
-	tristate "Wirenboard Embedded Controller GPIO Industrial I/O"
+	tristate "Wiren Board Embedded Controller ADC Driver"
 	depends on MFD_WBEC
 	help
-	  Say yes here to access the IIO part of the Wirenboard
-	  Embedded Controller.
+	  This option enables support for ADC and temperature measurement by
+	  Wiren Board Embedded Controller.
 
 config XILINX_XADC
 	tristate "Xilinx XADC driver"

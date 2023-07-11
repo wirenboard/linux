@@ -1955,11 +1955,11 @@ config RTC_DRV_WILCO_EC
 	  be named "rtc_wilco_ec".
 
 config RTC_DRV_WBEC
-	tristate "Wirenboard Embedded Controller RTC"
+	tristate "Wiren Board Embedded Controller RTC Driver"
 	depends on MFD_WBEC
 	help
-	  If you say yes here, you get read/write support for the Real Time
-	  Clock on the Wirenboard Embedded Controller.
+	  This option enables support for Real Time Clock on the
+	  Wiren Board Embedded Controller.
 	  Also rtcwake from poweroff mode is supported.
 
 endif # RTC_CLASS
