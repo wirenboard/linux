@@ -21,11 +21,20 @@
 #define WBEC_GPIO_PER_REG		16
 
 struct wbec_gpio {
-	int gpio_per_reg;
 	struct regmap *regmap;
 	struct device *dev;
 	struct gpio_chip gpio_chip;
 };
+
+static inline unsigned int offset_to_reg_addr(unsigned int offset)
+{
+	return WBEC_REG_GPIO + (offset / WBEC_GPIO_PER_REG);
+}
+
+static inline unsigned int offset_to_reg_mask(unsigned int offset)
+{
+	return BIT(offset % WBEC_GPIO_PER_REG);
+}
 
 
 /* generic gpio chip */
@@ -34,8 +43,8 @@ static int wbec_gpio_get(struct gpio_chip *chip, unsigned int offset)
 	struct wbec_gpio *wbec_gpio = gpiochip_get_data(chip);
 	int ret, val, reg, mask;
 
-	reg = WBEC_REG_GPIO + (offset / wbec_gpio->gpio_per_reg);
-	mask = BIT(offset % wbec_gpio->gpio_per_reg);
+	reg = offset_to_reg_addr(offset);
+	mask = offset_to_reg_mask(offset);
 
 	dev_dbg(wbec_gpio->dev, "%s function. offset=%u\n", __func__, offset);
 
@@ -55,8 +64,8 @@ static void wbec_gpio_set(struct gpio_chip *chip,
 	struct wbec_gpio *wbec_gpio = gpiochip_get_data(chip);
 	int ret, reg, mask;
 
-	reg = WBEC_REG_GPIO + (offset / wbec_gpio->gpio_per_reg);
-	mask = BIT(offset % wbec_gpio->gpio_per_reg);
+	reg = offset_to_reg_addr(offset);
+	mask = offset_to_reg_mask(offset);
 
 	dev_dbg(wbec_gpio->dev, "%s function. offset=%u, value=%d\n", __func__, offset, value);
 
@@ -90,12 +99,6 @@ static int wbec_gpio_probe(struct platform_device *pdev)
 	if (ret) {
 		dev_warn(&pdev->dev, "No linux,gpio-base property in device tree. Using -1 as gpio_base");
 		base = -1;
-	}
-
-	ret = device_property_read_u32(&pdev->dev, "gpio-per-reg", &wbec_gpio->gpio_per_reg);
-	if (ret) {
-		dev_dbg(&pdev->dev, "No gpio-per-reg property in device tree. Using %d", WBEC_GPIO_PER_REG);
-		wbec_gpio->gpio_per_reg = WBEC_GPIO_PER_REG;
 	}
 
 	/* Register gpio controller */
