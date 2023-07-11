@@ -332,7 +332,7 @@
 
 &spi2 {
 	pinctrl-0 = <&spi2_pb_pins>,
-			<&spi2_cs0_pb_pin>;
+		    <&spi2_cs0_pb_pin>;
 	pinctrl-names = "default";
 	status = "okay";
 
