@@ -86,9 +86,9 @@ static int wbec_gpio_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	ret = device_property_read_u32(&pdev->dev, "linux,base", &base);
+	ret = device_property_read_u32(&pdev->dev, "linux,gpio-base", &base);
 	if (ret) {
-		dev_warn(&pdev->dev, "No linux,base property in device tree. Using -1 as gpio_base");
+		dev_warn(&pdev->dev, "No linux,gpio-base property in device tree. Using -1 as gpio_base");
 		base = -1;
 	}
 
