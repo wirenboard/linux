@@ -1181,7 +1181,7 @@ patternProperties:
   "^winstar,.*":
     description: Winstar Display Corp.
   "^wirenboard,.*":
-    description: Wiren Board LLC
+    description: Wiren Board, LLC
   "^wits,.*":
     description: Shenzhen Merrii Technology Co., Ltd. (WITS)
   "^wlf,.*":
