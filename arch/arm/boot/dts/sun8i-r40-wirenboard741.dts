@@ -92,7 +92,7 @@
 
 	/* WBEC */
 	pinctrl_wbec_i2c_gpio: wbec-i2c-pb-pins {
-		pins = "PB14", "PB15", "PB16", "PB17";
+		pins = "PB16", "PB17";
 		function = "gpio_in";
 		bias-pull-up;
 	};
