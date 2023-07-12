@@ -49,8 +49,6 @@ static int wbec_wdt_ping(struct watchdog_device *wdd)
 	struct wbec_watchdog *wdt = watchdog_get_drvdata(wdd);
 	int ret;
 
-	dev_dbg(wdt->dev, "%s function\n", __func__);
-
 	ret = regmap_update_bits(wdt->regmap,
 				 WBEC_REG_WDT_STATUS,
 				 WBEC_REG_WDT_STATUS_RESET_MSK,
@@ -120,8 +118,6 @@ static int wbec_wdt_probe(struct platform_device *pdev)
 	struct wbec *wbec;
 	struct wbec_watchdog *wdt;
 	int ret;
-
-	dev_dbg(&pdev->dev, "%s function\n", __func__);
 
 	wbec = dev_get_drvdata(dev->parent);
 	if (!wbec)

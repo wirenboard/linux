@@ -69,8 +69,6 @@ static int wbec_rtc_set_time(struct device *dev, struct rtc_time *tm)
 	int rc;
 	u16 regs[4];
 
-	dev_dbg(dev, "%s function\n", __func__);
-
 	/* hours, minutes and seconds */
 	regs[0] = tm->tm_sec;
 	regs[0] |= tm->tm_min << 8;
@@ -103,8 +101,6 @@ static int wbec_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 	u16 buf[4];
 	int ret;
 
-	dev_dbg(dev, "%s function\n", __func__);
-
 	ret = regmap_bulk_read(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_SECS_MINS,
 				   buf, ARRAY_SIZE(buf));
 	if (ret)
@@ -125,9 +121,6 @@ static int wbec_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
 	u16 buf[4] = {};
 
-	dev_dbg(dev, "%s function, mday=%d, hour=%d, min=%d, sec=%d, en=%d\n", __func__,
-		alrm->time.tm_mday, alrm->time.tm_hour, alrm->time.tm_min, alrm->time.tm_sec, alrm->enabled);
-
 	buf[0] = alrm->time.tm_sec;
 	buf[0] |= alrm->time.tm_min << 8;
 	buf[1] = alrm->time.tm_hour;
@@ -145,8 +138,6 @@ static int wbec_rtc_alarm_irq_enable(struct device *dev,
 {
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
 
-	dev_dbg(dev, "%s function, en=%d\n", __func__, enabled);
-
 	return regmap_update_bits(wbec_rtc->regmap, WBEC_REG_RTC_ALARM_STATUS,
 				  WBEC_REG_RTC_ALARM_STATUS_EN_MSK,
 				  enabled ? WBEC_REG_RTC_ALARM_STATUS_EN_MSK : 0);
@@ -158,8 +149,6 @@ static int wbec_rtc_read_offset(struct device *dev, long *offset)
 	int ret;
 	long tmp = 0;
 	int reg;
-
-	dev_dbg(dev, "%s function\n", __func__);
 
 	ret = regmap_read(wbec_rtc->regmap, WBEC_REG_RTC_CFG_OFFSET, &reg);
 	if (ret)
@@ -191,8 +180,6 @@ static int wbec_rtc_set_offset(struct device *dev, long offset)
 	struct wbec_rtc *wbec_rtc = dev_get_drvdata(dev);
 	u16 reg = 0;
 	long tmp = 0;
-
-	dev_dbg(dev, "%s function\n", __func__);
 
 	/* Convert offset to EC units */
 	tmp = WBEC_RTC_PPB_TO_CALM(offset);
@@ -228,8 +215,6 @@ static int wbec_rtc_probe(struct platform_device *pdev)
 
 	unsigned int tmp;
 	int err;
-
-	dev_dbg(&pdev->dev, "%s function\n", __func__);
 
 	wbec_rtc = devm_kzalloc(&pdev->dev, sizeof(struct wbec_rtc),
 				GFP_KERNEL);

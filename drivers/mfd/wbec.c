@@ -55,8 +55,6 @@ static void wbec_pm_power_off(void)
 	if (!wbec)
 		return;
 
-	dev_dbg(wbec->dev, "%s function\n", __func__);
-
 	ret = regmap_write(wbec->regmap, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_OFF_MSK);
 	if (ret)
 		dev_err(wbec->dev, "Failed to shutdown device!\n");
@@ -73,8 +71,6 @@ static int wbec_restart_notify(struct notifier_block *this, unsigned long mode, 
 
 	if (!wbec)
 		return NOTIFY_STOP;
-
-	dev_dbg(wbec->dev, "%s function\n", __func__);
 
 	ret = regmap_write(wbec->regmap, WBEC_REG_POWER_CTRL, WBEC_REG_POWER_CTRL_REBOOT_MSK);
 	if (ret)
@@ -98,8 +94,6 @@ static int wbec_probe(struct spi_device *spi)
 	int ret;
 	int wbec_id;
 	u16 test[4];
-
-	dev_dbg(&spi->dev, "%s function. irq=%d\n", __func__, spi->irq);
 
 	wbec = devm_kzalloc(&spi->dev, sizeof(*wbec), GFP_KERNEL);
 	if (!wbec)
@@ -154,8 +148,6 @@ static int wbec_probe(struct spi_device *spi)
 
 static int wbec_remove(struct spi_device *spi)
 {
-	dev_dbg(&spi->dev, "%s function\n", __func__);
-
 	/**
 	 * pm_power_off may point to a function from another module.
 	 * Check if the pointer is set by us and only then overwrite it.

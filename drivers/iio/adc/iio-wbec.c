@@ -52,8 +52,6 @@ static int wbec_read_raw(struct iio_dev *indio_dev,
 	int ret;
 	unsigned int read_val;
 
-	dev_dbg(&indio_dev->dev, "%s function. addr=0x%lX\n", __func__, channel->address);
-
 	switch (mask) {
 	case IIO_CHAN_INFO_RAW:
 		if ((channel->type == IIO_TEMP) || (channel->type == IIO_VOLTAGE)) {
@@ -126,9 +124,6 @@ static int wbec_iio_probe(struct platform_device *pdev)
 	struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
 	struct iio_dev *indio_dev;
 	struct wbec_iio *wbec_iio;
-
-	dev_info(&pdev->dev, "%s function\n", __func__);
-	dev_dbg(&pdev->dev, "%s\n", __func__);
 
 	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*wbec_iio));
 	if (!indio_dev)
