@@ -836,24 +836,6 @@
 				function = "spi1";
 			};
 
-			/omit-if-no-ref/
-			spi2_pb_pins: spi2-pb-pins {
-				pins = "PB15", "PB16", "PB17";
-				function = "spi2";
-			};
-
-			/omit-if-no-ref/
-			spi2_cs0_pb_pin: spi2-cs0-pb-pin {
-				pins = "PB14";
-				function = "spi2";
-			};
-
-			/omit-if-no-ref/
-			spi2_cs1_pb_pin: spi2-cs1-pb-pin {
-				pins = "PB13";
-				function = "spi2";
-			};
-
 			uart0_pb_pins: uart0-pb-pins {
 				pins = "PB22", "PB23";
 				function = "uart0";
