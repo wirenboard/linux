@@ -36,8 +36,6 @@ static inline unsigned int offset_to_reg_mask(unsigned int offset)
 	return BIT(offset % WBEC_GPIO_PER_REG);
 }
 
-
-/* generic gpio chip */
 static int wbec_gpio_get(struct gpio_chip *chip, unsigned int offset)
 {
 	struct wbec_gpio *wbec_gpio = gpiochip_get_data(chip);
@@ -46,15 +44,13 @@ static int wbec_gpio_get(struct gpio_chip *chip, unsigned int offset)
 	reg = offset_to_reg_addr(offset);
 	mask = offset_to_reg_mask(offset);
 
-	dev_dbg(wbec_gpio->dev, "%s function. offset=%u\n", __func__, offset);
-
 	ret = regmap_read(wbec_gpio->regmap, reg, &val);
 	if (ret < 0) {
-		dev_err(wbec_gpio->dev, "error when read gpio %u\n", offset);
+		dev_err(wbec_gpio->dev, "error when reading gpio with offset %u\n", offset);
 		return ret;
 	}
 
-	return !!(val & mask);
+	return (val & mask) ? 1 : 0;
 }
 
 static void wbec_gpio_set(struct gpio_chip *chip,
@@ -67,11 +63,9 @@ static void wbec_gpio_set(struct gpio_chip *chip,
 	reg = offset_to_reg_addr(offset);
 	mask = offset_to_reg_mask(offset);
 
-	dev_dbg(wbec_gpio->dev, "%s function. offset=%u, value=%d\n", __func__, offset, value);
-
 	ret = regmap_update_bits(wbec_gpio->regmap, reg, mask, value ? mask : 0);
 	if (ret < 0)
-		dev_err(wbec_gpio->dev, "error when set gpio %u\n", offset);
+		dev_err(wbec_gpio->dev, "error when set gpio with offset %u\n", offset);
 }
 
 static int wbec_gpio_probe(struct platform_device *pdev)
