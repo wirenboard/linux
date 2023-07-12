@@ -1,4 +1,4 @@
-linux-wb (5.10.35-wb140) stable; urgency=medium
+linux-wb (5.10.35-wb141) stable; urgency=medium
 
   * wb74: add dts
   * wb-ec: add drivers
