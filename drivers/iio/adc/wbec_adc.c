@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * iio-wbec.c - Wiren Board Embedded Controller IIO driver
+ * wbec_adc.c - Wiren Board Embedded Controller IIO driver
  *
  * Copyright (c) 2023 Wiren Board LLC
  *
