@@ -20,69 +20,17 @@
 
 #define WBEC_GPIO_PER_REG		16
 
-struct wbec_gpio {
-	struct regmap *regmap;
-	struct device *dev;
-	struct gpio_chip gpio_chip;
-};
-
-static inline unsigned int offset_to_reg_addr(unsigned int offset)
-{
-	return WBEC_REG_GPIO + (offset / WBEC_GPIO_PER_REG);
-}
-
-static inline unsigned int offset_to_reg_mask(unsigned int offset)
-{
-	return BIT(offset % WBEC_GPIO_PER_REG);
-}
-
-static int wbec_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct wbec_gpio *wbec_gpio = gpiochip_get_data(chip);
-	int ret, val, reg, mask;
-
-	reg = offset_to_reg_addr(offset);
-	mask = offset_to_reg_mask(offset);
-
-	ret = regmap_read(wbec_gpio->regmap, reg, &val);
-	if (ret < 0) {
-		dev_err(wbec_gpio->dev, "error when reading gpio with offset %u\n", offset);
-		return ret;
-	}
-
-	return (val & mask) ? 1 : 0;
-}
-
-static void wbec_gpio_set(struct gpio_chip *chip,
-			   unsigned int offset,
-			   int value)
-{
-	struct wbec_gpio *wbec_gpio = gpiochip_get_data(chip);
-	int ret, reg, mask;
-
-	reg = offset_to_reg_addr(offset);
-	mask = offset_to_reg_mask(offset);
-
-	ret = regmap_update_bits(wbec_gpio->regmap, reg, mask, value ? mask : 0);
-	if (ret < 0)
-		dev_err(wbec_gpio->dev, "error when set gpio with offset %u\n", offset);
-}
-
 static int wbec_gpio_probe(struct platform_device *pdev)
 {
-	struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
-	struct wbec_gpio *wbec_gpio;
+	struct gpio_regmap_config config = {};
+	struct wbec *wbec;
 	struct device *dev = &pdev->dev;
 	int ret, ngpios;
 
-	wbec_gpio = devm_kzalloc(&pdev->dev, sizeof(*wbec_gpio), GFP_KERNEL);
-	if (!wbec_gpio)
-		return -ENOMEM;
+	if (!pdev->dev.parent)
+		return -ENODEV;
 
-	platform_set_drvdata(pdev, wbec_gpio);
-
-	wbec_gpio->dev = dev;
-	wbec_gpio->regmap = wbec->regmap;
+	wbec = dev_get_drvdata(pdev->dev.parent);
 
 	ret = device_property_read_u32(dev, "ngpios", &ngpios);
 	if (ret) {
@@ -90,25 +38,15 @@ static int wbec_gpio_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	/* Register gpio controller */
-	wbec_gpio->gpio_chip.label = dev_name(wbec_gpio->dev);
-	wbec_gpio->gpio_chip.owner = THIS_MODULE;
-	wbec_gpio->gpio_chip.get = wbec_gpio_get;
-	wbec_gpio->gpio_chip.set = wbec_gpio_set;
-	wbec_gpio->gpio_chip.can_sleep = true;
-	wbec_gpio->gpio_chip.base = -1;
-	wbec_gpio->gpio_chip.ngpio = ngpios;
-	wbec_gpio->gpio_chip.parent = dev;
-	wbec_gpio->gpio_chip.of_node = dev->of_node;
+	config.ngpio = ngpios;
+	config.regmap = wbec->regmap;
+	config.parent = dev;
+	config.reg_dat_base = WBEC_REG_GPIO;
+	config.reg_set_base = WBEC_REG_GPIO;
+	config.ngpio_per_reg = WBEC_GPIO_PER_REG;
+	config.reg_stride = 1;
 
-	/* Add gpio chip */
-	ret = devm_gpiochip_add_data(dev, &wbec_gpio->gpio_chip, wbec_gpio);
-	if (ret < 0) {
-		dev_err(dev, "Couldn't add gpiochip\n");
-		return ret;
-	}
-
-	return 0;
+	return PTR_ERR_OR_ZERO(devm_gpio_regmap_register(&pdev->dev, &config));
 }
 
 static const struct of_device_id wbec_gpio_of_match[] = {

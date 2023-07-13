@@ -1365,6 +1365,7 @@ config GPIO_UCB1400
 config GPIO_WBEC
 	tristate "Wiren Board Embedded Controller GPIO Driver"
 	depends on MFD_WBEC
+	select GPIO_REGMAP
 	select GPIOLIB_IRQCHIP
 	select REGMAP_IRQ
 	help
