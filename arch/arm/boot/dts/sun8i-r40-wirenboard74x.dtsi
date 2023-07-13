@@ -491,7 +491,6 @@
 
 			gpio-controller;
 			#gpio-cells = <2>;
-			linux,gpio-base = <384>;
 			ngpios = <6>;
 			gpio-line-names = "EC A1", "EC A2", "EC A3", "EC A4", "EC V OUT", "EC WBMZ STATUS";
 		};

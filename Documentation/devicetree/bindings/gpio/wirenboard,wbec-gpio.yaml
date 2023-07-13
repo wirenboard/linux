@@ -40,10 +40,6 @@ properties:
   gpio-line-names:
     minItems: 1
 
-  linux,gpio-base:
-    description:
-      Override base address of GPIO chip.
-
 required:
   - compatible
   - reg
@@ -61,7 +57,6 @@ examples:
 
       gpio-controller;
       #gpio-cells = <2>;
-      linux,gpio-base = <384>;
       ngpios = <6>;
       gpio-line-names = "EC A1", "EC A2", "EC A3", "EC A4", "EC V OUT", "EC WBMZ STATUS";
     };

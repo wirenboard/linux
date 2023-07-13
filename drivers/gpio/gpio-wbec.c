@@ -73,7 +73,7 @@ static int wbec_gpio_probe(struct platform_device *pdev)
 	struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
 	struct wbec_gpio *wbec_gpio;
 	struct device *dev = &pdev->dev;
-	int ret, ngpios, base;
+	int ret, ngpios;
 
 	wbec_gpio = devm_kzalloc(&pdev->dev, sizeof(*wbec_gpio), GFP_KERNEL);
 	if (!wbec_gpio)
@@ -90,19 +90,13 @@ static int wbec_gpio_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	ret = device_property_read_u32(dev, "linux,gpio-base", &base);
-	if (ret) {
-		dev_warn(dev, "No linux,gpio-base property in device tree. Using -1 as gpio_base");
-		base = -1;
-	}
-
 	/* Register gpio controller */
 	wbec_gpio->gpio_chip.label = dev_name(wbec_gpio->dev);
 	wbec_gpio->gpio_chip.owner = THIS_MODULE;
 	wbec_gpio->gpio_chip.get = wbec_gpio_get;
 	wbec_gpio->gpio_chip.set = wbec_gpio_set;
 	wbec_gpio->gpio_chip.can_sleep = true;
-	wbec_gpio->gpio_chip.base = base;
+	wbec_gpio->gpio_chip.base = -1;
 	wbec_gpio->gpio_chip.ngpio = ngpios;
 	wbec_gpio->gpio_chip.parent = dev;
 	wbec_gpio->gpio_chip.of_node = dev->of_node;
