@@ -5,6 +5,16 @@ linux-wb (5.10.35-wb141) stable; urgency=medium
 
  -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Thu, 06 Jul 2023 11:52:49 +0300
 
+linux-wb (5.10.35-wb141) stable; urgency=medium
+
+  * gpio: get rid of ARCH_NR_GPIOS_DYNALLOC, use ARCH_NR_GPIOS instead
+
+    On A40i there are 288 GPIOs but the range of for dynamically allocation is only 256.
+    So, GPIO drivers with gpio_base = -1 won't be able to allocate GPIO numbers.
+    Now 416 GPIO is available for sunxi.
+
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Wed, 12 Jul 2023 11:17:11 +0300
+
 linux-wb (5.10.35-wb140) stable; urgency=medium
 
   * spi: spi-sun6i: enable autosuspend feature
