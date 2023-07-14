@@ -73,8 +73,8 @@ examples:
           gpio-line-names = "EC A1", "EC A2", "EC A3", "EC A4", "EC V OUT", "EC WBMZ STATUS";
         };
 
-        wbec_iio: wbec-iio@0 {
-          compatible = "wirenboard,wbec-iio";
+        wbec_adc: wbec-adc@0 {
+          compatible = "wirenboard,wbec-adc";
           reg = <0>;
           #io-channel-cells = <1>;
         };

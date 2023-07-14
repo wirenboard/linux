@@ -22,7 +22,7 @@ description: |
 
 properties:
   compatible:
-    const: wirenboard,wbec-iio
+    const: wirenboard,wbec-adc
 
   reg:
     const: 0
@@ -39,8 +39,8 @@ additionalProperties: false
 
 examples:
   - |
-    wbec_iio: wbec-iio@0 {
-      compatible = "wirenboard,wbec-iio";
+    wbec_adc: wbec-adc@0 {
+      compatible = "wirenboard,wbec-adc";
       reg = <0>;
       #io-channel-cells = <1>;
     };

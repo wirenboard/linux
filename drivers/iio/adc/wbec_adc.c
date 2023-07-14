@@ -21,7 +21,7 @@
 #include <linux/iio/sysfs.h>
 #include <linux/mfd/wbec.h>
 
-enum wbec_iio_channel {
+enum wbec_adc_channel {
 	WBEC_IIO_CH_V_IN,
 	WBEC_IIO_CH_V_3_3,
 	WBEC_IIO_CH_V_5_0,
@@ -37,14 +37,8 @@ enum wbec_iio_channel {
 };
 
 
-struct wbec_iio {
+struct wbec_adc {
 	struct regmap *regmap;
-};
-
-union wbec_iio_value {
-	s16 s_value;
-	u16 u_value;
-	u8 regs[2];
 };
 
 static int read_voltage(struct regmap *map, unsigned int reg, int *voltage)
@@ -121,11 +115,11 @@ static int wbec_read_raw(struct iio_dev *indio_dev,
 				struct iio_chan_spec const *channel, int *val,
 				int *val2, long mask)
 {
-	struct wbec_iio *wbec_iio = iio_priv(indio_dev);
+	struct wbec_adc *wbec_adc = iio_priv(indio_dev);
 
 	switch (mask) {
 	case IIO_CHAN_INFO_RAW:
-		return read_raw_value(wbec_iio->regmap, channel, val);
+		return read_raw_value(wbec_adc->regmap, channel, val);
 
 	case IIO_CHAN_INFO_SCALE:
 		return read_scale(channel, val, val2);
@@ -149,7 +143,7 @@ static int wbec_read_raw(struct iio_dev *indio_dev,
 }
 
 
-static const struct iio_chan_spec wbec_iio_channels[] = {
+static const struct iio_chan_spec wbec_adc_channels[] = {
 	WBEC_IIO_CHANNEL(V_IN, IIO_VOLTAGE, "IN"),
 	WBEC_IIO_CHANNEL(V_3_3, IIO_VOLTAGE, "3V3"),
 	WBEC_IIO_CHANNEL(V_5_0, IIO_VOLTAGE, "5V"),
@@ -164,52 +158,52 @@ static const struct iio_chan_spec wbec_iio_channels[] = {
 	WBEC_IIO_CHANNEL(ADC6, IIO_VOLTAGE, "ADC6"),
 };
 
-static const struct iio_info wbec_iio_info = {
+static const struct iio_info wbec_adc_info = {
 	.read_raw = wbec_read_raw,
 };
 
-static int wbec_iio_probe(struct platform_device *pdev)
+static int wbec_adc_probe(struct platform_device *pdev)
 {
 	struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
 	struct iio_dev *indio_dev;
-	struct wbec_iio *wbec_iio;
+	struct wbec_adc *wbec_adc;
 
-	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*wbec_iio));
+	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*wbec_adc));
 	if (!indio_dev)
 		return -ENOMEM;
 
-	wbec_iio = iio_priv(indio_dev);
+	wbec_adc = iio_priv(indio_dev);
 
 	platform_set_drvdata(pdev, indio_dev);
-	wbec_iio->regmap = wbec->regmap;
+	wbec_adc->regmap = wbec->regmap;
 
 	indio_dev->name = "wbec";
 	indio_dev->modes = INDIO_DIRECT_MODE;
-	indio_dev->info = &wbec_iio_info;
+	indio_dev->info = &wbec_adc_info;
 
-	indio_dev->channels = wbec_iio_channels;
-	indio_dev->num_channels = ARRAY_SIZE(wbec_iio_channels);
+	indio_dev->channels = wbec_adc_channels;
+	indio_dev->num_channels = ARRAY_SIZE(wbec_adc_channels);
 
 	return devm_iio_device_register(&pdev->dev, indio_dev);
 }
 
-static const struct of_device_id wbec_iio_of_match[] = {
-	{ .compatible = "wirenboard,wbec-iio" },
+static const struct of_device_id wbec_adc_of_match[] = {
+	{ .compatible = "wirenboard,wbec-adc" },
 	{}
 };
-MODULE_DEVICE_TABLE(of, wbec_iio_of_match);
+MODULE_DEVICE_TABLE(of, wbec_adc_of_match);
 
-static struct platform_driver wbec_iio_driver = {
+static struct platform_driver wbec_adc_driver = {
 	.driver = {
-		.name	= "wbec-iio",
-		.of_match_table = wbec_iio_of_match,
+		.name	= "wbec-adc",
+		.of_match_table = wbec_adc_of_match,
 	},
-	.probe = wbec_iio_probe,
+	.probe = wbec_adc_probe,
 };
 
-module_platform_driver(wbec_iio_driver);
+module_platform_driver(wbec_adc_driver);
 
 MODULE_AUTHOR("Pavel Gasheev <pavel.gasheev@wirenboard.ru>");
 MODULE_DESCRIPTION("Wiren Board 7 Embedded Controller IIO driver");
 MODULE_LICENSE("GPL");
-MODULE_ALIAS("platform:wbec-iio");
+MODULE_ALIAS("platform:wbec-adc");

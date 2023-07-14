@@ -31,9 +31,9 @@ static const struct regmap_config wbec_regmap_config = {
 
 static const struct mfd_cell wbec_cells[] = {
 	{
-		.name = "wbec-iio",
+		.name = "wbec-adc",
 		.id = PLATFORM_DEVID_NONE,
-		.of_compatible = "wirenboard,wbec-iio"
+		.of_compatible = "wirenboard,wbec-adc"
 	},
 	{
 		.name = "wbec-gpio",
