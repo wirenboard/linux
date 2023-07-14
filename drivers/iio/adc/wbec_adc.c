@@ -17,6 +17,7 @@
 #include <linux/platform_device.h>
 
 #include <linux/iio/iio.h>
+#include <linux/iio/types.h>
 #include <linux/iio/sysfs.h>
 #include <linux/mfd/wbec.h>
 
@@ -44,44 +45,89 @@ union wbec_iio_value {
 	u8 regs[2];
 };
 
+static int read_voltage(struct regmap *map, unsigned int reg, int *voltage)
+{
+	int ret, val;
+
+	ret = regmap_read(map, reg, &val);
+	if (ret)
+		return ret;
+
+	/* Voltage in mV, u16 type */
+	*voltage = (u16)val;
+	return 0;
+}
+
+static int read_temperature(struct regmap *map, unsigned int reg, int *temperature)
+{
+	int ret, val;
+
+	ret = regmap_read(map, reg, &val);
+	if (ret)
+		return ret;
+
+	/* Temperature in deg C x100, s16 type */
+	*temperature = (s16)val;
+	return 0;
+}
+
+static int read_raw_value(struct regmap *map, struct iio_chan_spec const *channel, int *val)
+{
+	int ret;
+
+	switch (channel->type) {
+	case IIO_VOLTAGE:
+		ret = read_voltage(map, channel->address, val);
+		if (ret)
+			return ret;
+		return IIO_VAL_INT;
+
+	case IIO_TEMP:
+		ret = read_temperature(map, channel->address, val);
+		if (ret)
+			return ret;
+		return IIO_VAL_INT;
+
+	default:
+		break;
+	}
+	return -EINVAL;
+}
+
+static int read_scale(struct iio_chan_spec const *channel, int *val, int *val2)
+{
+	switch (channel->type) {
+	case IIO_VOLTAGE:
+		/* WBEC units is mV, Linux units is mV */
+		*val = 1;
+		*val2 = 0;
+		return IIO_VAL_INT;
+
+	case IIO_TEMP:
+		/* WBEC units is deg C x100, Linux units is deg C x1000 */
+		*val = 10;
+		*val2 = 0;
+		return IIO_VAL_INT;
+
+	default:
+		break;
+	}
+	return -EINVAL;
+}
+
 static int wbec_read_raw(struct iio_dev *indio_dev,
 				struct iio_chan_spec const *channel, int *val,
 				int *val2, long mask)
 {
 	struct wbec_iio *wbec_iio = iio_priv(indio_dev);
-	int ret;
-	unsigned int read_val;
 
 	switch (mask) {
 	case IIO_CHAN_INFO_RAW:
-		if ((channel->type == IIO_TEMP) || (channel->type == IIO_VOLTAGE)) {
-			ret = regmap_read(wbec_iio->regmap, channel->address, &read_val);
-			if (ret < 0) {
-				dev_err(&indio_dev->dev, "error reading value from reg 0x%lX", channel->address);
-				return ret;
-			}
-			if (channel->type == IIO_TEMP)
-				/* Temperature in deg C x100, s16 type */
-				*val = (s16)read_val;
-			else
-				/* Voltage in mV, u16 type */
-				*val = (u16)read_val;
-		} else {
-			break;
-		}
-		return IIO_VAL_INT;
+		return read_raw_value(wbec_iio->regmap, channel, val);
 
 	case IIO_CHAN_INFO_SCALE:
-		if (channel->type == IIO_VOLTAGE) {
-			*val = 1;
-			*val2 = 0;
-		} else if (channel->type == IIO_TEMP) {
-			*val = 10;
-			*val2 = 0;
-		} else {
-			break;
-		}
-		return IIO_VAL_INT_PLUS_MICRO;
+		return read_scale(channel, val, val2);
+
 	default:
 		break;
 	}
