@@ -342,7 +342,7 @@
 
 	iio-hwmon-pcb-temp {
 		compatible = "iio-hwmon";
-		io-channels = <&wbec_iio 9>;
+		io-channels = <&wbec_iio 5>;
 	};
 
 	/*
@@ -366,7 +366,7 @@
 
 	a1_volt: a1-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 0>;
+		io-channels = <&wbec_iio 6>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <10000>;
@@ -376,7 +376,7 @@
 
 	a2_volt: a2-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 1>;
+		io-channels = <&wbec_iio 7>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <10000>;
@@ -385,7 +385,7 @@
 
 	a3_volt: a3-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 2>;
+		io-channels = <&wbec_iio 8>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <10000>;
@@ -394,7 +394,7 @@
 
 	a4_volt: a4-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 3>;
+		io-channels = <&wbec_iio 9>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <10000>;
@@ -403,7 +403,7 @@
 
 	vin_volt: vin-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 4>;
+		io-channels = <&wbec_iio 0>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <1>;
@@ -412,7 +412,7 @@
 
 	v33_volt: v33-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 5>;
+		io-channels = <&wbec_iio 1>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <1>;
@@ -421,7 +421,7 @@
 
 	v50_volt: v50-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 6>;
+		io-channels = <&wbec_iio 2>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <1>;
@@ -430,7 +430,7 @@
 
 	vbus_debug_volt: vbus-debug-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 7>;
+		io-channels = <&wbec_iio 3>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <1>;
@@ -439,7 +439,7 @@
 
 	vbus_network_volt: vbus-network-volt {
 		compatible = "voltage-divider";
-		io-channels = <&wbec_iio 8>;
+		io-channels = <&wbec_iio 4>;
 		#io-channel-cells = <1>;
 
 		output-ohms = <1>;
