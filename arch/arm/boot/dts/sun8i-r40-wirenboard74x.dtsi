@@ -165,7 +165,7 @@
 
 		analog-inputs {
 			/* we don't use standard 'io-channels = <&adc1 N>' here because
-			   there is seemingly no way to assiciate iio channel index (N
+			   there is seemingly no way to associate iio channel index (N
 			   in above example) with channel name as in sysfs path
 			*/
 			A1 {
