@@ -119,6 +119,9 @@ static int wbec_wdt_probe(struct platform_device *pdev)
 	struct wbec_watchdog *wdt;
 	int ret;
 
+	if (!pdev->dev.parent)
+		return -ENODEV;
+
 	wbec = dev_get_drvdata(dev->parent);
 	if (!wbec)
 		return -EINVAL;

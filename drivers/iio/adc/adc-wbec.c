@@ -168,6 +168,9 @@ static int wbec_adc_probe(struct platform_device *pdev)
 	struct iio_dev *indio_dev;
 	struct wbec_adc *wbec_adc;
 
+	if (!pdev->dev.parent)
+		return -ENODEV;
+
 	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*wbec_adc));
 	if (!indio_dev)
 		return -ENOMEM;

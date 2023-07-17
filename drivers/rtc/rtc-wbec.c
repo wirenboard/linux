@@ -216,6 +216,9 @@ static int wbec_rtc_probe(struct platform_device *pdev)
 	unsigned int tmp;
 	int err;
 
+	if (!pdev->dev.parent)
+		return -ENODEV;
+
 	wbec_rtc = devm_kzalloc(&pdev->dev, sizeof(struct wbec_rtc),
 				GFP_KERNEL);
 	if (!wbec_rtc)

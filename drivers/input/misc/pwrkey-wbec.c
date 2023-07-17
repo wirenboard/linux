@@ -83,6 +83,9 @@ static int wbec_pwrkey_probe(struct platform_device *pdev)
 	struct wbec_pwrkey *wbec_pwrkey;
 	int err;
 
+	if (!pdev->dev.parent)
+		return -ENODEV;
+
 	wbec_pwrkey = devm_kzalloc(&pdev->dev, sizeof(struct wbec_pwrkey),
 				GFP_KERNEL);
 	if (!wbec_pwrkey)
