@@ -246,9 +246,16 @@ static int wbec_rtc_probe(struct platform_device *pdev)
 	return rtc_register_device(wbec_rtc->rtc);
 }
 
+static const struct of_device_id wbec_rtc_of_match[] = {
+	{ .compatible = "wirenboard,wbec-rtc" },
+	{}
+};
+MODULE_DEVICE_TABLE(of, wbec_rtc_of_match);
+
 static struct platform_driver wbec_rtc_driver = {
 	.driver		= {
 		.name	= "wbec-rtc",
+		.of_match_table = wbec_rtc_of_match,
 	},
 	.probe	= wbec_rtc_probe,
 };

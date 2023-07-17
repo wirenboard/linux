@@ -138,9 +138,16 @@ static int wbec_pwrkey_remove(struct platform_device *pdev)
 	return 0;
 }
 
+static const struct of_device_id wbec_pwrkey_of_match[] = {
+	{ .compatible = "wirenboard,wbec-pwrkey" },
+	{}
+};
+MODULE_DEVICE_TABLE(of, wbec_pwrkey_of_match);
+
 static struct platform_driver wbec_pwrkey_driver = {
 	.driver	= {
 		.name = "wbec-pwrkey",
+		.of_match_table = wbec_pwrkey_of_match,
 	},
 	.probe	= wbec_pwrkey_probe,
 	.remove = wbec_pwrkey_remove,

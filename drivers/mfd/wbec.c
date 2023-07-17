@@ -40,9 +40,21 @@ static const struct mfd_cell wbec_cells[] = {
 		.id = PLATFORM_DEVID_NONE,
 		.of_compatible = "wirenboard,wbec-gpio"
 	},
-	{ .name = "wbec-watchdog", .id = PLATFORM_DEVID_NONE, },
-	{ .name = "wbec-rtc", .id = PLATFORM_DEVID_NONE, },
-	{ .name = "wbec-pwrkey", .id = PLATFORM_DEVID_NONE, },
+	{
+		.name = "wbec-watchdog",
+		.id = PLATFORM_DEVID_NONE,
+		.of_compatible = "wirenboard,wbec-watchdog"
+	},
+	{
+		.name = "wbec-rtc",
+		.id = PLATFORM_DEVID_NONE,
+		.of_compatible = "wirenboard,wbec-rtc"
+	},
+	{
+		.name = "wbec-pwrkey",
+		.id = PLATFORM_DEVID_NONE,
+		.of_compatible = "wirenboard,wbec-pwrkey"
+	},
 };
 
 static struct wbec *wbec_pm;

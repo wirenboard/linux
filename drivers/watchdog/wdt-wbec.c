@@ -160,10 +160,17 @@ static int wbec_wdt_probe(struct platform_device *pdev)
 	return devm_watchdog_register_device(dev, &wdt->wdtdev);
 }
 
+static const struct of_device_id wbec_wdt_of_match[] = {
+	{ .compatible = "wirenboard,wbec-watchdog" },
+	{}
+};
+MODULE_DEVICE_TABLE(of, wbec_wdt_of_match);
+
 static struct platform_driver wbec_wdt_driver = {
 	.probe = wbec_wdt_probe,
 	.driver = {
 		.name = "wbec-watchdog",
+		.of_match_table = wbec_wdt_of_match,
 	},
 };
 module_platform_driver(wbec_wdt_driver);
