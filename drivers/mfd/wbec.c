@@ -55,6 +55,11 @@ static const struct mfd_cell wbec_cells[] = {
 		.id = PLATFORM_DEVID_NONE,
 		.of_compatible = "wirenboard,wbec-pwrkey"
 	},
+	{
+		.name = "wbec-power",
+		.id = PLATFORM_DEVID_NONE,
+		.of_compatible = "wirenboard,wbec-power"
+	},
 };
 
 static struct wbec *wbec_pm;
