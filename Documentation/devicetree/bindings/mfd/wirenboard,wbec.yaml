@@ -69,14 +69,19 @@ examples:
 
           gpio-controller;
           #gpio-cells = <2>;
-          ngpios = <6>;
-          gpio-line-names = "EC A1", "EC A2", "EC A3", "EC A4", "EC V OUT", "EC WBMZ STATUS";
+          ngpios = <5>;
+          gpio-line-names = "EC A1", "EC A2", "EC A3", "EC A4", "EC V OUT";
         };
 
         wbec_adc: wbec-adc@0 {
           compatible = "wirenboard,wbec-adc";
           reg = <0>;
           #io-channel-cells = <1>;
+        };
+
+        vin: wbec-power@0 {
+          compatible = "wirenboard,wbec-power";
+          reg = <0>;
         };
       };
     };
