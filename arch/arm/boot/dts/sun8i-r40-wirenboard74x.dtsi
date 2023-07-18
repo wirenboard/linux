@@ -360,12 +360,6 @@
 		status = "okay";
 	};
 
-	vin: vin {
-		compatible = "gpio-charger";
-		charger-type = "mains";
-		gpios = <&wbec_gpio 5 GPIO_ACTIVE_LOW>;
-	};
-
 	a1_volt: a1-volt {
 		compatible = "voltage-divider";
 		io-channels = <&wbec_adc 6>;
@@ -517,6 +511,11 @@
 			compatible = "wirenboard,wbec-adc";
 			reg = <0>;
 			#io-channel-cells = <1>;
+		};
+
+		vin: wbec-power@0 {
+			compatible = "wirenboard,wbec-power";
+			reg = <0>;
 		};
 	};
 };
