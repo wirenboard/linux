@@ -71,7 +71,6 @@
    #define WBEC_REG_GPIO_A3_MSK                             BIT(2)
    #define WBEC_REG_GPIO_A4_MSK                             BIT(3)
    #define WBEC_REG_GPIO_V_OUT_MSK                          BIT(4)
-   #define WBEC_REG_GPIO_STATUS_BAT_MSK                     BIT(5)
 
 /* Region WDT: RW */
 #define WBEC_REG_WDT_TIMEOUT                                0x90
@@ -89,6 +88,10 @@
 #define WBEC_REG_IRQ_CLEAR                                  0xB4
    #define WBEC_REG_IRQ_RTC_ALARM_MSK                       BIT(0)
    #define WBEC_REG_IRQ_PWROFF_REQ_MSK                      BIT(1)
+
+/* Region PWR_STATUS: RO */
+#define WBEC_REG_PWR_STATUS                                 0xC0
+   #define WBEC_REG_PWR_STATUS_POWERED_FROM_WBMZ_MSK        BIT(0)
 
 
 struct wbec {
