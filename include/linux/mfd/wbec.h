@@ -54,16 +54,6 @@
 #define WBEC_REG_ADC_DATA_ADC5                              0x4A
 #define WBEC_REG_ADC_DATA_ADC6                              0x4B
 
-/* Region ADC_CFG: RW */
-#define WBEC_REG_ADC_CFG_LOWPASS_RC_A1                      0x60
-#define WBEC_REG_ADC_CFG_LOWPASS_RC_A2                      0x61
-#define WBEC_REG_ADC_CFG_LOWPASS_RC_A3                      0x62
-#define WBEC_REG_ADC_CFG_LOWPASS_RC_A4                      0x63
-#define WBEC_REG_ADC_CFG_V_IN_UVP                           0x64
-#define WBEC_REG_ADC_CFG_V_IN_OVP                           0x65
-#define WBEC_REG_ADC_CFG_V_OUT_UVP                          0x66
-#define WBEC_REG_ADC_CFG_V_OUT_OVP                          0x67
-
 /* Region GPIO: RW */
 #define WBEC_REG_GPIO                                       0x80
    #define WBEC_REG_GPIO_A1_MSK                             BIT(0)
