@@ -57,7 +57,7 @@ void pwrkey_poll_wq(struct work_struct *work)
 		return;
 	}
 	if (wbec_id != WBEC_ID) {
-		dev_err(&pwr->dev, "wrong wbec ID at 0x%X. Get 0x%X istead of 0x%X\n",
+		dev_err_once(&pwr->dev, "wrong wbec ID at 0x%X. Get 0x%X istead of 0x%X\n",
 			WBEC_REG_INFO_WBEC_ID, wbec_id, WBEC_ID);
 		return;
 	}
