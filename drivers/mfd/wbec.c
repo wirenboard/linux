@@ -18,9 +18,21 @@
 #include <linux/notifier.h>
 #include <linux/mfd/wbec.h>
 #include <linux/mod_devicetable.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
 
 /* For power off WBEC activates PWON pin on PMIC for 6s */
 #define WBEC_POWER_RESET_DELAY_MS			10000
+
+static const char * const wbec_poweron_reason[] = {
+	"Power supply on",
+	"Power button",
+	"RTC alarm",
+	"Reboot",
+	"Reboot instead of poweroff",
+	"Watchdog",
+	"Unknown",
+};
 
 static const struct regmap_config wbec_regmap_config = {
 	.reg_bits = 16,
@@ -61,6 +73,173 @@ static const struct mfd_cell wbec_cells[] = {
 		.of_compatible = "wirenboard,wbec-power"
 	},
 };
+
+#ifdef CONFIG_DEBUG_FS
+/*
+ * Some debugfs entries only exposed if we're using debug
+ */
+static int wbec_info_print(struct seq_file *s, void *p)
+{
+	struct wbec *wbec = s->private;
+	int ret;
+	u16 info[7];
+	int major, minor, patch, suffix;
+
+
+	ret = regmap_bulk_read(wbec->regmap, WBEC_REG_INFO_WBEC_ID, info, ARRAY_SIZE(info));
+	if (ret)
+		return ret;
+
+	if (info[WBEC_REG_INFO_WBEC_ID] != WBEC_ID)
+		return -ENODEV;
+
+	major = info[WBEC_REG_INFO_FW_VER_MAJOR];
+	minor = info[WBEC_REG_INFO_FW_VER_MINOR];
+	patch = info[WBEC_REG_INFO_FW_VER_PATCH];
+	suffix = (s16)(info[WBEC_REG_INFO_FW_VER_SUFFIX]);
+
+	seq_printf(s, "Wiren Board Embedded Controller\n\n");
+	seq_printf(s, "Board HW revision: 0x%04X\n", info[WBEC_REG_INFO_BOARD_REV]);
+	seq_printf(s, "FW version: %d.%d.%d", major, minor, patch);
+	if (suffix > 0)
+		seq_printf(s, "+wb%d", suffix);
+	else if (suffix < 0)
+		seq_printf(s, "-rc%d", -suffix);
+	seq_printf(s, "\n");
+	seq_printf(s, "Poweron reason: %s\n", wbec_poweron_reason[info[WBEC_REG_INFO_POWERON_REASON]]);
+
+	return 0;
+}
+
+static int wbec_info_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, wbec_info_print, inode->i_private);
+}
+
+static const struct file_operations wbec_info_fops = {
+	.open = wbec_info_open,
+	.read = seq_read,
+	.llseek = seq_lseek,
+	.release = single_release,
+	.owner = THIS_MODULE,
+};
+
+static int wbec_read_regs(struct seq_file *s, void *p)
+{
+	struct wbec *wbec = s->private;
+	int ret, val, i;
+	int max_reg = regmap_get_max_register(wbec->regmap);
+
+	for (i = 0; i < max_reg; i++) {
+		ret = regmap_read(wbec->regmap, i, &val);
+		if (ret)
+			return ret;
+		seq_printf(s, "0x%04X: 0x%04X\n", i, val);
+	}
+
+	return 0;
+}
+
+static int wbec_read_regs_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, wbec_read_regs, inode->i_private);
+}
+
+static const struct file_operations wbec_read_regs_fops = {
+	.open = wbec_read_regs_open,
+	.read = seq_read,
+	.llseek = seq_lseek,
+	.release = single_release,
+	.owner = THIS_MODULE,
+};
+
+ static ssize_t wbec_write_reg(struct file *file,
+				  const char __user *user_buf,
+				  size_t count, loff_t *ppos)
+{
+	struct wbec *wbec = file->private_data;
+	char buf[32];
+	ssize_t buf_size;
+	int regp;
+	u16 reg_addr, reg_value;
+	int err;
+	int i = 0;
+
+	/* Get userspace string and assure termination */
+	buf_size = min((ssize_t)count, (ssize_t)(sizeof(buf)-1));
+	if (copy_from_user(buf, user_buf, buf_size))
+		return -EFAULT;
+	buf[buf_size] = 0;
+
+	/* The string format is "wbec: 0xnn 0xnn" for writing a register. */
+
+	/* Check prefix */
+	if (strncmp(buf, "wbec: ", 6) != 0)
+		return -EINVAL;
+
+	/* Get register address: skip spaces */
+	i = 6;
+	while ((i < buf_size) && (buf[i] == ' '))
+		i++;
+	regp = i;
+	/* And replace first space after value with null-termination char */
+	while ((i < buf_size) && (buf[i] != ' '))
+		i++;
+	buf[i] = '\0';
+
+	err = kstrtou16(&buf[regp], 16, &reg_addr);
+	if (err)
+		return err;
+
+	/* Get register value: the same method */
+	i++;
+	while ((i < buf_size) && (buf[i] == ' '))
+		i++;
+	err = kstrtou16(&buf[i], 16, &reg_value);
+	if (err)
+		return err;
+
+	/* Write register */
+	dev_info(wbec->dev, "debugfs writing 0x%04X to 0x%04X\n", reg_value, reg_addr);
+	err = regmap_write(wbec->regmap, reg_addr, reg_value);
+	if (err)
+		return err;
+
+	return buf_size;
+}
+
+static const struct file_operations wbec_write_reg_fops = {
+	.open = simple_open,
+	.write = wbec_write_reg,
+	.llseek = noop_llseek,
+};
+
+static void wbec_setup_debugfs(struct wbec *wbec)
+{
+	wbec->wbec_dir = debugfs_create_dir("wbec", NULL);
+
+	debugfs_create_file("info", S_IRUGO, wbec->wbec_dir, wbec,
+			    &wbec_info_fops);
+
+	debugfs_create_file("read_regs", S_IRUGO, wbec->wbec_dir, wbec,
+			    &wbec_read_regs_fops);
+
+	debugfs_create_file("write_reg", S_IWUSR, wbec->wbec_dir, wbec,
+			    &wbec_write_reg_fops);
+}
+
+static void wbec_clean_debugfs(struct wbec *wbec)
+{
+	debugfs_remove_recursive(wbec->wbec_dir);
+}
+#else
+static inline void wbec_setup_debugfs(struct wbec *wbec)
+{
+}
+static inline void wbec_clean_debugfs(struct wbec *wbec)
+{
+}
+#endif
 
 static struct wbec *wbec_pm;
 
@@ -110,7 +289,6 @@ static int wbec_probe(struct spi_device *spi)
 	struct wbec *wbec;
 	int ret;
 	int wbec_id;
-	u16 test[4];
 
 	wbec = devm_kzalloc(&spi->dev, sizeof(*wbec), GFP_KERNEL);
 	if (!wbec)
@@ -129,8 +307,6 @@ static int wbec_probe(struct spi_device *spi)
 		dev_err(&spi->dev, "regmap initialization failed\n");
 		return PTR_ERR(wbec->regmap);
 	}
-
-	ret = regmap_bulk_read(wbec->regmap, 0, test, ARRAY_SIZE(test));
 
 	ret = regmap_read(wbec->regmap, WBEC_REG_INFO_WBEC_ID, &wbec_id);
 	if (ret < 0) {
@@ -158,6 +334,8 @@ static int wbec_probe(struct spi_device *spi)
 	if (ret)
 		dev_warn(&spi->dev, "failed to register restart handler\n");
 
+	wbec_setup_debugfs(wbec);
+
 	dev_info(&spi->dev, "WBEC device added\n");
 
 	return ret;
@@ -165,6 +343,7 @@ static int wbec_probe(struct spi_device *spi)
 
 static int wbec_remove(struct spi_device *spi)
 {
+	struct wbec *wbec = spi_get_drvdata(spi);
 	/**
 	 * pm_power_off may point to a function from another module.
 	 * Check if the pointer is set by us and only then overwrite it.
@@ -173,6 +352,8 @@ static int wbec_remove(struct spi_device *spi)
 		pm_power_off = NULL;
 		unregister_restart_handler(&wbec_restart_handler);
 	}
+
+	wbec_clean_debugfs(wbec);
 
 	return 0;
 }

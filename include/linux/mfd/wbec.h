@@ -14,12 +14,14 @@
 
 #define WBEC_ID                                             0x3CD2
 
-/* Region INFO: RW */
+/* Region INFO: RO */
 #define WBEC_REG_INFO_WBEC_ID                               0x00
 #define WBEC_REG_INFO_BOARD_REV                             0x01
-#define WBEC_REG_INFO_FW_VER_MAJOR_MINOR                    0x02
-#define WBEC_REG_INFO_FW_VER_PATCH_SUFFIX                   0x03
-#define WBEC_REG_INFO_POWERON_REASON                        0x04
+#define WBEC_REG_INFO_FW_VER_MAJOR                          0x02
+#define WBEC_REG_INFO_FW_VER_MINOR                          0x03
+#define WBEC_REG_INFO_FW_VER_PATCH                          0x04
+#define WBEC_REG_INFO_FW_VER_SUFFIX                         0x05
+#define WBEC_REG_INFO_POWERON_REASON                        0x06
 
 /* Region RTC_TIME: RW */
 #define WBEC_REG_RTC_TIME_SECS_MINS                         0x10
@@ -87,6 +89,7 @@
 struct wbec {
 	struct device *dev;
 	struct regmap *regmap;
+	struct dentry *wbec_dir;
 };
 
 #endif
