@@ -31,6 +31,7 @@ static const char * const wbec_poweron_reason[] = {
 	"Reboot",
 	"Reboot instead of poweroff",
 	"Watchdog",
+	"PMIC is unexpectedly off",
 	"Unknown",
 };
 
