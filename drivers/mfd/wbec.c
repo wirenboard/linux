@@ -98,14 +98,14 @@ static int wbec_info_print(struct seq_file *s, void *p)
 	patch = info[WBEC_REG_INFO_FW_VER_PATCH];
 	suffix = (s16)(info[WBEC_REG_INFO_FW_VER_SUFFIX]);
 
-	seq_printf(s, "Wiren Board Embedded Controller\n\n");
+	seq_puts(s, "Wiren Board Embedded Controller\n\n");
 	seq_printf(s, "Board HW revision: 0x%04X\n", info[WBEC_REG_INFO_BOARD_REV]);
 	seq_printf(s, "FW version: %d.%d.%d", major, minor, patch);
 	if (suffix > 0)
 		seq_printf(s, "+wb%d", suffix);
 	else if (suffix < 0)
 		seq_printf(s, "-rc%d", -suffix);
-	seq_printf(s, "\n");
+	seq_puts(s, "\n");
 	seq_printf(s, "Poweron reason: %s\n", wbec_poweron_reason[info[WBEC_REG_INFO_POWERON_REASON]]);
 
 	return 0;
@@ -153,7 +153,7 @@ static const struct file_operations wbec_read_regs_fops = {
 	.owner = THIS_MODULE,
 };
 
- static ssize_t wbec_write_reg(struct file *file,
+static ssize_t wbec_write_reg(struct file *file,
 				  const char __user *user_buf,
 				  size_t count, loff_t *ppos)
 {
@@ -218,13 +218,13 @@ static void wbec_setup_debugfs(struct wbec *wbec)
 {
 	wbec->wbec_dir = debugfs_create_dir("wbec", NULL);
 
-	debugfs_create_file("info", S_IRUGO, wbec->wbec_dir, wbec,
+	debugfs_create_file("info", 0444, wbec->wbec_dir, wbec,
 			    &wbec_info_fops);
 
-	debugfs_create_file("read_regs", S_IRUGO, wbec->wbec_dir, wbec,
+	debugfs_create_file("read_regs", 0444, wbec->wbec_dir, wbec,
 			    &wbec_read_regs_fops);
 
-	debugfs_create_file("write_reg", S_IWUSR, wbec->wbec_dir, wbec,
+	debugfs_create_file("write_reg", 0200, wbec->wbec_dir, wbec,
 			    &wbec_write_reg_fops);
 }
 
