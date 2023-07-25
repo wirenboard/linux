@@ -78,7 +78,7 @@ static const struct mfd_cell wbec_cells[] = {
 /* SysFS interface */
 
 static ssize_t
-wbec_mfd_sysfs_fwrev_show(struct device *dev,
+fwrev_show(struct device *dev,
 			      struct device_attribute *attr, char *buf)
 {
 	union wbec_version {
@@ -109,7 +109,7 @@ wbec_mfd_sysfs_fwrev_show(struct device *dev,
 }
 
 static ssize_t
-wbec_mfd_sysfs_hwrev_show(struct device *dev,
+hwrev_show(struct device *dev,
 			      struct device_attribute *attr, char *buf)
 {
 	struct wbec *wbec = dev_get_drvdata(dev);
@@ -123,7 +123,7 @@ wbec_mfd_sysfs_hwrev_show(struct device *dev,
 }
 
 static ssize_t
-wbec_mfd_sysfs_poweron_reason_show(struct device *dev,
+poweron_reason_show(struct device *dev,
 			      struct device_attribute *attr, char *buf)
 {
 	struct wbec *wbec = dev_get_drvdata(dev);
@@ -137,7 +137,7 @@ wbec_mfd_sysfs_poweron_reason_show(struct device *dev,
 }
 
 static ssize_t
-wbec_mfd_sysfs_poweron_reason_str_show(struct device *dev,
+poweron_reason_str_show(struct device *dev,
 			      struct device_attribute *attr, char *buf)
 {
 	struct wbec *wbec = dev_get_drvdata(dev);
@@ -154,10 +154,10 @@ wbec_mfd_sysfs_poweron_reason_str_show(struct device *dev,
 }
 
 
-static DEVICE_ATTR(fwrev, S_IRUGO, wbec_mfd_sysfs_fwrev_show, NULL);
-static DEVICE_ATTR(hwrev, S_IRUGO, wbec_mfd_sysfs_hwrev_show, NULL);
-static DEVICE_ATTR(poweron_reason, S_IRUGO, wbec_mfd_sysfs_poweron_reason_show, NULL);
-static DEVICE_ATTR(poweron_reason_str, S_IRUGO, wbec_mfd_sysfs_poweron_reason_str_show, NULL);
+static DEVICE_ATTR_RO(fwrev);
+static DEVICE_ATTR_RO(hwrev);
+static DEVICE_ATTR_RO(poweron_reason);
+static DEVICE_ATTR_RO(poweron_reason_str);
 
 static struct attribute *wbec_sysfs_entries[] = {
 	&dev_attr_fwrev.attr,
