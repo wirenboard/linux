@@ -8,7 +8,7 @@ $schema: "http://devicetree.org/meta-schemas/core.yaml#"
 title: Wiren Board Embedded Controller GPIO Driver
 
 maintainers:
-  - Pavel Gasheev <pavel.gasheev@wirenboard.ru>
+  - Pavel Gasheev <pavel.gasheev@wirenboard.com>
 
 description: |
   The WB EC GPIO describes the GPIO block included in the WB EC.

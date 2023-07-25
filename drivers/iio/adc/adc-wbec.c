@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2023 Wiren Board LLC
  *
- * Author: Pavel Gasheev <pavel.gasheev@wirenboard.ru>
+ * Author: Pavel Gasheev <pavel.gasheev@wirenboard.com>
  */
 
 #include <linux/err.h>
@@ -205,7 +205,7 @@ static struct platform_driver wbec_adc_driver = {
 
 module_platform_driver(wbec_adc_driver);
 
-MODULE_AUTHOR("Pavel Gasheev <pavel.gasheev@wirenboard.ru>");
+MODULE_AUTHOR("Pavel Gasheev <pavel.gasheev@wirenboard.com>");
 MODULE_DESCRIPTION("Wiren Board 7 Embedded Controller IIO driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:wbec-adc");

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2023 Wiren Board LLC
  *
- * Author: Pavel Gasheev <pavel.gasheev@wirenboard.ru>
+ * Author: Pavel Gasheev <pavel.gasheev@wirenboard.com>
  */
 
 #include <linux/gpio/driver.h>
@@ -64,7 +64,7 @@ static struct platform_driver wbec_gpio_driver = {
 };
 module_platform_driver(wbec_gpio_driver);
 
-MODULE_AUTHOR("Pavel Gasheev <pavel.gasheev@wirenboard.ru>");
+MODULE_AUTHOR("Pavel Gasheev <pavel.gasheev@wirenboard.com>");
 MODULE_DESCRIPTION("Wiren Board 7 Embedded Controller GPIO driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:wbec-gpio");
