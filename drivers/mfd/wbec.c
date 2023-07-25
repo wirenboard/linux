@@ -32,7 +32,6 @@ static const char * const wbec_poweron_reason[] = {
 	"Reboot instead of poweroff",
 	"Watchdog",
 	"PMIC is unexpectedly off",
-	"Unknown",
 };
 
 static const struct regmap_config wbec_regmap_config = {
@@ -75,84 +74,108 @@ static const struct mfd_cell wbec_cells[] = {
 	},
 };
 
-#ifdef CONFIG_DEBUG_FS
-/*
- * Some debugfs entries only exposed if we're using debug
- */
-static int wbec_info_print(struct seq_file *s, void *p)
+/* ----------------------------------------------------------------------- */
+/* SysFS interface */
+
+static ssize_t
+wbec_mfd_sysfs_fwrev_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
 {
-	struct wbec *wbec = s->private;
+	union wbec_version {
+		struct {
+			u16 major;
+			u16 minor;
+			u16 patch;
+			s16 suffix;
+		};
+		u16 raw[4];
+	} version;
+	struct wbec *wbec = dev_get_drvdata(dev);
 	int ret;
-	u16 info[7];
-	int major, minor, patch, suffix;
+	char suffix_str[32] = "";
 
-
-	ret = regmap_bulk_read(wbec->regmap, WBEC_REG_INFO_WBEC_ID, info, ARRAY_SIZE(info));
+	ret = regmap_bulk_read(wbec->regmap, WBEC_REG_INFO_FW_VER_MAJOR,
+			version.raw, sizeof(version.raw));
 	if (ret)
 		return ret;
 
-	if (info[WBEC_REG_INFO_WBEC_ID] != WBEC_ID)
-		return -ENODEV;
+	if (version.suffix > 0)
+		sprintf(suffix_str, "+wb%d", version.suffix);
+	else if (version.suffix < 0)
+		sprintf(suffix_str, "-rc%d", -version.suffix);
 
-	major = info[WBEC_REG_INFO_FW_VER_MAJOR];
-	minor = info[WBEC_REG_INFO_FW_VER_MINOR];
-	patch = info[WBEC_REG_INFO_FW_VER_PATCH];
-	suffix = (s16)(info[WBEC_REG_INFO_FW_VER_SUFFIX]);
-
-	seq_puts(s, "Wiren Board Embedded Controller\n\n");
-	seq_printf(s, "Board HW revision: 0x%04X\n", info[WBEC_REG_INFO_BOARD_REV]);
-	seq_printf(s, "FW version: %d.%d.%d", major, minor, patch);
-	if (suffix > 0)
-		seq_printf(s, "+wb%d", suffix);
-	else if (suffix < 0)
-		seq_printf(s, "-rc%d", -suffix);
-	seq_puts(s, "\n");
-	seq_printf(s, "Poweron reason: %s\n", wbec_poweron_reason[info[WBEC_REG_INFO_POWERON_REASON]]);
-
-	return 0;
+	return sprintf(buf, "%d.%d.%d%s\n",
+			version.major, version.minor, version.patch, suffix_str);
 }
 
-static int wbec_info_open(struct inode *inode, struct file *file)
+static ssize_t
+wbec_mfd_sysfs_hwrev_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
 {
-	return single_open(file, wbec_info_print, inode->i_private);
+	struct wbec *wbec = dev_get_drvdata(dev);
+	int ret, hwrev;
+
+	ret = regmap_read(wbec->regmap, WBEC_REG_INFO_BOARD_REV, &hwrev);
+	if (ret)
+		return ret;
+
+	return sprintf(buf, "%d\n", (u16)hwrev);
 }
 
-static const struct file_operations wbec_info_fops = {
-	.open = wbec_info_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-	.owner = THIS_MODULE,
+static ssize_t
+wbec_mfd_sysfs_poweron_reason_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct wbec *wbec = dev_get_drvdata(dev);
+	int ret, reason;
+
+	ret = regmap_read(wbec->regmap, WBEC_REG_INFO_POWERON_REASON, &reason);
+	if (ret)
+		return ret;
+
+	return sprintf(buf, "%d\n", reason);
+}
+
+static ssize_t
+wbec_mfd_sysfs_poweron_reason_str_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct wbec *wbec = dev_get_drvdata(dev);
+	int ret, reason;
+
+	ret = regmap_read(wbec->regmap, WBEC_REG_INFO_POWERON_REASON, &reason);
+	if (ret)
+		return ret;
+
+	if (reason >= ARRAY_SIZE(wbec_poweron_reason))
+		return sprintf(buf, "Unknown\n");
+
+	return sprintf(buf, "%s\n", wbec_poweron_reason[reason]);
+}
+
+
+static DEVICE_ATTR(fwrev, S_IRUGO, wbec_mfd_sysfs_fwrev_show, NULL);
+static DEVICE_ATTR(hwrev, S_IRUGO, wbec_mfd_sysfs_hwrev_show, NULL);
+static DEVICE_ATTR(poweron_reason, S_IRUGO, wbec_mfd_sysfs_poweron_reason_show, NULL);
+static DEVICE_ATTR(poweron_reason_str, S_IRUGO, wbec_mfd_sysfs_poweron_reason_str_show, NULL);
+
+static struct attribute *wbec_sysfs_entries[] = {
+	&dev_attr_fwrev.attr,
+	&dev_attr_hwrev.attr,
+	&dev_attr_poweron_reason.attr,
+	&dev_attr_poweron_reason_str.attr,
+	NULL,
 };
 
-static int wbec_read_regs(struct seq_file *s, void *p)
-{
-	struct wbec *wbec = s->private;
-	int ret, val, i;
-	int max_reg = regmap_get_max_register(wbec->regmap);
-
-	for (i = 0; i < max_reg; i++) {
-		ret = regmap_read(wbec->regmap, i, &val);
-		if (ret)
-			return ret;
-		seq_printf(s, "0x%04X: 0x%04X\n", i, val);
-	}
-
-	return 0;
-}
-
-static int wbec_read_regs_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, wbec_read_regs, inode->i_private);
-}
-
-static const struct file_operations wbec_read_regs_fops = {
-	.open = wbec_read_regs_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-	.owner = THIS_MODULE,
+static const struct attribute_group wbec_attr_group = {
+	.attrs	= wbec_sysfs_entries,
 };
+
+
+#ifdef CONFIG_DEBUG_FS
+/*
+ * debugfs entries only exposed if we're using debug
+ */
 
 static ssize_t wbec_write_reg(struct file *file,
 				  const char __user *user_buf,
@@ -218,12 +241,6 @@ static const struct file_operations wbec_write_reg_fops = {
 static void wbec_setup_debugfs(struct wbec *wbec)
 {
 	wbec->wbec_dir = debugfs_create_dir("wbec", NULL);
-
-	debugfs_create_file("info", 0444, wbec->wbec_dir, wbec,
-			    &wbec_info_fops);
-
-	debugfs_create_file("read_regs", 0444, wbec->wbec_dir, wbec,
-			    &wbec_read_regs_fops);
 
 	debugfs_create_file("write_reg", 0200, wbec->wbec_dir, wbec,
 			    &wbec_write_reg_fops);
@@ -321,6 +338,12 @@ static int wbec_probe(struct spi_device *spi)
 		return -ENOTSUPP;
 	}
 
+	ret = sysfs_create_group(&wbec->dev->kobj, &wbec_attr_group);
+	if (ret) {
+		dev_err(&spi->dev, "failed to create sysfs group\n");
+		return ret;
+	}
+
 	ret = devm_mfd_add_devices(&spi->dev, PLATFORM_DEVID_NONE,
 			      wbec_cells, ARRAY_SIZE(wbec_cells), NULL, 0, NULL);
 	if (ret) {
@@ -354,6 +377,7 @@ static int wbec_remove(struct spi_device *spi)
 		unregister_restart_handler(&wbec_restart_handler);
 	}
 
+	sysfs_remove_group(&wbec->dev->kobj, &wbec_attr_group);
 	wbec_clean_debugfs(wbec);
 
 	return 0;
@@ -387,3 +411,4 @@ module_spi_driver(wbec_driver);
 MODULE_AUTHOR("Pavel Gasheev <pavel.gasheev@wirenboard.ru>");
 MODULE_DESCRIPTION("Wiren Board 7 Embedded Controller MFD driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("spi:wbec");
