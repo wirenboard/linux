@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2023 Wiren Board LLC
  *
- * Author: Pavel Gasheev <pavel.gasheev@wirenboard.ru>
+ * Author: Pavel Gasheev <pavel.gasheev@wirenboard.com>
  */
 
 #ifndef __WBEC_H
