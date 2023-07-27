@@ -5,6 +5,12 @@ linux-wb (5.10.35-wb142) stable; urgency=medium
 
  -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Thu, 13 Jul 2023 08:27:15 +0300
 
+linux-wb (5.10.35-wb142) stable; urgency=medium
+
+  * wb6: initramfs: wb7-like update scheme support
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Tue, 18 Jul 2023 19:56:13 +0600
+
 linux-wb (5.10.35-wb141) stable; urgency=medium
 
   * gpio: get rid of ARCH_NR_GPIOS_DYNALLOC, use ARCH_NR_GPIOS instead
