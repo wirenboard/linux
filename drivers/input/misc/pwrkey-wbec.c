@@ -20,32 +20,18 @@
 #include <linux/workqueue.h>
 #include <linux/mfd/wbec.h>
 
-#define WBEC_PWRKEY_POLL_PERIOD_NS		1000000000
+#define WBEC_PWRKEY_POLL_PERIOD_MS		500
 
 struct wbec_pwrkey {
 	struct input_dev *pwr;
-	struct hrtimer poll_timer;
-	struct work_struct wq;
+	struct delayed_work wq;
 	struct regmap *regmap;
 };
-
-static enum hrtimer_restart pwrkey_poll_cb(struct hrtimer *hrtimer)
-{
-	struct wbec_pwrkey *wbec_pwrkey =
-		container_of(hrtimer, typeof(*wbec_pwrkey), poll_timer);
-
-	schedule_work(&wbec_pwrkey->wq);
-
-	hrtimer_forward_now(hrtimer,
-			    ns_to_ktime(WBEC_PWRKEY_POLL_PERIOD_NS));
-
-	return HRTIMER_RESTART;
-}
 
 void pwrkey_poll_wq(struct work_struct *work)
 {
 	struct wbec_pwrkey *wbec_pwrkey =
-		container_of(work, typeof(*wbec_pwrkey), wq);
+		container_of(work, struct wbec_pwrkey, wq.work);
 	struct input_dev *pwr = wbec_pwrkey->pwr;
 	int val, wbec_id;
 
@@ -65,16 +51,22 @@ void pwrkey_poll_wq(struct work_struct *work)
 	val = regmap_test_bits(wbec_pwrkey->regmap, WBEC_REG_IRQ_FLAGS, WBEC_REG_IRQ_PWROFF_REQ_MSK);
 
 	if (val > 0) {
-		dev_info(&pwr->dev, "Power key press detected\n");
-		// Clear irq flag
-		regmap_write(wbec_pwrkey->regmap, WBEC_REG_IRQ_CLEAR, WBEC_REG_IRQ_PWROFF_REQ_MSK);
+		dev_info_once(&pwr->dev, "power key press detected\n");
+		/**
+		 * Do not clear interrupt flag here because if power key was pressed
+		 * during boot process, input event may be lost.
+		 * Repeat power key press event in the next iteration of the workqueue
+		 * while the system is not ready to handle it.
+		 */
 		input_report_key(pwr, KEY_POWER, 1);
 		input_sync(pwr);
-
-		hrtimer_cancel(&wbec_pwrkey->poll_timer);
+		input_report_key(pwr, KEY_POWER, 0);
+		input_sync(pwr);
 	} else if (val < 0) {
 		dev_err(&pwr->dev, "Error reading power off request from EC");
 	}
+
+	schedule_delayed_work(&wbec_pwrkey->wq, msecs_to_jiffies(WBEC_PWRKEY_POLL_PERIOD_MS));
 }
 
 static int wbec_pwrkey_probe(struct platform_device *pdev)
@@ -104,9 +96,6 @@ static int wbec_pwrkey_probe(struct platform_device *pdev)
 	wbec_pwrkey->pwr->id.bustype = BUS_HOST;
 	input_set_capability(wbec_pwrkey->pwr, EV_KEY, KEY_POWER);
 
-	hrtimer_init(&wbec_pwrkey->poll_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_SOFT);
-	wbec_pwrkey->poll_timer.function = pwrkey_poll_cb;
-
 	err = input_register_device(wbec_pwrkey->pwr);
 	if (err) {
 		dev_err(&pdev->dev, "Can't register power button: %d\n", err);
@@ -116,11 +105,8 @@ static int wbec_pwrkey_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, wbec_pwrkey);
 	device_init_wakeup(&pdev->dev, true);
 
-	INIT_WORK(&wbec_pwrkey->wq, pwrkey_poll_wq);
-
-	hrtimer_start(&wbec_pwrkey->poll_timer,
-			      ns_to_ktime(WBEC_PWRKEY_POLL_PERIOD_NS),
-			      HRTIMER_MODE_REL_SOFT);
+	INIT_DELAYED_WORK(&wbec_pwrkey->wq, pwrkey_poll_wq);
+	schedule_delayed_work(&wbec_pwrkey->wq, msecs_to_jiffies(WBEC_PWRKEY_POLL_PERIOD_MS));
 
 	return 0;
 }
@@ -131,8 +117,7 @@ static int wbec_pwrkey_remove(struct platform_device *pdev)
 
 	dev_info(&pdev->dev, "%s function\n", __func__);
 
-	hrtimer_cancel(&wbec_pwrkey->poll_timer);
-	flush_work(&wbec_pwrkey->wq);
+	cancel_delayed_work_sync(&wbec_pwrkey->wq);
 	input_unregister_device(wbec_pwrkey->pwr);
 
 	return 0;
