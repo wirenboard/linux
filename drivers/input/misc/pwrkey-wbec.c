@@ -52,12 +52,7 @@ void pwrkey_poll_wq(struct work_struct *work)
 
 	if (val > 0) {
 		dev_info_once(&pwr->dev, "power key press detected\n");
-		/**
-		 * Do not clear interrupt flag here because if power key was pressed
-		 * during boot process, input event may be lost.
-		 * Repeat power key press event in the next iteration of the workqueue
-		 * while the system is not ready to handle it.
-		 */
+		regmap_write(wbec_pwrkey->regmap, WBEC_REG_IRQ_CLEAR, WBEC_REG_IRQ_PWROFF_REQ_MSK);
 		input_report_key(pwr, KEY_POWER, 1);
 		input_sync(pwr);
 		input_report_key(pwr, KEY_POWER, 0);
