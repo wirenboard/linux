@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb143) stable; urgency=medium
+
+  * wb74: add dts
+  * wb-ec: add drivers
+
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Thu, 27 Jul 2023 20:42:13 +0300
+
 linux-wb (5.10.35-wb142) stable; urgency=medium
 
   * wb6: initramfs: wb7-like update scheme support
