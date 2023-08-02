@@ -1214,7 +1214,7 @@ config VIPERBOARD_ADC
 	  To compile this driver as a module, choose M here: the module will be
 	  called viperboard_adc.
 
-config WBEC_IIO
+config WBEC_ADC
 	tristate "Wiren Board Embedded Controller ADC Driver"
 	depends on MFD_WBEC
 	help
