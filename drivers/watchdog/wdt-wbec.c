@@ -38,8 +38,6 @@ static int wbec_wdt_start(struct watchdog_device *wdd)
 {
 	struct wbec_watchdog *wdt = watchdog_get_drvdata(wdd);
 
-	dev_info(wdt->dev, "start watchdog, but actually EC watchdog is always running\n");
-
 	// Nothing to do here, watchdog always running
 	return 0;
 }
@@ -65,8 +63,6 @@ static int wbec_wdt_set_timeout(struct watchdog_device *wdd,
 {
 	struct wbec_watchdog *wdt = watchdog_get_drvdata(wdd);
 	int ret;
-
-	dev_info(wdt->dev, "%s: timeout=%d\n", __func__, timeout);
 
 	if (timeout > WBEC_WDT_MAX_TIMEOUT) {
 		timeout = WBEC_WDT_MAX_TIMEOUT;
