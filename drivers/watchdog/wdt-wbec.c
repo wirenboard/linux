@@ -36,8 +36,6 @@ struct wbec_watchdog {
 
 static int wbec_wdt_start(struct watchdog_device *wdd)
 {
-	struct wbec_watchdog *wdt = watchdog_get_drvdata(wdd);
-
 	// Nothing to do here, watchdog always running
 	return 0;
 }
