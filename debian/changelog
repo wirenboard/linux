@@ -2,6 +2,7 @@ linux-wb (5.10.35-wb143) stable; urgency=medium
 
   * wb74: add dts
   * wb-ec: add drivers
+  * fix battery status reporting on WB7
 
  -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Thu, 27 Jul 2023 20:42:13 +0300
 
