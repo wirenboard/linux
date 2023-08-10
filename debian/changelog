@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb143) UNRELEASED; urgency=medium
+
+  * fix battery status reporting on WB7
+
+ -- Evgeny Boger <boger@wirenboard.com>  Thu, 10 Aug 2023 18:36:34 +0300
+
 linux-wb (5.10.35-wb142) stable; urgency=medium
 
   * wb6: initramfs: wb7-like update scheme support
