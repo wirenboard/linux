@@ -40,25 +40,24 @@ void pwrkey_poll_wq(struct work_struct *work)
 	if (val < 0) {
 		dev_err(&pwr->dev, "failed to read the wbec id at 0x%X\n",
 			WBEC_REG_INFO_WBEC_ID);
-		return;
-	}
-	if (wbec_id != WBEC_ID) {
+	} else if (wbec_id != WBEC_ID) {
 		dev_err_once(&pwr->dev, "wrong wbec ID at 0x%X. Get 0x%X istead of 0x%X\n",
 			WBEC_REG_INFO_WBEC_ID, wbec_id, WBEC_ID);
-		return;
-	}
+	} else {
+		val = regmap_test_bits(wbec_pwrkey->regmap, WBEC_REG_IRQ_FLAGS,
+			WBEC_REG_IRQ_PWROFF_REQ_MSK);
 
-	val = regmap_test_bits(wbec_pwrkey->regmap, WBEC_REG_IRQ_FLAGS, WBEC_REG_IRQ_PWROFF_REQ_MSK);
-
-	if (val > 0) {
-		dev_info_once(&pwr->dev, "power key press detected\n");
-		regmap_write(wbec_pwrkey->regmap, WBEC_REG_IRQ_CLEAR, WBEC_REG_IRQ_PWROFF_REQ_MSK);
-		input_report_key(pwr, KEY_POWER, 1);
-		input_sync(pwr);
-		input_report_key(pwr, KEY_POWER, 0);
-		input_sync(pwr);
-	} else if (val < 0) {
-		dev_err(&pwr->dev, "Error reading power off request from EC");
+		if (val > 0) {
+			dev_info_once(&pwr->dev, "power key press detected\n");
+			regmap_write(wbec_pwrkey->regmap, WBEC_REG_IRQ_CLEAR,
+				WBEC_REG_IRQ_PWROFF_REQ_MSK);
+			input_report_key(pwr, KEY_POWER, 1);
+			input_sync(pwr);
+			input_report_key(pwr, KEY_POWER, 0);
+			input_sync(pwr);
+		} else if (val < 0) {
+			dev_err(&pwr->dev, "Error reading power off request from EC");
+		}
 	}
 
 	schedule_delayed_work(&wbec_pwrkey->wq, msecs_to_jiffies(WBEC_PWRKEY_POLL_PERIOD_MS));
