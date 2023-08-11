@@ -1225,6 +1225,7 @@ dtb-$(CONFIG_MACH_SUN8I) += \
 	sun8i-r40-bananapi-m2-ultra.dtb \
 	sun8i-r40-wirenboard-som-test.dtb \
 	sun8i-r40-wirenboard72x-initram.dtb \
+	sun8i-r40-wirenboard72x-bootlet.dtb \
 	sun8i-r40-wirenboard720.dtb \
 	sun8i-r40-wirenboard730.dtb \
 	sun8i-r40-wirenboard731.dtb \
