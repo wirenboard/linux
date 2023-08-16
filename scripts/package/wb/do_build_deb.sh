@@ -62,7 +62,7 @@ make_deb () {
 
 make_bootlet_deb() {
     local DEBDIR="$KBUILD_OUTPUT/bootlet-deb"
-    local BOOTLET_DIR="$DEBDIR/usr/share/wb-boot/"
+    local BOOTLET_DIR="$DEBDIR/var/lib/wb-image-update"
     local TARGET_NAME="${KERNEL_FLAVOUR%-bootlet}"
     local PACKAGE_NAME="wb-bootlet-$TARGET_NAME"
     mkdir -p "$BOOTLET_DIR"
