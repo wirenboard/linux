@@ -1,4 +1,10 @@
-linux-wb (5.10.35-wb143) UNRELEASED; urgency=medium
+linux-wb (5.10.35-wb144) stable; urgency=medium
+
+  * add bootlet package build support, no functional changes to generic kernel
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Wed, 16 Aug 2023 21:17:30 +0600
+
+linux-wb (5.10.35-wb143) stable; urgency=medium
 
   * fix battery status reporting on WB7
 
