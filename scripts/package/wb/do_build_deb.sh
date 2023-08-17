@@ -71,7 +71,7 @@ make_bootlet_deb() {
     cp "$KBUILD_OUTPUT/arch/arm/boot/dts/$BOOTLET_DTB" "$BOOTLET_DIR/boot.dtb"
 
     rm -f "$PACKAGE_NAME"*.deb || true
-    fpm -s dir -t deb -n "$PACKAGE_NAME" -v "$(get_kernel_full_version)-fs${INITRAMFS_VERSION}${VERSION_SUFFIX}" \
+    fpm -s dir -t deb -n "$PACKAGE_NAME" -v "$(get_kernel_full_version)${VERSION_SUFFIX}-fs${INITRAMFS_VERSION}" \
         --architecture "$DEBARCH" \
         --description "FIT bootlet images, $KDEB_WBDESC" \
         --maintainer "$DEBFULLNAME <$DEBEMAIL>" \
