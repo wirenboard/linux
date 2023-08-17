@@ -157,3 +157,13 @@
 		};
 	};
 };
+
+/* ATECC on WB7.4 is on i2c4 */
+&i2c4 {
+	status = "okay";
+	clock-frequency = <10000>;
+};
+
+&i2c4_pins {
+	bias-pull-up;
+};
