@@ -1,3 +1,3 @@
-@Library('wbci@feature/34164-kernel-bootlet') _
+@Library('wbci@bugfix/build-kernel-cleanup') _
 
-buildWbKernel defaultTargets: 'wb6 wb7'
+buildWbKernel defaultTargets: 'wb6x-bootlet wb7x-bootlet'
