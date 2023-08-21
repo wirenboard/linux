@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb146) stable; urgency=medium
+
+  * add wb74 support to bootlet
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Mon, 21 Aug 2023 12:41:06 +0600
+
 linux-wb (5.10.35-wb145) stable; urgency=medium
 
   * wb74: add dts
