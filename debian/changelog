@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb147) stable; urgency=medium
+
+  * wb741 dts: fix "V_OUT ON" gpio name
+
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Sun, 27 Aug 2023 21:30:28 +0300
+
 linux-wb (5.10.35-wb146) stable; urgency=medium
 
   * add wb74 support to bootlet
