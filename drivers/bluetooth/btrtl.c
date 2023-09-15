@@ -168,7 +168,15 @@ static const struct id_table ic_id_table[] = {
 	  .has_rom_version = true,
 	  .fw_name  = "rtl_bt/rtl8822b_fw.bin",
 	  .cfg_name = "rtl_bt/rtl8822b_config" },
+
+	/* 8733BU */
+	{ IC_INFO(RTL_ROM_LMP_8723B, 0xf),
+	  .config_needed = true,
+	  .has_rom_version = true,
+	  .fw_name  = "rtl_bt/rtl8723fu_fw.bin",
+	  .cfg_name = "rtl_bt/rtl8723fu_config" },
 	};
+
 
 static const struct id_table *btrtl_match_ic(u16 lmp_subver, u16 hci_rev,
 					     u8 hci_ver, u8 hci_bus)
@@ -275,6 +283,7 @@ static int rtlbt_parse_firmware(struct hci_dev *hdev,
 		{ RTL_ROM_LMP_8821A, 10 },	/* 8821C */
 		{ RTL_ROM_LMP_8822B, 13 },	/* 8822C */
 		{ RTL_ROM_LMP_8761A, 14 },	/* 8761B */
+		{ RTL_ROM_LMP_8723B, 19 },	/* 8733B */
 	};
 
 	min_size = sizeof(struct rtl_epatch_header) + sizeof(extension_sig) + 3;
