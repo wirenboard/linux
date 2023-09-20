@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb142+wb101) stable; urgency=medium
+
+  * wb7: disable microsd card detect gpio (it is broken on some boards)
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Wed, 20 Sep 2023 15:52:20 +0600
+
 linux-wb (5.10.35-wb142) stable; urgency=medium
 
   * wb6: initramfs: wb7-like update scheme support
