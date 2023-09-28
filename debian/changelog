@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb120+wb102) stable; urgency=medium
+
+  * wb7: disable microsd card detect gpio (it is broken on some boards)
+
+ -- Vladimir Romanov <v.romanov@wirenboard.ru>  Thu, 28 Sep 2023 13:54:34 +0300
+
 linux-wb (5.10.35-wb120+wb101) stable; urgency=medium
 
   * wb: more robust 1-wire readings. Fix regression in wb 5.10 kernel.
