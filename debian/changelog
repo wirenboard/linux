@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb149) stable; urgency=medium
+
+  * add rtl8733bu wireless driver as a submodule
+    wb7 defconfig: enable CONFIG_RTL8733BU=m
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.com>  Fri, 29 Sep 2023 10:10:25 +0500
+
 linux-wb (5.10.35-wb148) stable; urgency=medium
 
   * wb7: disable microsd card detect gpio (it is broken on some boards)
