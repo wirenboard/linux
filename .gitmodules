@@ -3,4 +3,4 @@
 	url = https://github.com/wirenboard/rtl8723bu
 [submodule "drivers/net/wireless/realtek/rtl8733bu"]
 	path = drivers/net/wireless/realtek/rtl8733bu
-	url = git@github.com:wirenboard/rtl8733bu.git
+	url = https://github.com/wirenboard/rtl8733bu
