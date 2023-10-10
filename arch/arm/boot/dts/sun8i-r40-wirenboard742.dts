@@ -2,8 +2,8 @@
 #include "sun8i-r40-wirenboard74x.dtsi"
 
 / {
-	model = "Wiren Board rev. 7.4.1 (A40i)";
-	compatible = "wirenboard,wirenboard-741", "wirenboard,wirenboard-740", "wirenboard,wirenboard-74x", "wirenboard,wirenboard-73x", "wirenboard,wirenboard-72x", "wirenboard,wirenboard-720", "wirenboard,wirenboard-700", "wirenboard,wirenboard-7xx", "allwinner,sun8i-r40";
+	model = "Wiren Board rev. 7.4.2 (A40i)";
+	compatible = "wirenboard,wirenboard-742", "wirenboard,wirenboard-741", "wirenboard,wirenboard-74x", "wirenboard,wirenboard-73x", "wirenboard,wirenboard-72x", "wirenboard,wirenboard-720", "wirenboard,wirenboard-700", "wirenboard,wirenboard-7xx", "allwinner,sun8i-r40";
 
 	a1_volt: a1-volt {
 		compatible = "voltage-divider";
@@ -11,7 +11,7 @@
 		#io-channel-cells = <1>;
 
 		output-ohms = <10000>;
-		full-ohms = <98700>;
+		full-ohms = <110000>;
 		status = "okay";
 	};
 
@@ -21,7 +21,7 @@
 		#io-channel-cells = <1>;
 
 		output-ohms = <10000>;
-		full-ohms = <98700>;
+		full-ohms = <110000>;
 	};
 
 	a3_volt: a3-volt {
@@ -30,7 +30,7 @@
 		#io-channel-cells = <1>;
 
 		output-ohms = <10000>;
-		full-ohms = <98700>;
+		full-ohms = <110000>;
 	};
 
 	a4_volt: a4-volt {
@@ -39,6 +39,6 @@
 		#io-channel-cells = <1>;
 
 		output-ohms = <10000>;
-		full-ohms = <98700>;
+		full-ohms = <110000>;
 	};
 };
