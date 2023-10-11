@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb151) stable; urgency=medium
+
+  * Bluetooth: btrtl: Add support for RTL8733BU
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.com>  Wed, 11 Oct 2023 09:56:01 +0500
+
 linux-wb (5.10.35-wb150) stable; urgency=medium
 
   * wb7: add WB 7.4.2 revision with different ADC resistor divider
