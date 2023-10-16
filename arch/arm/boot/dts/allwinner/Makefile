@@ -248,18 +248,25 @@ dtb-$(CONFIG_MACH_SUN8I) += \
 	sun8i-r16-nintendo-nes-classic.dtb \
 	sun8i-r16-nintendo-super-nes-classic.dtb \
 	sun8i-r16-parrot.dtb \
-	sun8i-r40-bananapi-m2-ultra.dtb \
-	sun8i-r40-oka40i-c.dtb \
+        sun8i-r40-wirenboard-som-test.dtb \
+        sun8i-r40-wirenboard72x-initram.dtb \
+        sun8i-r40-wirenboard72x-factory.dtb \
+        sun8i-r40-wirenboard720.dtb \
+        sun8i-r40-wirenboard730.dtb \
+        sun8i-r40-wirenboard731.dtb \
+        sun8i-r40-wirenboard732.dtb \
+        sun8i-r40-wirenboard733.dtb \
+        sun8i-r40-wirenboard734-38071cb.dtb \
+        sun8i-r40-wirenboard741.dtb \
+        sun8i-r40-wirenboard742.dtb \
 	sun8i-s3-elimo-initium.dtb \
 	sun8i-s3-lichee-zero-plus.dtb \
 	sun8i-s3-pinecube.dtb \
 	sun8i-t113s-mangopi-mq-r-t113.dtb \
-	sun8i-t3-cqa3t-bv3.dtb \
 	sun8i-v3-sl631-imx179.dtb \
 	sun8i-v3s-licheepi-zero.dtb \
 	sun8i-v3s-licheepi-zero-dock.dtb \
-	sun8i-v40-bananapi-m2-berry.dtb
-dtb-$(CONFIG_MACH_SUN8I) += \
+#dtb-$(CONFIG_MACH_SUN8I) += \
 	sun8i-a23-evb.dtb \
 	sun8i-a23-gt90h-v4.dtb \
 	sun8i-a23-inet86dz.dtb \
@@ -310,17 +317,24 @@ dtb-$(CONFIG_MACH_SUN8I) += \
 	sun8i-r16-nintendo-nes-classic.dtb \
 	sun8i-r16-nintendo-super-nes-classic.dtb \
 	sun8i-r16-parrot.dtb \
-	sun8i-r40-bananapi-m2-ultra.dtb \
-	sun8i-r40-oka40i-c.dtb \
+        sun8i-r40-wirenboard-som-test.dtb \
+        sun8i-r40-wirenboard72x-initram.dtb \
+        sun8i-r40-wirenboard72x-factory.dtb \
+        sun8i-r40-wirenboard720.dtb \
+        sun8i-r40-wirenboard730.dtb \
+        sun8i-r40-wirenboard731.dtb \
+        sun8i-r40-wirenboard732.dtb \
+        sun8i-r40-wirenboard733.dtb \
+        sun8i-r40-wirenboard734-38071cb.dtb \
+        sun8i-r40-wirenboard741.dtb \
+        sun8i-r40-wirenboard742.dtb \
 	sun8i-s3-elimo-initium.dtb \
 	sun8i-s3-lichee-zero-plus.dtb \
 	sun8i-s3-pinecube.dtb \
 	sun8i-t113s-mangopi-mq-r-t113.dtb \
-	sun8i-t3-cqa3t-bv3.dtb \
 	sun8i-v3-sl631-imx179.dtb \
 	sun8i-v3s-licheepi-zero.dtb \
-	sun8i-v3s-licheepi-zero-dock.dtb \
-	sun8i-v40-bananapi-m2-berry.dtb
+	sun8i-v3s-licheepi-zero-dock.dtb 
 dtb-$(CONFIG_MACH_SUN9I) += \
 	sun9i-a80-optimus.dtb \
 	sun9i-a80-cubieboard4.dtb

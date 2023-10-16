@@ -42,7 +42,6 @@
  */
 
 #include <dt-bindings/interrupt-controller/arm-gic.h>
-#include <dt-bindings/clock/sun6i-rtc.h>
 #include <dt-bindings/clock/sun8i-de2.h>
 #include <dt-bindings/clock/sun8i-r40-ccu.h>
 #include <dt-bindings/clock/sun8i-tcon-top.h>
@@ -77,6 +76,95 @@
 		};
 	};
 
+	cpu0_opp_table: opp_table0 {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp-120000000 {
+			opp-hz = /bits/ 64 <120000000>;
+			opp-microvolt = <1040000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+
+		opp-240000000 {
+			opp-hz = /bits/ 64 <240000000>;
+			opp-microvolt = <1040000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+
+		opp-312000000 {
+			opp-hz = /bits/ 64 <312000000>;
+			opp-microvolt = <1040000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+
+		opp-408000000 {
+			opp-hz = /bits/ 64 <408000000>;
+			opp-microvolt = <1040000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+
+		opp-480000000 {
+			opp-hz = /bits/ 64 <480000000>;
+			opp-microvolt = <1040000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+
+		opp-504000000 {
+			opp-hz = /bits/ 64 <504000000>;
+			opp-microvolt = <1040000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+
+		opp-600000000 {
+			opp-hz = /bits/ 64 <600000000>;
+			opp-microvolt = <1040000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+
+		opp-648000000 {
+			opp-hz = /bits/ 64 <648000000>;
+			opp-microvolt = <1040000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+
+		opp-720000000 {
+			opp-hz = /bits/ 64 <720000000>;
+			opp-microvolt = <1100000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+
+		opp-816000000 {
+			opp-hz = /bits/ 64 <816000000>;
+			opp-microvolt = <1100000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+
+		opp-912000000 {
+			opp-hz = /bits/ 64 <912000000>;
+			opp-microvolt = <1200000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+
+		opp-1008000000 {
+			opp-hz = /bits/ 64 <1008000000>;
+			opp-microvolt = <1200000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+
+		opp-1104000000 {
+			opp-hz = /bits/ 64 <1104000000>;
+			opp-microvolt = <1300000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+
+		opp-1200000000 {
+			opp-hz = /bits/ 64 <1200000000>;
+			opp-microvolt = <1300000>;
+			clock-latency-ns = <244144>; /* 8 32k periods */
+		};
+	};
+
 	cpus {
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -87,6 +175,7 @@
 			reg = <0>;
 			clocks = <&ccu CLK_CPU>;
 			clock-names = "cpu";
+			operating-points-v2 = <&cpu0_opp_table>;
 			#cooling-cells = <2>;
 		};
 
@@ -96,6 +185,7 @@
 			reg = <1>;
 			clocks = <&ccu CLK_CPU>;
 			clock-names = "cpu";
+			operating-points-v2 = <&cpu0_opp_table>;
 			#cooling-cells = <2>;
 		};
 
@@ -105,6 +195,7 @@
 			reg = <2>;
 			clocks = <&ccu CLK_CPU>;
 			clock-names = "cpu";
+			operating-points-v2 = <&cpu0_opp_table>;
 			#cooling-cells = <2>;
 		};
 
@@ -114,6 +205,7 @@
 			reg = <3>;
 			clocks = <&ccu CLK_CPU>;
 			clock-names = "cpu";
+			operating-points-v2 = <&cpu0_opp_table>;
 			#cooling-cells = <2>;
 		};
 	};
@@ -130,16 +222,15 @@
 			polling-delay-passive = <0>;
 			polling-delay = <0>;
 			thermal-sensors = <&ths 0>;
-
 			trips {
 				cpu_hot_trip: cpu-hot {
-					temperature = <80000>;
+					temperature = <125000>;
 					hysteresis = <2000>;
 					type = "passive";
 				};
 
 				cpu_very_hot_trip: cpu-very-hot {
-					temperature = <115000>;
+					temperature = <140000>;
 					hysteresis = <0>;
 					type = "critical";
 				};
@@ -227,25 +318,6 @@
 			};
 		};
 
-		deinterlace: deinterlace@1400000 {
-			compatible = "allwinner,sun8i-r40-deinterlace",
-				     "allwinner,sun8i-h3-deinterlace";
-			reg = <0x01400000 0x20000>;
-			clocks = <&ccu CLK_BUS_DEINTERLACE>,
-				 <&ccu CLK_DEINTERLACE>,
-				 /*
-				  * NOTE: Contrary to what datasheet claims,
-				  * DRAM deinterlace gate doesn't exist and
-				  * it's shared with CSI1.
-				  */
-				 <&ccu CLK_DRAM_CSI1>;
-			clock-names = "bus", "mod", "ram";
-			resets = <&ccu RST_BUS_DEINTERLACE>;
-			interrupts = <GIC_SPI 93 IRQ_TYPE_LEVEL_HIGH>;
-			interconnects = <&mbus 9>;
-			interconnect-names = "dma-mem";
-		};
-
 		syscon: system-control@1c00000 {
 			compatible = "allwinner,sun8i-r40-system-control",
 				     "allwinner,sun4i-a10-system-control";
@@ -253,6 +325,20 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 			ranges;
+
+			sram_a: sram@0 {
+				compatible = "mmio-sram";
+				reg = <0x00000000 0xc000>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				ranges = <0 0x00000000 0xc000>;
+
+				emac_sram: sram-section@8000 {
+					compatible = "allwinner,sun4i-a10-sram-a3-a4";
+					reg = <0x8000 0x4000>;
+					status = "okay";
+				};
+			};
 
 			sram_c: sram@1d00000 {
 				compatible = "mmio-sram";
@@ -287,6 +373,17 @@
 			dma-requests = <31>;
 			resets = <&ccu RST_BUS_DMA>;
 			#dma-cells = <1>;
+		};
+
+		sid: eeprom@1c1b000 {
+			compatible = "allwinner,sun8i-r40-sid";
+			reg = <0x1c1b000 0x200>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			ths_calibration: thermal-sensor-calibration@40 {
+				reg = <0x40 4>;
+			};
 		};
 
 		spi0: spi@1c05000 {
@@ -394,13 +491,26 @@
 			clock-names = "ahb", "mmc";
 			resets = <&ccu RST_BUS_MMC3>;
 			reset-names = "ahb";
-			pinctrl-0 = <&mmc3_pins>;
-			pinctrl-names = "default";
 			interrupts = <GIC_SPI 35 IRQ_TYPE_LEVEL_HIGH>;
 			status = "disabled";
 			#address-cells = <1>;
 			#size-cells = <0>;
 		};
+
+		usb_otg: usb@1c13000 {
+			compatible = "allwinner,sun8i-r40-musb";
+			reg = <0x01c13000 0x0400>;
+			clocks = <&ccu CLK_BUS_OTG>;
+			resets = <&ccu RST_BUS_OTG>;
+			interrupts = <GIC_SPI 38 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "mc";
+			host-controllers = <&ehci0>, <&ohci0>;
+			phys = <&usbphy 0>;
+			phy-names = "usb";
+			extcon = <&usbphy 0>;
+			status = "disabled";
+		};
+
 
 		usbphy: phy@1c13400 {
 			compatible = "allwinner,sun8i-r40-usb-phy";
@@ -424,6 +534,8 @@
 			reset-names = "usb0_reset",
 				      "usb1_reset",
 				      "usb2_reset";
+			port0-host-controllers = <&ehci0>, <&ohci0>;
+			port0-peripheral-controllers = <&usb_otg>;
 			status = "disabled";
 			#phy-cells = <1>;
 		};
@@ -460,12 +572,37 @@
 			status = "disabled";
 		};
 
+		ehci0: usb@1c14000 {
+			compatible = "allwinner,sun8i-r40-ehci", "generic-ehci";
+			reg = <0x01c14000 0x100>;
+			interrupts = <GIC_SPI 39 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_EHCI0>;
+			resets = <&ccu RST_BUS_EHCI0>;
+			companion = <&ohci0>;
+			phys = <&usbphy 0>;
+			phy-names = "usb";
+			status = "disabled";
+		};
+
+		ohci0: usb@1c14400 {
+			compatible = "allwinner,sun8i-r40-ohci", "generic-ohci";
+			reg = <0x01c14400 0x100>;
+			interrupts = <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_OHCI0>,
+				 <&ccu CLK_USB_OHCI0>;
+			resets = <&ccu RST_BUS_OHCI0>;
+			phys = <&usbphy 0>;
+			phy-names = "usb";
+			status = "disabled";
+		};
+
 		ehci1: usb@1c19000 {
 			compatible = "allwinner,sun8i-r40-ehci", "generic-ehci";
 			reg = <0x01c19000 0x100>;
 			interrupts = <GIC_SPI 76 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_BUS_EHCI1>;
 			resets = <&ccu RST_BUS_EHCI1>;
+			companion = <&ohci1>;
 			phys = <&usbphy 1>;
 			phy-names = "usb";
 			status = "disabled";
@@ -489,6 +626,7 @@
 			interrupts = <GIC_SPI 78 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_BUS_EHCI2>;
 			resets = <&ccu RST_BUS_EHCI2>;
+			companion = <&ohci2>;
 			phys = <&usbphy 2>;
 			phy-names = "usb";
 			status = "disabled";
@@ -522,7 +660,7 @@
 		ccu: clock@1c20000 {
 			compatible = "allwinner,sun8i-r40-ccu";
 			reg = <0x01c20000 0x400>;
-			clocks = <&osc24M>, <&rtc CLK_OSC32K>;
+			clocks = <&osc24M>, <&rtc 0>;
 			clock-names = "hosc", "losc";
 			#clock-cells = <1>;
 			#reset-cells = <1>;
@@ -541,8 +679,7 @@
 			compatible = "allwinner,sun8i-r40-pinctrl";
 			reg = <0x01c20800 0x400>;
 			interrupts = <GIC_SPI 28 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&ccu CLK_BUS_PIO>, <&osc24M>,
-				 <&rtc CLK_OSC32K>;
+			clocks = <&ccu CLK_BUS_PIO>, <&osc24M>, <&rtc 0>;
 			clock-names = "apb", "hosc", "losc";
 			gpio-controller;
 			interrupt-controller;
@@ -589,6 +726,24 @@
 				 * and need a higher signal drive strength
 				 */
 				drive-strength = <40>;
+			};
+
+			emac_pa_pins: emac-pa-pins {
+				pins = "PA0", "PA1", "PA2",
+				       "PA3", "PA4", "PA5", "PA6",
+				       "PA7", "PA8", "PA9", "PA10",
+				       "PA11", "PA12", "PA13", "PA14",
+				       "PA15", "PA16";
+				function = "emac";
+			};
+
+			emac_ph_pins: emac-ph-pins {
+				pins = "PH8", "PH9", "PH10", "PH11",
+				       "PH14", "PH15", "PH16", "PH17",
+				       "PH18","PH19", "PH20", "PH21",
+				       "PH22", "PH23", "PH24", "PH25",
+				       "PH26", "PH27";
+				function = "emac";
 			};
 
 			i2c0_pins: i2c0-pins {
@@ -652,15 +807,6 @@
 			};
 
 			/omit-if-no-ref/
-			mmc3_pins: mmc3-pins {
-				pins = "PI4", "PI5", "PI6",
-				       "PI7", "PI8", "PI9";
-				function = "mmc3";
-				drive-strength = <30>;
-				bias-pull-up;
-			};
-
-			/omit-if-no-ref/
 			spi0_pc_pins: spi0-pc-pins {
 				pins = "PC0", "PC1", "PC2";
 				function = "spi0";
@@ -690,52 +836,83 @@
 				function = "spi1";
 			};
 
-			/omit-if-no-ref/
 			uart0_pb_pins: uart0-pb-pins {
 				pins = "PB22", "PB23";
 				function = "uart0";
 			};
 
-			/omit-if-no-ref/
+			uart1_pa_pins: uart1-pa-pins {
+				pins = "PA10", "PA11";
+			};
+
+			uart2_pa_pins: uart2-pa-pins {
+				pins = "PA2", "PA3";
+				function = "uart2";
+			};
+
 			uart2_pi_pins: uart2-pi-pins {
 				pins = "PI18", "PI19";
 				function = "uart2";
 			};
 
-			/omit-if-no-ref/
-			uart2_rts_cts_pi_pins: uart2-rts-cts-pi-pins{
-				pins = "PI16", "PI17";
-				function = "uart2";
-			};
-
-			/omit-if-no-ref/
 			uart3_pg_pins: uart3-pg-pins {
 				pins = "PG6", "PG7";
 				function = "uart3";
 			};
 
-			/omit-if-no-ref/
 			uart3_rts_cts_pg_pins: uart3-rts-cts-pg-pins {
 				pins = "PG8", "PG9";
 				function = "uart3";
 			};
 
-			/omit-if-no-ref/
+			uart3_ph_pins: uart3-ph-pins {
+				pins = "PH0", "PH1";
+				function = "uart3";
+			};
+
 			uart4_pg_pins: uart4-pg-pins {
 				pins = "PG10", "PG11";
 				function = "uart4";
 			};
 
-			/omit-if-no-ref/
+			uart4_ph_pins: uart4-ph-pins {
+				pins = "PH4", "PH5";
+				function = "uart4";
+			};
+
 			uart5_ph_pins: uart5-ph-pins {
 				pins = "PH6", "PH7";
 				function = "uart5";
 			};
 
-			/omit-if-no-ref/
+			uart5_pi_pins: uart5-pi-pins {
+				pins = "PI10", "PI11";
+				function = "uart5";
+			};
+
+			uart6_pa_pins: uart6-pa-pins {
+				pins = "PA12", "PA13";
+				function = "uart6";
+			};
+
+			uart6_pi_pins: uart6-pi-pins {
+				pins = "PI12", "PI13";
+				function = "uart6";
+			};
+
 			uart7_pi_pins: uart7-pi-pins {
 				pins = "PI20", "PI21";
 				function = "uart7";
+			};
+
+			uart7_pa_pins: uart7-pa-pins {
+				pins = "PA14", "PA15";
+				function = "uart7";
+			};
+
+			pwm_ch2_pi_pins: pwm-ch2-pi-pins {
+				pins = "PI20";
+				function = "pwm";
 			};
 		};
 
@@ -784,45 +961,6 @@
 			status = "disabled";
 		};
 
-		i2s0: i2s@1c22000 {
-			#sound-dai-cells = <0>;
-			compatible = "allwinner,sun8i-r40-i2s",
-				     "allwinner,sun8i-h3-i2s";
-			reg = <0x01c22000 0x400>;
-			interrupts = <GIC_SPI 16 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&ccu CLK_BUS_I2S0>, <&ccu CLK_I2S0>;
-			clock-names = "apb", "mod";
-			resets = <&ccu RST_BUS_I2S0>;
-			dmas = <&dma 3>, <&dma 3>;
-			dma-names = "rx", "tx";
-		};
-
-		i2s1: i2s@1c22400 {
-			#sound-dai-cells = <0>;
-			compatible = "allwinner,sun8i-r40-i2s",
-				     "allwinner,sun8i-h3-i2s";
-			reg = <0x01c22400 0x400>;
-			interrupts = <GIC_SPI 87 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&ccu CLK_BUS_I2S1>, <&ccu CLK_I2S1>;
-			clock-names = "apb", "mod";
-			resets = <&ccu RST_BUS_I2S1>;
-			dmas = <&dma 4>, <&dma 4>;
-			dma-names = "rx", "tx";
-		};
-
-		i2s2: i2s@1c22800 {
-			#sound-dai-cells = <0>;
-			compatible = "allwinner,sun8i-r40-i2s",
-				     "allwinner,sun8i-h3-i2s";
-			reg = <0x01c22800 0x400>;
-			interrupts = <GIC_SPI 90 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&ccu CLK_BUS_I2S2>, <&ccu CLK_I2S2>;
-			clock-names = "apb", "mod";
-			resets = <&ccu RST_BUS_I2S2>;
-			dmas = <&dma 6>, <&dma 6>;
-			dma-names = "rx", "tx";
-		};
-
 		ths: thermal-sensor@1c24c00 {
 			compatible = "allwinner,sun8i-r40-ths";
 			reg = <0x01c24c00 0x100>;
@@ -830,12 +968,38 @@
 			clock-names = "bus", "mod";
 			interrupts = <GIC_SPI 36 IRQ_TYPE_LEVEL_HIGH>;
 			resets = <&ccu RST_BUS_THS>;
-			/* TODO: add nvmem-cells for calibration */
 			#thermal-sensor-cells = <1>;
+			nvmem-cells = <&ths_calibration>;
+			nvmem-cell-names = "calibration";
+		};
+
+		pwm: pwm@1c23400 {
+			compatible = "allwinner,sun8i-r40-pwm";
+			reg = <0x01c23400 0x400>;
+			interrupts = <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&osc24M>, <&ccu CLK_APB1>;
+			clock-names = "mux-0", "mux-1";
+			pwm-channels = <8>;
+			#pwm-cells = <3>;
+			status = "disabled";
+		};
+
+		rtp: rtp@1c25000 {
+			compatible = "allwinner,sun8i-r40-ts",
+				     "allwinner,sun6i-a31-ts";
+			reg = <0x01c25000 0x100>;
+			interrupts = <GIC_SPI 29 IRQ_TYPE_LEVEL_HIGH>;
+			#thermal-sensor-cells = <0>;
+
+			gpadc: gpadc {
+				compatible = "allwinner,sun8i-r40-gpadc";
+				#io-channel-cells = <1>;
+			};
 		};
 
 		uart0: serial@1c28000 {
-			compatible = "snps,dw-apb-uart";
+			compatible = "allwinner,sun4i-a10-uart",
+				     "snps,dw-apb-uart";
 			reg = <0x01c28000 0x400>;
 			interrupts = <GIC_SPI 1 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
@@ -846,7 +1010,8 @@
 		};
 
 		uart1: serial@1c28400 {
-			compatible = "snps,dw-apb-uart";
+			compatible = "allwinner,sun4i-a10-uart",
+				     "snps,dw-apb-uart";
 			reg = <0x01c28400 0x400>;
 			interrupts = <GIC_SPI 2 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
@@ -857,7 +1022,8 @@
 		};
 
 		uart2: serial@1c28800 {
-			compatible = "snps,dw-apb-uart";
+			compatible = "allwinner,sun4i-a10-uart",
+				     "snps,dw-apb-uart";
 			reg = <0x01c28800 0x400>;
 			interrupts = <GIC_SPI 3 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
@@ -868,7 +1034,8 @@
 		};
 
 		uart3: serial@1c28c00 {
-			compatible = "snps,dw-apb-uart";
+			compatible = "allwinner,sun4i-a10-uart",
+				     "snps,dw-apb-uart";
 			reg = <0x01c28c00 0x400>;
 			interrupts = <GIC_SPI 4 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
@@ -879,7 +1046,8 @@
 		};
 
 		uart4: serial@1c29000 {
-			compatible = "snps,dw-apb-uart";
+			compatible = "allwinner,sun4i-a10-uart",
+				     "snps,dw-apb-uart";
 			reg = <0x01c29000 0x400>;
 			interrupts = <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
@@ -890,7 +1058,8 @@
 		};
 
 		uart5: serial@1c29400 {
-			compatible = "snps,dw-apb-uart";
+			compatible = "allwinner,sun4i-a10-uart",
+				     "snps,dw-apb-uart";
 			reg = <0x01c29400 0x400>;
 			interrupts = <GIC_SPI 18 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
@@ -901,7 +1070,8 @@
 		};
 
 		uart6: serial@1c29800 {
-			compatible = "snps,dw-apb-uart";
+			compatible = "allwinner,sun4i-a10-uart",
+				     "snps,dw-apb-uart";
 			reg = <0x01c29800 0x400>;
 			interrupts = <GIC_SPI 19 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
@@ -912,7 +1082,8 @@
 		};
 
 		uart7: serial@1c29c00 {
-			compatible = "snps,dw-apb-uart";
+			compatible = "allwinner,sun4i-a10-uart",
+				     "snps,dw-apb-uart";
 			reg = <0x01c29c00 0x400>;
 			interrupts = <GIC_SPI 20 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
@@ -1035,6 +1206,24 @@
 				#address-cells = <1>;
 				#size-cells = <0>;
 			};
+		};
+
+		emac: ethernet@1c0b000 {
+			compatible = "allwinner,sun8i-r40-emac";
+			reg = <0x01c0b000 0x1000>;
+			interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_EMAC>;
+			resets = <&ccu RST_BUS_EMAC>;
+			allwinner,sram = <&emac_sram 1>;
+			status = "disabled";
+		};
+
+		emac_mdio: mdio@1c0b080 {
+			compatible = "allwinner,sun4i-a10-mdio";
+			reg = <0x01c0b080 0x14>;
+			status = "disabled";
+			#address-cells = <1>;
+			#size-cells = <0>;
 		};
 
 		mbus: dram-controller@1c62000 {
@@ -1269,8 +1458,8 @@
 			reg-io-width = <1>;
 			interrupts = <GIC_SPI 58 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_BUS_HDMI0>, <&ccu CLK_HDMI_SLOW>,
-				 <&ccu CLK_HDMI>, <&rtc CLK_OSC32K>;
-			clock-names = "iahb", "isfr", "tmds", "cec";
+				 <&ccu CLK_HDMI>;
+			clock-names = "iahb", "isfr", "tmds";
 			resets = <&ccu RST_BUS_HDMI1>;
 			reset-names = "ctrl";
 			phys = <&hdmi_phy>;

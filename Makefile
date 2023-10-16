@@ -1298,6 +1298,11 @@ headers: $(version_h) scripts_unifdef uapi-asm-generic archheaders archscripts
 	$(Q)$(MAKE) $(hdr-inst)=include/uapi
 	$(Q)$(MAKE) $(hdr-inst)=arch/$(SRCARCH)/include/uapi
 
+# Deprecated. It is no-op now.
+PHONY += headers_check
+headers_check:
+        @:
+
 ifdef CONFIG_HEADERS_INSTALL
 prepare: headers
 endif
