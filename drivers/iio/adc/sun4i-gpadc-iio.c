@@ -25,6 +25,7 @@
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>
+#include <linux/of_device.h>
 #include <linux/pm_runtime.h>
 #include <linux/regmap.h>
 #include <linux/thermal.h>
@@ -52,6 +53,7 @@ struct gpadc_data {
 	unsigned int	tp_adc_select;
 	unsigned int	(*adc_chan_select)(unsigned int chan);
 	unsigned int	adc_chan_mask;
+	bool            has_temp_sensor;
 };
 
 static const struct gpadc_data sun4i_gpadc_data = {
@@ -61,6 +63,7 @@ static const struct gpadc_data sun4i_gpadc_data = {
 	.tp_adc_select = SUN4I_GPADC_CTRL1_TP_ADC_SELECT,
 	.adc_chan_select = &sun4i_gpadc_chan_select,
 	.adc_chan_mask = SUN4I_GPADC_CTRL1_ADC_CHAN_MASK,
+        .has_temp_sensor = true,
 };
 
 static const struct gpadc_data sun5i_gpadc_data = {
@@ -70,6 +73,7 @@ static const struct gpadc_data sun5i_gpadc_data = {
 	.tp_adc_select = SUN4I_GPADC_CTRL1_TP_ADC_SELECT,
 	.adc_chan_select = &sun4i_gpadc_chan_select,
 	.adc_chan_mask = SUN4I_GPADC_CTRL1_ADC_CHAN_MASK,
+        .has_temp_sensor = true,
 };
 
 static const struct gpadc_data sun6i_gpadc_data = {
@@ -79,12 +83,23 @@ static const struct gpadc_data sun6i_gpadc_data = {
 	.tp_adc_select = SUN6I_GPADC_CTRL1_TP_ADC_SELECT,
 	.adc_chan_select = &sun6i_gpadc_chan_select,
 	.adc_chan_mask = SUN6I_GPADC_CTRL1_ADC_CHAN_MASK,
+        .has_temp_sensor = true,
 };
 
+static const struct gpadc_data sun8i_r40_gpadc_data = {
+       .temp_offset = -1623,
+       .temp_scale = 167,
+       .tp_mode_en = SUN6I_GPADC_CTRL1_TP_MODE_EN,
+       .tp_adc_select = SUN6I_GPADC_CTRL1_TP_ADC_SELECT,
+       .adc_chan_select = &sun6i_gpadc_chan_select,
+       .adc_chan_mask = SUN6I_GPADC_CTRL1_ADC_CHAN_MASK,
+       .has_temp_sensor = false,
+};
 static const struct gpadc_data sun8i_a33_gpadc_data = {
 	.temp_offset = -1662,
 	.temp_scale = 162,
 	.tp_mode_en = SUN8I_GPADC_CTRL1_CHOP_TEMP_EN,
+        .has_temp_sensor = true,
 };
 
 struct sun4i_gpadc_iio {
@@ -690,6 +705,7 @@ static const struct platform_device_id sun4i_gpadc_id[] = {
 	{ "sun4i-a10-gpadc-iio", (kernel_ulong_t)&sun4i_gpadc_data },
 	{ "sun5i-a13-gpadc-iio", (kernel_ulong_t)&sun5i_gpadc_data },
 	{ "sun6i-a31-gpadc-iio", (kernel_ulong_t)&sun6i_gpadc_data },
+        { "sun8i-r40-gpadc-iio", (kernel_ulong_t)&sun8i_r40_gpadc_data },
 	{ /* sentinel */ },
 };
 MODULE_DEVICE_TABLE(platform, sun4i_gpadc_id);
