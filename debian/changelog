@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb152) stable; urgency=medium
+
+  * wbec: fix stack overwrite in sysfs read resulting in junk in fwrev
+
+ -- Evgeny Boger <boger@wirenboard.com>  Sun, 22 Oct 2023 00:15:00 +0300
+
 linux-wb (5.10.35-wb151) stable; urgency=medium
 
   * Bluetooth: btrtl: Add support for RTL8733BU
