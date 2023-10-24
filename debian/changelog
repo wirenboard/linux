@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb153) URELEASED; urgency=medium
+
+  * regmap: allow register writing
+
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Tue, 24 Oct 2023 15:51:14 +0300
+
 linux-wb (5.10.35-wb152) stable; urgency=medium
 
   * wbec: fix stack overwrite in sysfs read resulting in junk in fwrev
