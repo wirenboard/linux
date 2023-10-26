@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb153) stable; urgency=medium
+
+  * wb74: disable microsd card detect gpio (it is broken on some boards)
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Thu, 26 Oct 2023 13:58:00 +0400
+
 linux-wb (5.10.35-wb152) stable; urgency=medium
 
   * wbec: fix stack overwrite in sysfs read resulting in junk in fwrev
