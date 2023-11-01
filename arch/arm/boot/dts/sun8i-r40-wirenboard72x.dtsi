@@ -48,6 +48,7 @@
 			regulator-name = "usb0_vbus";
 			regulator-min-microvolt = <5000000>;
 			regulator-max-microvolt = <5000000>;
+			regulator-boot-on;
 
 			gpio = <PIN_PE 0 GPIO_ACTIVE_HIGH>;
 			enable-active-high;

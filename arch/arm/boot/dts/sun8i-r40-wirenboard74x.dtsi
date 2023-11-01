@@ -53,6 +53,7 @@
 
 			gpio = <PIN_PE 0 GPIO_ACTIVE_HIGH>;
 			enable-active-high;
+			regulator-boot-on;
 		};
 
 		/* USB Wi-Fi is directly connected to SoC, power supply is
