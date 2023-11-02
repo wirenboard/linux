@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb154) stable; urgency=medium
+
+  * wb7x: enable USB regulator on boot to fix some USB flash drives detection
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Thu, 02 Nov 2023 21:20:22 +0600
+
 linux-wb (5.10.35-wb153) stable; urgency=medium
 
   * wb74: disable microsd card detect gpio (it is broken on some boards)
