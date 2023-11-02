@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb156) stable; urgency=medium
+
+  * wb7x: enable USB regulator on boot to fix some USB flash drives detection
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Tue, 21 Nov 2023 19:05:38 +0600
+
 linux-wb (5.10.35-wb155) stable; urgency=medium
 
   * Fix 1-Wire pin numbers for Wiren Board 7.4+
