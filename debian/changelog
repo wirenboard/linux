@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb154) stable; urgency=medium
+
+  * wb7x: dts: fix microsd card power in bootlet on 7.3+ boards
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Tue, 07 Nov 2023 22:29:19 +0600
+
 linux-wb (5.10.35-wb153) stable; urgency=medium
 
   * wb74: disable microsd card detect gpio (it is broken on some boards)
