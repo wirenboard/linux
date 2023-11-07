@@ -28,4 +28,11 @@ dtb-$(CONFIG_ARCH_MXS) += \
 	imx28-sps1.dtb \
 	imx28-ts4600.dtb \
 	imx28-tx28.dtb \
-	imx28-xea.dtb
+	imx28-xea.dtb \
+	imx28-ev-dbg.dtb \
+	imx28-wirenboard50.dtb \
+	imx28-wirenboard52-functest.dtb \
+	imx28-wirenboard52.dtb \
+	imx28-wirenboard55.dtb \
+	imx28-wirenboard58.dtb \
+	imx28-wirenboard5x-usbfw.dtb

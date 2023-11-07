@@ -320,7 +320,18 @@ dtb-$(CONFIG_MACH_SUN8I) += \
 	sun8i-v3-sl631-imx179.dtb \
 	sun8i-v3s-licheepi-zero.dtb \
 	sun8i-v3s-licheepi-zero-dock.dtb \
-	sun8i-v40-bananapi-m2-berry.dtb
+	sun8i-v40-bananapi-m2-berry.dtb \
+	sun8i-r40-wirenboard-som-test.dtb \
+	sun8i-r40-wirenboard720.dtb \
+	sun8i-r40-wirenboard72x-initram.dtb \
+	sun8i-r40-wirenboard72x-factory.dtb \
+	sun8i-r40-wirenboard730.dtb \
+	sun8i-r40-wirenboard731.dtb \
+	sun8i-r40-wirenboard732.dtb \
+	sun8i-r40-wirenboard733.dtb \
+	sun8i-r40-wirenboard734-38071cb.dtb \
+	sun8i-r40-wirenboard741.dtb \
+	sun8i-r40-wirenboard742.dtb
 dtb-$(CONFIG_MACH_SUN9I) += \
 	sun9i-a80-optimus.dtb \
 	sun9i-a80-cubieboard4.dtb
