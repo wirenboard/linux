@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb155) stable; urgency=medium
+
+  * Fix 1-Wire pin numbers for Wiren Board 7.4+
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Sat, 11 Nov 2023 00:16:41 +0600
+
 linux-wb (5.10.35-wb154) stable; urgency=medium
 
   * wb7x: dts: fix microsd card power in bootlet on 7.3+ boards
