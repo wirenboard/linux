@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb157) stable; urgency=medium
+
+  * rtl8733bu: log association rejection messages as warnings 
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.com>  Wed, 29 Nov 2023 10:06:57 +0500
+
 linux-wb (5.10.35-wb156) stable; urgency=medium
 
   * wb7x: enable USB regulator on boot to fix some USB flash drives detection
