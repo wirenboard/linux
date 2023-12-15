@@ -282,10 +282,10 @@
 			pinctrl-0 = <&mmc0_pins>;
 			status = "disabled";
 			max-frequency = <150000000>;
-			cap-sd-highspeed;
-			cap-mmc-highspeed;
-			mmc-ddr-3_3v;
-			cap-sdio-irq;
+			//cap-sd-highspeed;
+			//cap-mmc-highspeed;
+			//mmc-ddr-3_3v;
+			//cap-sdio-irq;
 			#address-cells = <1>;
 			#size-cells = <0>;
 		};
@@ -497,8 +497,8 @@
 			reg = <0x05020000 0x10000>;
 			interrupts = <GIC_SPI 14 IRQ_TYPE_LEVEL_HIGH>;
 			interrupt-names = "macirq";
-			clocks = <&ccu CLK_BUS_EMAC0>;
-			clock-names = "stmmaceth";
+			clocks = <&ccu CLK_BUS_EMAC0>, <&ccu CLK_EMAC_25M>;
+			clock-names = "stmmaceth", "pclk";
 			resets = <&ccu RST_BUS_EMAC0>;
 			reset-names = "stmmaceth";
 			syscon = <&syscon>;
@@ -509,6 +509,19 @@
 				#address-cells = <1>;
 				#size-cells = <0>;
 			};
+		};
+
+		emac1: ethernet@5030000 {
+			compatible = "allwinner,sun50i-t507-emac1";
+			reg = <0x05030000 0x10000>;
+			interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "macirq";
+			clocks = <&ccu CLK_BUS_EMAC1>, <&ccu CLK_EMAC_25M>;
+			clock-names = "stmmaceth", "pclk";
+			resets = <&ccu RST_BUS_EMAC1>;
+			reset-names = "stmmaceth";
+			syscon = <&syscon>;
+			status = "disabled";
 		};
 
 		usbotg: usb@5100000 {
