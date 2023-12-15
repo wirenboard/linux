@@ -1,0 +1,432 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (C) 2023 Wiren Board
+ */
+
+/dts-v1/;
+
+#include "sun50i-h616.dtsi"
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/leds/common.h>
+
+#define PA 0
+#define PB 1
+#define PC 2
+#define PD 3
+#define PE 4
+#define PF 5
+#define PG 6
+#define PH 7
+#define PI 8
+
+/ {
+	model = "Wiren Board 8.x";
+	compatible = "wirenboard,wirenboard-8xx", "allwinner,sun50i-h616";
+
+	aliases {
+		serial0 = &uart0;
+		mmc0 = &mmc2;
+		mmc1 = &mmc0;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	regulators {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		reg_usb_vbus: regulator@1 {
+			compatible = "regulator-fixed";
+			gpio = <&pio PE 4 GPIO_ACTIVE_HIGH>;
+			regulator-name = "usb-vbus";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			enable-active-high;
+			regulator-always-on;  // FIXME: ehci driver does not enable it on boot
+		};
+
+		reg_usb_id_mux: regulator@2 {
+			compatible = "regulator-fixed";
+			gpio = <&pio PG 18 GPIO_ACTIVE_HIGH>;
+			regulator-name = "usb-id-mux";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			enable-active-low;
+			regulator-always-on;
+		};
+
+		reg_wifi_on: regulator@3 {
+			compatible = "regulator-fixed";
+			gpio = <&pio PE 15 GPIO_ACTIVE_LOW>;
+			regulator-name = "wifi-on";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-always-on;  // FIXME: ehci driver does not enable it on boot
+		};
+
+		reg_modem_on: regulator@4 {
+			compatible = "regulator-fixed";
+			gpio = <&pio PE 13 GPIO_ACTIVE_HIGH>;
+			regulator-name = "modem-on";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			enable-active-high;
+			regulator-always-on;  // FIXME: ehci driver does not enable it on boot
+		};
+
+		reg_periph_on: regulator@5 {
+			compatible = "regulator-fixed";
+			gpio = <&pio PG 13 GPIO_ACTIVE_HIGH>;
+			regulator-name = "periph-on";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			enable-active-high;
+			regulator-always-on;  // FIXME: ehci driver does not enable it on boot
+		};
+
+		vdd_sd_power: regulator@6 {
+			compatible = "regulator-fixed";
+			gpio = <&pio PE 16 GPIO_ACTIVE_LOW>;
+			regulator-name = "vdd-sd-power";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-always-on;
+		};
+	};
+};
+
+&pio {
+    gpio-line-names = 
+	/* PA */
+	"", "", "", "",  /* 0-3 */
+	"", "", "", "",  /* 4-7 */
+	"", "", "", "",  /* 8-11 */
+	"", "", "", "",  /* 12-15 */
+	"", "", "", "",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PB */
+	"", "", "", "",  /* 0-3 */
+	"", "", "", "",  /* 4-7 */
+	"", "", "", "",  /* 8-11 */
+	"", "", "", "",  /* 12-15 */
+	"", "", "", "",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PC */
+	"", "", "", "",  /* 0-3 */
+	"", "", "", "",  /* 4-7 */
+	"", "", "", "",  /* 8-11 */
+	"BAT SCK", "", "", "",  /* 12-15 */
+	"", "", "", "",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PD */
+	"", "", "", "",  /* 0-3 */
+	"", "", "", "",  /* 4-7 */
+	"", "", "MOD3 RTS", "MOD1 RX",  /* 8-11 */
+	"", "BAT SDA", "MOD4 RX", "RS-485-1 RTS",  /* 12-15 */
+	"RS-485-2 RTS", "RS-485-1 FAILSAFE", "RS-485-2 FAILSAFE", "RS-485-1 TERMINATION",  /* 16-19 */
+	"A4 IN", "", "", "A2 OUT",  /* 20-23 */
+	"", "A3 IN", "MOD4 TX", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PE */
+	"RTC SCK", "", "SIM_SELECT", "",  /* 0-3 */
+	"", "A1 OUT", "MOD4 RTS", "EC INT",  /* 4-7 */
+	"", "5V_OUT ON", "MOD1 TX", "W2",  /* 8-11 */
+	"GSM STATUS", "GSM ON", "", "",  /* 12-15 */
+	"", "", "EC RESET", "RTC SDA",  /* 16-19 */
+	"WBIO INT", "W2 UP", "EC SWCLK/BOOT0", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PF */
+	"", "", "", "",  /* 0-3 */
+	"", "", "", "",  /* 4-7 */
+	"", "", "", "",  /* 8-11 */
+	"", "", "", "",  /* 12-15 */
+	"", "", "", "",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PG */
+	"", "", "", "",  /* 0-3 */
+	"", "", "", "",  /* 4-7 */
+	"W1 UP", "A3 OUT", "", "A4 OUT",  /* 8-11 */
+	"RS-485-2 TERMINATION", "", "", "",  /* 12-15 */
+	"", "MOD1 RTS", "", "BUZZER",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PH */
+	"", "", "", "",  /* 0-3 */
+	"A2 IN", "", "", "",  /* 4-7 */
+	"", "A1 IN", "PUSHBUTTON", "",  /* 8-11 */
+	"", "", "", "",  /* 12-15 */
+	"", "", "", "",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PI */
+	"", "", "", "",  /* 0-3 */
+	"", "", "", "",  /* 4-7 */
+	"", "", "", "",  /* 8-11 */
+	"", "", "", "MOD2 RTS",  /* 12-15 */
+	"", "", "", "",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "";  /* 28-31 */
+};
+
+&uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_ph_pins>;
+	status = "okay";
+};
+
+&r_i2c {
+	status = "okay";
+
+	pmu0: pmu@36{
+		compatible = "x-powers,axp15060";
+		reg = <0x36>;
+		interrupt-controller;
+		#interrupt-cells = <1>;
+
+		wakeup-source;
+		overtemp_shutdown = <1>;
+		overtemp_value = <145>;
+
+		regulator0: regulators{
+			reg_dcdc1: dcdc1 {
+				regulator-name = "dcdc1";
+				regulator-min-microvolt = <1500000>;
+				regulator-max-microvolt = <3400000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-always-on;
+				under_voltage_shutdown = <1>;
+			};
+
+			reg_dcdc2: dcdc2 {
+				regulator-name = "dcdc2";
+				regulator-min-microvolt = <500000>;
+				regulator-max-microvolt = <1540000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-ramp-delay = <6001>; /* FIXME */
+				regulator-always-on;
+				under_voltage_shutdown = <1>;
+			};
+
+			reg_dcdc3: dcdc3 {
+				regulator-name = "dcdc3";
+				regulator-min-microvolt = <500000>;
+				regulator-max-microvolt = <1540000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-always-on;
+				under_voltage_shutdown = <1>;
+			};
+
+			reg_dcdc4: dcdc4 {
+				regulator-name = "dcdc4";
+				regulator-min-microvolt = <500000>;
+				regulator-max-microvolt = <1540000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-enable-ramp-delay = <1000>;
+				under_voltage_shutdown = <1>;
+			};
+
+			reg_dcdc5: dcdc5 {
+				regulator-name = "dcdc5";
+				regulator-min-microvolt = <800000>;
+				regulator-max-microvolt = <1840000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-always-on;
+				under_voltage_shutdown = <1>;
+			};
+
+			reg_dcdc6: dcdc6 {
+				regulator-name = "dcdc6";
+				regulator-min-microvolt = <500000>;
+				regulator-max-microvolt = <3400000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				under_voltage_shutdown = <1>;
+			};
+
+			reg_aldo1: aldo1 {
+				regulator-name = "aldo1";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-always-on;
+			};
+
+			reg_aldo2: aldo2 {
+				regulator-name = "aldo2";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-always-on;
+			};
+
+			reg_aldo3: aldo3 {
+				regulator-name = "aldo3";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+			};
+
+			reg_aldo4: aldo4 {
+				regulator-name = "aldo4";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-always-on;
+			};
+
+			reg_aldo5: aldo5 {
+				regulator-name = "aldo5";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+			};
+
+			reg_bldo1: bldo1 {
+				regulator-name = "bldo1";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+			};
+
+			reg_bldo2: bldo2 {
+				regulator-name = "bldo2";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+			};
+
+			reg_bldo3: bldo3 {
+				regulator-name = "bldo3";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+			};
+
+			reg_bldo4: bldo4 {
+				regulator-name = "bldo4";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-always-on;
+			};
+
+			reg_bldo5: bldo5 {
+				regulator-name = "bldo5";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+			};
+
+			reg_cldo1: cldo1 {
+				regulator-name = "cldo1";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-always-on;
+			};
+
+			reg_cldo2: cldo2 {
+				regulator-name = "cldo2";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+				regulator-always-on;
+			};
+
+			reg_cldo3: cldo3 {
+				regulator-name = "cldo3";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+			};
+
+			reg_cldo4: cldo4 {
+				regulator-name = "cldo4";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <4200000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+			};
+
+			reg_cpusldo: cpusldo {
+				regulator-name = "cpusldo";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <1400000>;
+				regulator-step-delay-us = <25>;
+				regulator-final-delay-us = <50>;
+			};
+
+			reg_sw: sw {
+				regulator-name = "sw";
+				regulator-always-on;
+			};
+		};
+	};
+};
+
+&cpu0 {
+	cpu-supply = <&reg_dcdc2>;
+};
+
+&pio {
+	vcc-pa-supply = <&reg_dcdc1>;
+	vcc-pc-supply = <&reg_aldo1>;
+	vcc-pd-supply = <&reg_dcdc1>, <&reg_bldo1>;
+	vcc-pe-supply = <&reg_dcdc1>;
+	vcc-pg-supply = <&reg_dcdc1>;
+	vcc-pi-supply = <&reg_dcdc1>;
+};
+
+&mmc0 {
+	bus-width = <4>;
+	cd-gpios = <&pio PF 6 GPIO_ACTIVE_LOW>;
+	status = "okay";
+	vmmc-supply = <&reg_dcdc1>;
+};
+
+&mmc2 {
+	vmmc-supply = <&reg_dcdc1>;
+	vqmmc-supply = <&reg_aldo1>;
+	bus-width = <8>;
+	non-removable;
+	mmc-ddr-1_8v;
+	no-sdio;
+	no-sd;
+	cap-mmc-highspeed;
+	status = "okay";
+};
