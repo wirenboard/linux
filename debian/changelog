@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb158) stable; urgency=medium
+
+  * rtl8733bu: move some log messages to info debug level
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.com>  Mon, 18 Dec 2023 13:08:03 +0500
+
 linux-wb (5.10.35-wb157) stable; urgency=medium
 
   * rtl8733bu: log association rejection messages as warnings 
