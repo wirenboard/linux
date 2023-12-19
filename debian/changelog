@@ -1,3 +1,9 @@
+linux-wb (6.6-rc6-wb153) UNRELEASED; urgency=medium
+
+  * fix builddeb & build on Jenkins
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Tue, 19 Dec 2023 10:33:21 +0300
+
 linux-wb (6.6-rc6-wb152) UNRELEASED; urgency=medium
 
   * 6.6 rc kernel build for WB7
