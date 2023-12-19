@@ -430,3 +430,10 @@
 	cap-mmc-highspeed;
 	status = "okay";
 };
+
+&reg_dcdc5 {
+	regulator-name = "vcc-dram";
+	regulator-min-microvolt = <1100000>;
+	regulator-max-microvolt = <1100000>;
+	regulator-always-on;
+};
