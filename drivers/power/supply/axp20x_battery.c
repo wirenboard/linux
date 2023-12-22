@@ -628,18 +628,12 @@ static int axp20x_power_probe(struct platform_device *pdev)
 
 	// Enable battery detection function to work with wbmz-battery
 	rc = regmap_update_bits(axp20x_batt->regmap, AXP20X_OFF_CTRL,
-				  AXP20X_OFF_CTRL_BAT_DET, 1);
+				  AXP20X_OFF_CTRL_BAT_DET, 0xF);
 	if (rc) {
 		dev_err(dev,
 			"Failed to enable battery detection function");
 		return rc;
-	}
-
-	if (regmap_update_bits(axp20x_batt->regmap, AXP20X_OFF_CTRL,
-				  AXP20X_OFF_CTRL_BAT_DET, 1) == -1) {
-
-				  }
-	
+	}	
 
 	axp20x_batt->batt_v = devm_iio_channel_get(&pdev->dev, "batt_v");
 	if (IS_ERR(axp20x_batt->batt_v)) {
