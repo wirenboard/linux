@@ -30,6 +30,22 @@
 		serial0 = &uart0;
 		mmc0 = &mmc2;
 		mmc1 = &mmc0;
+		mdio-gpio1 = &soft_mdio1;
+		ethernet0 = &emac0;
+		ethernet1 = &emac1;
+	};
+
+	leds-gpio {
+		compatible = "gpio-leds";
+
+		green {
+			label = "green";
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&pio PD 27 GPIO_ACTIVE_LOW>;
+			default-state = "on";
+			active-low;
+			linux,default-trigger = "default-off";
+		};
 	};
 
 	chosen {
@@ -435,4 +451,101 @@
 &reg_dcdc5 {
 	regulator-name = "vcc-dram";
 	regulator-always-on;
+};
+
+&pio {
+	ext_emac0_rmii_pins: emac0-rmii-pins {
+		pins = "PI2", "PI3", "PI5", "PI6",
+			"PI9", "PI10", "PI11", "PI12";
+		function = "emac0";
+		drive-strength = <40>;
+	};
+
+	ext_emac1_rmii_pins: emac1-rmii-pins {
+		pins = "PA0", "PA1", "PA2", "PA3", "PA4",
+			"PA5", "PA6", "PA7";
+		function = "emac1";
+		drive-strength = <40>;
+	};
+
+	ext_emac1_mdio_pins: emac1-mdio-pins {
+		pins = "PA8", "PA9";
+		function = "emac1";
+		drive-strength = <40>;
+	};
+
+	ephy_25m_out_pins: ephy-25m-out-pins {
+		pins = "PI16";
+		function = "emac0";
+		drive-strength = <40>;
+	};
+
+	i2c3_pa_pins: i2c3-pa-pins {
+		pins = "PA10", "PA11";
+		function = "i2c3";
+		drive-strength = <40>;
+	};
+};
+
+/ {
+	soft_mdio1: soft-mdio1 {
+		compatible = "virtual,mdio-gpio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pinctrl-0 = <&ephy_25m_out_pins>;
+		pinctrl-names = "default";
+
+		gpios = <&pio PI 1 GPIO_ACTIVE_HIGH>,  /* MDC */
+				<&pio PI 0 GPIO_ACTIVE_HIGH>;  /* MDIO */
+
+		clocks = <&ccu CLK_EMAC_25M>;
+		clock-names = "ephy";
+
+		reset-gpios = <&pio PI 4 GPIO_ACTIVE_LOW>;
+		reset-delay-us = <50000>;
+
+		ext_rmii_phy0: ethernet-phy {
+			compatible = "ethernet-phy-ieee802.3-c22";
+		};
+	};
+};
+
+
+&emac0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&ext_emac0_rmii_pins>;
+	phy-mode = "rmii";
+	phy-handle = <&ext_rmii_phy0>;
+	allwinner,rx-delay-ps = <3100>;
+	allwinner,tx-delay-ps = <700>;
+	status = "okay";
+};
+
+&emac1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&ext_emac1_rmii_pins>;
+	phy-mode = "rmii";
+	phy-handle = <&ext_rmii_phy1>;
+	allwinner,rx-delay-ps = <3100>;
+	allwinner,tx-delay-ps = <700>;
+	status = "okay";
+
+	mdio1: mdio {
+		compatible = "snps,dwmac-mdio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&ext_emac1_mdio_pins>;
+		reset-gpios = <&pio PI 8 GPIO_ACTIVE_LOW>;
+		reset-delay-us = <50000>;
+
+		clocks = <&ccu CLK_EMAC_25M>;
+		clock-names = "ephy";
+
+		ext_rmii_phy1: ethernet-phy {
+			compatible = "ethernet-phy-ieee802.3-c22";
+		};
+	};
 };
