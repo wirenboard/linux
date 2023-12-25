@@ -626,7 +626,6 @@ static int axp20x_power_probe(struct platform_device *pdev)
 
 	axp20x_batt->regmap = dev_get_regmap(pdev->dev.parent, NULL);
 
-	// Enable battery detection function to work with wbmz-battery
 	rc = regmap_update_bits(axp20x_batt->regmap, AXP20X_OFF_CTRL,
 				  AXP20X_OFF_CTRL_BAT_DET, 0xFF);
 	if (rc) {
@@ -723,7 +722,6 @@ static int axp20x_power_remove(struct platform_device *pdev)
 {
 	struct axp20x_batt_ps *axp20x_batt = platform_get_drvdata(pdev);
 
-	// Disable battery detection function to work with wbmz-supercap
 	return regmap_update_bits(axp20x_batt->regmap, AXP20X_OFF_CTRL,
 				  AXP20X_OFF_CTRL_BAT_DET, 0);
 }
