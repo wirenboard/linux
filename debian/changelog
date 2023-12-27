@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb159) stable; urgency=medium
+
+  * Fix edlc zero values after startup in case of full charge
+
+ -- Ekaterina Volkova <ekaterina.volkova@wirenboard.ru>  Fri, 22 Dec 2023 10:32:46 +0300
+
 linux-wb (5.10.35-wb158) stable; urgency=medium
 
   * rtl8733bu: move some log messages to info debug level
