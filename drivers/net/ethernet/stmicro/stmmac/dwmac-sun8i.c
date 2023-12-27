@@ -81,7 +81,7 @@ struct sunxi_priv_data {
 
 /* EMAC clock register @ 0x30 in the "system control" address range */
 static const struct reg_field sun8i_syscon_reg_field = {
-	.reg = 0x30,
+	.reg = 0x34,  // FIXME
 	.lsb = 0,
 	.msb = 31,
 };
@@ -938,11 +938,6 @@ static int sun8i_dwmac_set_syscon(struct device *dev,
 	int ret;
 	u32 reg, val;
 
-    /* reg = 0x00058000;  // FIXME */
-	/* regmap_field_write(gmac->regmap_field, reg); */
-	/* return 0; */
-
-
 	ret = regmap_field_read(gmac->regmap_field, &val);
 	if (ret) {
 		dev_err(dev, "Fail to read from regmap field.\n");
@@ -1039,8 +1034,6 @@ static int sun8i_dwmac_set_syscon(struct device *dev,
 			phy_modes(plat->mac_interface));
 		return -EINVAL;
 	}
-
-    reg = 0x00058000;  // FIXME
 
 	regmap_field_write(gmac->regmap_field, reg);
 
