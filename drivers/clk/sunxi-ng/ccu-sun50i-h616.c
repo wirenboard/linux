@@ -5,6 +5,8 @@
  *   Copyright (c) 2017 Icenowy Zheng <icenowy@aosc.io>
  */
 
+#define DEBUG
+
 #include <linux/clk-provider.h>
 #include <linux/io.h>
 #include <linux/module.h>

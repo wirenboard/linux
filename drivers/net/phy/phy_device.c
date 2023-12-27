@@ -7,6 +7,8 @@
  * Copyright (c) 2004 Freescale Semiconductor, Inc.
  */
 
+#define DEBUG
+
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include <linux/acpi.h>
@@ -879,6 +881,7 @@ static int get_phy_c22_id(struct mii_bus *bus, int addr, u32 *phy_id)
 
 	/* Grab the bits from PHYIR1, and put them in the upper half */
 	phy_reg = mdiobus_read(bus, addr, MII_PHYSID1);
+    printk("phy_reg[id1] = %d\n", phy_reg);
 	if (phy_reg < 0) {
 		/* returning -ENODEV doesn't stop bus scanning */
 		return (phy_reg == -EIO || phy_reg == -ENODEV) ? -ENODEV : -EIO;
@@ -888,6 +891,7 @@ static int get_phy_c22_id(struct mii_bus *bus, int addr, u32 *phy_id)
 
 	/* Grab the bits from PHYIR2, and put them in the lower half */
 	phy_reg = mdiobus_read(bus, addr, MII_PHYSID2);
+    printk("phy_reg[id2] = %d\n", phy_reg);
 	if (phy_reg < 0) {
 		/* returning -ENODEV doesn't stop bus scanning */
 		return (phy_reg == -EIO || phy_reg == -ENODEV) ? -ENODEV : -EIO;

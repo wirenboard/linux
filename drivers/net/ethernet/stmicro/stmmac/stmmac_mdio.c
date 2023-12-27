@@ -10,6 +10,8 @@
   Maintainer: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
+#define DEBUG
+
 #include <linux/gpio/consumer.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
@@ -247,6 +249,28 @@ static int stmmac_mdio_read(struct stmmac_priv *priv, int data, u32 value)
 	unsigned int mii_data = priv->hw->mii.data;
 	u32 v;
 
+    printk("MDIO read: data = %08x, value = %08x\n", data, value);
+    {
+        static bool first = true;
+        if (first) {
+            first = false;
+            void __iomem *porta = ioremap(0x0300B000, 0x20);
+            void __iomem *clk = ioremap(0x03001000, 0xF30);
+            void __iomem *ephy_clk = ioremap(0x03000030, 0x10);
+
+            for (int i = 0; i < 0x20; i += 4) {
+                printk("porta[%02x] = %08x\n", i, readl(porta + i));
+            }
+            printk("clk[0x51C] = %08x\n", readl(clk + 0x51C));
+            printk("clk[0x970] = %08x\n", readl(clk + 0x970));
+            printk("clk[0x97C] = %08x\n", readl(clk + 0x974));
+            printk("ephy_clk[0x0] = %08x\n", readl(ephy_clk + 0x0));
+
+            iounmap(porta);
+            iounmap(clk);
+        }
+    }
+
 	if (readl_poll_timeout(priv->ioaddr + mii_address, v, !(v & MII_BUSY),
 			       100, 10000))
 		return -EBUSY;
@@ -347,6 +371,8 @@ static int stmmac_mdio_write(struct stmmac_priv *priv, int data, u32 value)
 	unsigned int mii_address = priv->hw->mii.addr;
 	unsigned int mii_data = priv->hw->mii.data;
 	u32 v;
+
+    printk("MDIO write: data = %08x, value = %08x\n", data, value);
 
 	/* Wait until any existing MII operation is complete */
 	if (readl_poll_timeout(priv->ioaddr + mii_address, v, !(v & MII_BUSY),
@@ -590,7 +616,20 @@ int stmmac_mdio_register(struct net_device *ndev)
 	new_bus->phy_mask = mdio_bus_data->phy_mask;
 	new_bus->parent = priv->device;
 
+    /* get clock */
+    priv->clk = devm_clk_get_optional(dev, "ephy");
+    if (IS_ERR(priv->clk)) {
+        err = PTR_ERR(priv->clk);
+        if (err != -EPROBE_DEFER)
+            dev_err(dev, "failed to get ephy clock: %d\n", err);
+        goto bus_register_fail;
+    }
+
+    clk_prepare_enable(priv->clk);
+
+    printk("stmmac_mdio_register before of_mdiobus_register\n");
 	err = of_mdiobus_register(new_bus, mdio_node);
+    printk("stmmac_mdio_register after of_mdiobus_register, err=%d\n", err);
 	if (err != 0) {
 		dev_err_probe(dev, err, "Cannot register the MDIO bus\n");
 		goto bus_register_fail;
@@ -613,9 +652,11 @@ int stmmac_mdio_register(struct net_device *ndev)
 		}
 	}
 
+    printk("stmmac_mdio_register before scan\n");
 	if (priv->plat->phy_node || mdio_node)
 		goto bus_register_done;
 
+    printk("stmmac_mdio_register scan begins\n");
 	found = 0;
 	for (addr = 0; addr < max_addr; addr++) {
 		struct phy_device *phydev = mdiobus_get_phy(new_bus, addr);
@@ -652,6 +693,7 @@ int stmmac_mdio_register(struct net_device *ndev)
 	}
 
 bus_register_done:
+    printk("stmmac_mdio_register bus register done\n");
 	priv->mii = new_bus;
 
 	return 0;
@@ -677,6 +719,8 @@ int stmmac_mdio_unregister(struct net_device *ndev)
 
 	if (priv->hw->xpcs)
 		xpcs_destroy(priv->hw->xpcs);
+
+    clk_disable_unprepare(priv->clk);
 
 	mdiobus_unregister(priv->mii);
 	priv->mii->priv = NULL;

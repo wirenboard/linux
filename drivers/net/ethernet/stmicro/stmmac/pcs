@@ -1,0 +1,280 @@
+dwmac-intel.c:	void __iomem *ioaddr = priv->hw->pcsr;
+dwmac-meson8b.c:	hw->init = &init;
+dwmac-socfpga.c:		stpriv->hw->lynx_pcs = lynx_pcs_create_mdiodev(pcs_bus, 0);
+dwmac-socfpga.c:		if (IS_ERR(stpriv->hw->lynx_pcs)) {
+dwmac-socfpga.c:			ret = PTR_ERR(stpriv->hw->lynx_pcs);
+dwmac-socfpga.c:	struct phylink_pcs *pcs = priv->hw->lynx_pcs;
+dwmac-sun8i.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac-sun8i.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac-sun8i.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac-sun8i.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac-sun8i.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac-sun8i.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac-sun8i.c:	} else if (macaddrs <= hw->unicast_filter_entries) {
+dwmac-sun8i.c:	while (i < hw->unicast_filter_entries)
+dwmac-sun8i.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac1000_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac1000_core.c:	if (hw->ps) {
+dwmac1000_core.c:		value &= ~hw->link.speed_mask;
+dwmac1000_core.c:		switch (hw->ps) {
+dwmac1000_core.c:			value |= hw->link.speed1000;
+dwmac1000_core.c:			value |= hw->link.speed100;
+dwmac1000_core.c:			value |= hw->link.speed10;
+dwmac1000_core.c:	if (hw->pcs)
+dwmac1000_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac1000_core.c:	if (hw->rx_csum)
+dwmac1000_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac1000_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac1000_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac1000_core.c:	unsigned int perfect_addr_number = hw->unicast_filter_entries;
+dwmac1000_core.c:	int mcbitslog2 = hw->mcast_bits_log2;
+dwmac1000_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac1000_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac1000_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac1000_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac1000_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac1000_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac1000_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac100_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac100_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac100_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac100_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac100_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	if (hw->ps) {
+dwmac4_core.c:		value &= hw->link.speed_mask;
+dwmac4_core.c:		switch (hw->ps) {
+dwmac4_core.c:			value |= hw->link.speed1000;
+dwmac4_core.c:			value |= hw->link.speed100;
+dwmac4_core.c:			value |= hw->link.speed10;
+dwmac4_core.c:	if (hw->pcs)
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	if (hw->rx_csum)
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	if (index >= hw->num_vlan)
+dwmac4_core.c:	if (hw->num_vlan == 1) {
+dwmac4_core.c:		if (hw->vlan_filter[0] & GMAC_VLAN_TAG_VID) {
+dwmac4_core.c:		hw->vlan_filter[0] = vid;
+dwmac4_core.c:	for (i = 0; i < hw->num_vlan; i++) {
+dwmac4_core.c:		if (hw->vlan_filter[i] == val)
+dwmac4_core.c:		else if (!(hw->vlan_filter[i] & GMAC_VLAN_TAG_DATA_VEN))
+dwmac4_core.c:			   hw->num_vlan);
+dwmac4_core.c:		hw->vlan_filter[index] = val;
+dwmac4_core.c:	if (hw->num_vlan == 1) {
+dwmac4_core.c:		if ((hw->vlan_filter[0] & GMAC_VLAN_TAG_VID) == vid) {
+dwmac4_core.c:			hw->vlan_filter[0] = 0;
+dwmac4_core.c:	for (i = 0; i < hw->num_vlan; i++) {
+dwmac4_core.c:		if ((hw->vlan_filter[i] & GMAC_VLAN_TAG_DATA_VID) == vid) {
+dwmac4_core.c:				hw->vlan_filter[i] = 0;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	if (hw->num_vlan == 1) {
+dwmac4_core.c:		dwmac4_write_single_vlan(dev, hw->vlan_filter[0]);
+dwmac4_core.c:	for (i = 0; i < hw->num_vlan; i++) {
+dwmac4_core.c:		if (hw->vlan_filter[i] & GMAC_VLAN_TAG_DATA_VEN) {
+dwmac4_core.c:			val = hw->vlan_filter[i];
+dwmac4_core.c:	int numhashregs = (hw->multicast_filter_bins >> 5);
+dwmac4_core.c:	int mcbitslog2 = hw->mcast_bits_log2;
+dwmac4_core.c:		if (hw->vlan_fail_q_en) {
+dwmac4_core.c:				 (hw->vlan_fail_q << GMAC_RXQCTRL_VFFQ_SHIFT);
+dwmac4_core.c:		   (netdev_mc_count(dev) > hw->multicast_filter_bins)) {
+dwmac4_core.c:	if (netdev_uc_count(dev) > hw->unicast_filter_entries) {
+dwmac4_core.c:	if (dev->flags & IFF_PROMISC && !hw->vlan_fail_q_en)
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwmac4_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	if (hw->ps) {
+dwxgmac2_core.c:		tx &= ~hw->link.speed_mask;
+dwxgmac2_core.c:		switch (hw->ps) {
+dwxgmac2_core.c:			tx |= hw->link.xgmii.speed10000;
+dwxgmac2_core.c:			tx |= hw->link.speed2500;
+dwxgmac2_core.c:			tx |= hw->link.speed1000;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	if (hw->rx_csum)
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	int mcbitslog2 = hw->mcast_bits_log2;
+dwxgmac2_core.c:		   (netdev_mc_count(dev) > hw->multicast_filter_bins)) {
+dwxgmac2_core.c:	if (netdev_uc_count(dev) > hw->unicast_filter_entries) {
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+dwxgmac2_core.c:	void __iomem *ioaddr = hw->pcsr;
+hwif.c:	priv->hw->xlgmac = true;
+hwif.h:	if ((__priv)->hw->__module && (__priv)->hw->__module->__cname) { \
+hwif.h:		(__priv)->hw->__module->__cname((__arg0), ##__args); \
+hwif.h:	if ((__priv)->hw->__module && (__priv)->hw->__module->__cname) \
+hwif.h:		__result = (__priv)->hw->__module->__cname((__arg0), ##__args); \
+stmmac_ethtool.c:	if (priv->hw->pcs & STMMAC_PCS_RGMII ||
+stmmac_ethtool.c:	    priv->hw->pcs & STMMAC_PCS_SGMII) {
+stmmac_ethtool.c:	if (priv->hw->pcs & STMMAC_PCS_RGMII ||
+stmmac_ethtool.c:	    priv->hw->pcs & STMMAC_PCS_SGMII) {
+stmmac_ethtool.c:		stmmac_pcs_ctrl_ane(priv, priv->ioaddr, 1, priv->hw->ps, 0);
+stmmac_ethtool.c:	if (priv->hw->pcs && !stmmac_pcs_get_adv_lp(priv, priv->ioaddr, &adv_lp)) {
+stmmac_ethtool.c:	if (priv->hw->pcs && !stmmac_pcs_get_adv_lp(priv, priv->ioaddr, &adv_lp)) {
+stmmac_main.c:	if (priv->hw->pcs == STMMAC_PCS_TBI ||
+stmmac_main.c:	    priv->hw->pcs == STMMAC_PCS_RTBI)
+stmmac_main.c:			if (priv->hw->xpcs)
+stmmac_main.c:				xpcs_config_eee(priv->hw->xpcs,
+stmmac_main.c:		if (priv->hw->xpcs)
+stmmac_main.c:			xpcs_config_eee(priv->hw->xpcs,
+stmmac_main.c:	if (priv->hw->xpcs)
+stmmac_main.c:		return &priv->hw->xpcs->pcs;
+stmmac_main.c:	if (priv->hw->lynx_pcs)
+stmmac_main.c:		return priv->hw->lynx_pcs;
+stmmac_main.c:	ctrl = old_ctrl & ~priv->hw->link.speed_mask;
+stmmac_main.c:			ctrl |= priv->hw->link.xgmii.speed10000;
+stmmac_main.c:			ctrl |= priv->hw->link.xgmii.speed5000;
+stmmac_main.c:			ctrl |= priv->hw->link.xgmii.speed2500;
+stmmac_main.c:			ctrl |= priv->hw->link.xlgmii.speed100000;
+stmmac_main.c:			ctrl |= priv->hw->link.xlgmii.speed50000;
+stmmac_main.c:			ctrl |= priv->hw->link.xlgmii.speed40000;
+stmmac_main.c:			ctrl |= priv->hw->link.xlgmii.speed25000;
+stmmac_main.c:			ctrl |= priv->hw->link.xgmii.speed10000;
+stmmac_main.c:			ctrl |= priv->hw->link.speed2500;
+stmmac_main.c:			ctrl |= priv->hw->link.speed1000;
+stmmac_main.c:			ctrl |= priv->hw->link.speed2500;
+stmmac_main.c:			ctrl |= priv->hw->link.speed1000;
+stmmac_main.c:			ctrl |= priv->hw->link.speed100;
+stmmac_main.c:			ctrl |= priv->hw->link.speed10;
+stmmac_main.c:		ctrl &= ~priv->hw->link.duplex;
+stmmac_main.c:		ctrl |= priv->hw->link.duplex;
+stmmac_main.c:			priv->hw->pcs = STMMAC_PCS_RGMII;
+stmmac_main.c:			priv->hw->pcs = STMMAC_PCS_SGMII;
+stmmac_main.c:	if (priv->hw->xpcs)
+stmmac_main.c:		xpcs_get_interfaces(priv->hw->xpcs,
+stmmac_main.c:	if (priv->hw->pcs) {
+stmmac_main.c:			priv->hw->ps = speed;
+stmmac_main.c:			priv->hw->ps = 0;
+stmmac_main.c:		priv->hw->rx_csum = 0;
+stmmac_main.c:	if (priv->hw->pcs)
+stmmac_main.c:		stmmac_pcs_ctrl_ane(priv, priv->ioaddr, 1, priv->hw->ps, 0);
+stmmac_main.c:	sph_en = (priv->hw->rx_csum > 0) && priv->sph;
+stmmac_main.c:	if (priv->hw->pcs != STMMAC_PCS_TBI &&
+stmmac_main.c:	    priv->hw->pcs != STMMAC_PCS_RTBI &&
+stmmac_main.c:	    (!priv->hw->xpcs ||
+stmmac_main.c:	     xpcs_get_an_mode(priv->hw->xpcs, mode) != DW_AN_C73) &&
+stmmac_main.c:	    !priv->hw->lynx_pcs) {
+stmmac_main.c:	int coe = priv->hw->rx_csum;
+stmmac_main.c:	int coe = priv->hw->rx_csum;
+stmmac_main.c:	int coe = priv->hw->rx_csum;
+stmmac_main.c:	int status = 0, coe = priv->hw->rx_csum;
+stmmac_main.c:		priv->hw->rx_csum = priv->plat->rx_coe;
+stmmac_main.c:		priv->hw->rx_csum = 0;
+stmmac_main.c:		bool sph_en = (priv->hw->rx_csum > 0) && priv->sph;
+stmmac_main.c:		if (priv->hw->pcs &&
+stmmac_main.c:	if (priv->hw->num_vlan) {
+stmmac_main.c:	if (priv->hw->num_vlan) {
+stmmac_main.c:	sph_en = (priv->hw->rx_csum > 0) && priv->sph;
+stmmac_main.c:		priv->hw->pmt = priv->plat->pmt;
+stmmac_main.c:			priv->hw->multicast_filter_bins =
+stmmac_main.c:			priv->hw->mcast_bits_log2 =
+stmmac_main.c:					ilog2(priv->hw->multicast_filter_bins);
+stmmac_main.c:		priv->hw->rx_csum = priv->plat->rx_coe;
+stmmac_main.c:			dev_info(priv->device, "COE Type %d\n", priv->hw->rx_csum);
+stmmac_main.c:	priv->hw->vlan_fail_q_en =
+stmmac_main.c:	priv->hw->vlan_fail_q = priv->plat->vlan_fail_q;
+stmmac_main.c:	/* MTU range: 46 - hw-specific max */
+stmmac_main.c:	if (priv->hw->pcs != STMMAC_PCS_TBI &&
+stmmac_main.c:	    priv->hw->pcs != STMMAC_PCS_RTBI) {
+stmmac_main.c:	if (priv->hw->pcs != STMMAC_PCS_TBI &&
+stmmac_main.c:	    priv->hw->pcs != STMMAC_PCS_RTBI)
+stmmac_main.c:	if (priv->hw->pcs != STMMAC_PCS_TBI &&
+stmmac_main.c:	    priv->hw->pcs != STMMAC_PCS_RTBI)
+stmmac_mdio.c:	unsigned int mii_address = priv->hw->mii.addr;
+stmmac_mdio.c:	unsigned int mii_data = priv->hw->mii.data;
+stmmac_mdio.c:	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shift)
+stmmac_mdio.c:		& priv->hw->mii.clk_csr_mask;
+stmmac_mdio.c:	unsigned int mii_address = priv->hw->mii.addr;
+stmmac_mdio.c:	unsigned int mii_data = priv->hw->mii.data;
+stmmac_mdio.c:	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shift)
+stmmac_mdio.c:		& priv->hw->mii.clk_csr_mask;
+stmmac_mdio.c:	unsigned int mii_address = priv->hw->mii.addr;
+stmmac_mdio.c:	unsigned int mii_data = priv->hw->mii.data;
+stmmac_mdio.c:	value |= (phyaddr << priv->hw->mii.addr_shift)
+stmmac_mdio.c:		& priv->hw->mii.addr_mask;
+stmmac_mdio.c:	value |= (phyreg << priv->hw->mii.reg_shift) & priv->hw->mii.reg_mask;
+stmmac_mdio.c:	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shift)
+stmmac_mdio.c:		& priv->hw->mii.clk_csr_mask;
+stmmac_mdio.c:	value |= (phyaddr << priv->hw->mii.addr_shift)
+stmmac_mdio.c:		& priv->hw->mii.addr_mask;
+stmmac_mdio.c:	value |= (phyreg << priv->hw->mii.reg_shift) & priv->hw->mii.reg_mask;
+stmmac_mdio.c:	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shift)
+stmmac_mdio.c:		& priv->hw->mii.clk_csr_mask;
+stmmac_mdio.c:	value &= ~priv->hw->mii.reg_mask;
+stmmac_mdio.c:	value |= (devad << priv->hw->mii.reg_shift) & priv->hw->mii.reg_mask;
+stmmac_mdio.c:	unsigned int mii_address = priv->hw->mii.addr;
+stmmac_mdio.c:	unsigned int mii_data = priv->hw->mii.data;
+stmmac_mdio.c:	value |= (phyaddr << priv->hw->mii.addr_shift)
+stmmac_mdio.c:		& priv->hw->mii.addr_mask;
+stmmac_mdio.c:	value |= (phyreg << priv->hw->mii.reg_shift) & priv->hw->mii.reg_mask;
+stmmac_mdio.c:	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shift)
+stmmac_mdio.c:		& priv->hw->mii.clk_csr_mask;
+stmmac_mdio.c:	value |= (phyaddr << priv->hw->mii.addr_shift)
+stmmac_mdio.c:		& priv->hw->mii.addr_mask;
+stmmac_mdio.c:	value |= (phyreg << priv->hw->mii.reg_shift) & priv->hw->mii.reg_mask;
+stmmac_mdio.c:	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shift)
+stmmac_mdio.c:		& priv->hw->mii.clk_csr_mask;
+stmmac_mdio.c:	value &= ~priv->hw->mii.reg_mask;
+stmmac_mdio.c:	value |= (devad << priv->hw->mii.reg_shift) & priv->hw->mii.reg_mask;
+stmmac_mdio.c:	unsigned int mii_address = priv->hw->mii.addr;
+stmmac_mdio.c:		priv->hw->xpcs = xpcs;
+stmmac_mdio.c:	if (!priv->hw->xpcs) {
+stmmac_mdio.c:	if (priv->hw->xpcs)
+stmmac_mdio.c:		xpcs_destroy(priv->hw->xpcs);
+stmmac_selftests.c:	int mc_offset = 32 - priv->hw->mcast_bits_log2;
+stmmac_selftests.c:	if (netdev_mc_count(priv->dev) >= priv->hw->multicast_filter_bins)
+stmmac_selftests.c:	if (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
+stmmac_selftests.c:	if (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
+stmmac_selftests.c:	if (netdev_mc_count(priv->dev) >= priv->hw->multicast_filter_bins)
+stmmac_selftests.c:	if (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
+stmmac_selftests.c:	if (netdev_mc_count(priv->dev) >= priv->hw->multicast_filter_bins)
+stmmac_tc.c:	ret = stmmac_rxp_config(priv, priv->hw->pcsr, priv->tc_entries,
+stmmac_tc.c:	return stmmac_rxp_config(priv, priv->hw->pcsr, priv->tc_entries,

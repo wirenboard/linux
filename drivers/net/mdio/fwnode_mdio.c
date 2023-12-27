@@ -6,6 +6,8 @@
  * out of the fwnode and using it to populate an mii_bus.
  */
 
+#define DEBUG
+
 #include <linux/acpi.h>
 #include <linux/fwnode_mdio.h>
 #include <linux/of.h>

@@ -6,6 +6,8 @@
  * Copyright (c) 2004 Freescale Semiconductor, Inc.
  */
 
+#define DEBUG
+
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include <linux/delay.h>

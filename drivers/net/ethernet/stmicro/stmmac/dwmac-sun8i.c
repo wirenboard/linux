@@ -938,6 +938,11 @@ static int sun8i_dwmac_set_syscon(struct device *dev,
 	int ret;
 	u32 reg, val;
 
+    /* reg = 0x00058000;  // FIXME */
+	/* regmap_field_write(gmac->regmap_field, reg); */
+	/* return 0; */
+
+
 	ret = regmap_field_read(gmac->regmap_field, &val);
 	if (ret) {
 		dev_err(dev, "Fail to read from regmap field.\n");
@@ -1034,6 +1039,8 @@ static int sun8i_dwmac_set_syscon(struct device *dev,
 			phy_modes(plat->mac_interface));
 		return -EINVAL;
 	}
+
+    reg = 0x00058000;  // FIXME
 
 	regmap_field_write(gmac->regmap_field, reg);
 

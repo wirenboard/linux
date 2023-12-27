@@ -48,6 +48,16 @@
 		};
 	};
 
+	/* leds-pwm { */
+	/* 	compatible = "pwm-leds"; */
+
+	/* 	red { */
+	/* 		label = "red"; */
+	/* 		pwms = <&pwm0 0 5000000 0>; */
+	/* 		linux,default-trigger = "timer"; */
+	/* 	}; */
+	/* }; */
+
 	chosen {
 		stdout-path = "serial0:115200n8";
 	};
@@ -463,13 +473,7 @@
 
 	ext_emac1_rmii_pins: emac1-rmii-pins {
 		pins = "PA0", "PA1", "PA2", "PA3", "PA4",
-			"PA5", "PA6", "PA7";
-		function = "emac1";
-		drive-strength = <40>;
-	};
-
-	ext_emac1_mdio_pins: emac1-mdio-pins {
-		pins = "PA8", "PA9";
+			"PA5", "PA6", "PA7", "PA8", "PA9";
 		function = "emac1";
 		drive-strength = <40>;
 	};
@@ -493,8 +497,8 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		pinctrl-0 = <&ephy_25m_out_pins>;
 		pinctrl-names = "default";
+		pinctrl-0 = <&ephy_25m_out_pins>;
 
 		gpios = <&pio PI 1 GPIO_ACTIVE_HIGH>,  /* MDC */
 				<&pio PI 0 GPIO_ACTIVE_HIGH>;  /* MDIO */
@@ -531,13 +535,15 @@
 	allwinner,tx-delay-ps = <700>;
 	status = "okay";
 
+	snps,clk-csr = <0x3>;
+
 	mdio1: mdio {
 		compatible = "snps,dwmac-mdio";
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		pinctrl-names = "default";
-		pinctrl-0 = <&ext_emac1_mdio_pins>;
+		/* pinctrl-names = "default"; */
+		/* pinctrl-0 = <&ephy_25m_out_pins>; */
 		reset-gpios = <&pio PI 8 GPIO_ACTIVE_LOW>;
 		reset-delay-us = <50000>;
 

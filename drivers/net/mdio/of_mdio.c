@@ -8,6 +8,8 @@
  * out of the OpenFirmware device tree and using it to populate an mii_bus.
  */
 
+#define DEBUG
+
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/fwnode_mdio.h>
@@ -185,6 +187,9 @@ int __of_mdiobus_register(struct mii_bus *mdio, struct device_node *np,
 			scanphys = true;
 			continue;
 		}
+
+        /* check if clock is enabled here */
+        /* dev_err(&mdio->dev, "clock state at 0x%x: %08x\n", 0x03001970, *((uint32_t*)__va((void*)0x03001970))); */
 
 		if (of_mdiobus_child_is_phy(child))
 			rc = of_mdiobus_register_phy(mdio, child, addr);
