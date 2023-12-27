@@ -92,6 +92,8 @@
 
 #define AXP717_TS_PIN_DISABLE		BIT(4)
 
+#define AXP20X_OFF_CTRL_BAT_DET		BIT(6)
+
 struct axp20x_batt_ps;
 
 struct axp_data {
@@ -100,6 +102,7 @@ struct axp_data {
 	unsigned int	ccc_reg;
 	unsigned int	ccc_mask;
 	bool		has_fg_valid;
+	bool		bat_det_ctrl;	/* AXP20X_OFF_CTRL battery detection */
 	const struct	power_supply_desc *bat_ps_desc;
 	int	(*get_max_voltage)(struct axp20x_batt_ps *batt, int *val);
 	int	(*set_max_voltage)(struct axp20x_batt_ps *batt, int val);
@@ -1074,6 +1077,7 @@ static void axp717_set_battery_info(struct platform_device *pdev,
 }
 
 static const struct axp_data axp209_data = {
+	.bat_det_ctrl = true,
 	.ccc_scale = 100000,
 	.ccc_offset = 300000,
 	.ccc_reg = AXP20X_CHRG_CTRL1,
@@ -1086,6 +1090,7 @@ static const struct axp_data axp209_data = {
 };
 
 static const struct axp_data axp221_data = {
+	.bat_det_ctrl = true,
 	.ccc_scale = 150000,
 	.ccc_offset = 300000,
 	.ccc_reg = AXP20X_CHRG_CTRL1,
@@ -1111,6 +1116,7 @@ static const struct axp_data axp717_data = {
 };
 
 static const struct axp_data axp813_data = {
+	.bat_det_ctrl = true,
 	.ccc_scale = 200000,
 	.ccc_offset = 200000,
 	.ccc_reg = AXP20X_CHRG_CTRL1,
@@ -1167,6 +1173,16 @@ static int axp20x_power_probe(struct platform_device *pdev)
 
 	axp20x_batt->data = (struct axp_data *)of_device_get_match_data(dev);
 
+	if (axp20x_batt->data->bat_det_ctrl) {
+		ret = regmap_update_bits(axp20x_batt->regmap, AXP20X_OFF_CTRL,
+					 AXP20X_OFF_CTRL_BAT_DET, 0xFF);
+		if (ret) {
+			dev_err(dev,
+				"Failed to enable battery detection function");
+			return ret;
+		}
+	}
+
 	ret = axp20x_batt->data->cfg_iio_chan(pdev, axp20x_batt);
 	if (ret)
 		return ret;
@@ -1201,8 +1217,18 @@ static int axp20x_power_probe(struct platform_device *pdev)
 	return 0;
 }
 
+static void axp20x_power_remove(struct platform_device *pdev)
+{
+	struct axp20x_batt_ps *axp20x_batt = platform_get_drvdata(pdev);
+
+	if (axp20x_batt->data->bat_det_ctrl)
+		regmap_update_bits(axp20x_batt->regmap, AXP20X_OFF_CTRL,
+				   AXP20X_OFF_CTRL_BAT_DET, 0);
+}
+
 static struct platform_driver axp20x_batt_driver = {
 	.probe    = axp20x_power_probe,
+	.remove   = axp20x_power_remove,
 	.driver   = {
 		.name  = "axp20x-battery-power-supply",
 		.of_match_table = axp20x_battery_ps_id,
