@@ -57,6 +57,8 @@
 
 #define AXP20X_V_OFF_MASK		GENMASK(2, 0)
 
+#define AXP20X_OFF_CTRL_BAT_DET		BIT(6)
+
 struct axp20x_batt_ps;
 
 struct axp_data {
@@ -610,6 +612,7 @@ static int axp20x_power_probe(struct platform_device *pdev)
 	struct power_supply_battery_info info;
 	struct device *dev = &pdev->dev;
 	u32 tmp;
+	int rc;
 
 	if (!of_device_is_available(pdev->dev.of_node))
 		return -ENODEV;
@@ -620,6 +623,16 @@ static int axp20x_power_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	axp20x_batt->dev = &pdev->dev;
+
+	axp20x_batt->regmap = dev_get_regmap(pdev->dev.parent, NULL);
+
+	rc = regmap_update_bits(axp20x_batt->regmap, AXP20X_OFF_CTRL,
+				  AXP20X_OFF_CTRL_BAT_DET, 0xFF);
+	if (rc) {
+		dev_err(dev,
+			"Failed to enable battery detection function");
+		return rc;
+	}	
 
 	axp20x_batt->batt_v = devm_iio_channel_get(&pdev->dev, "batt_v");
 	if (IS_ERR(axp20x_batt->batt_v)) {
@@ -644,7 +657,6 @@ static int axp20x_power_probe(struct platform_device *pdev)
 		return PTR_ERR(axp20x_batt->batt_dischrg_i);
 	}
 
-	axp20x_batt->regmap = dev_get_regmap(pdev->dev.parent, NULL);
 	platform_set_drvdata(pdev, axp20x_batt);
 
 	psy_cfg.drv_data = axp20x_batt;
@@ -706,8 +718,17 @@ static int axp20x_power_probe(struct platform_device *pdev)
 	return 0;
 }
 
+static int axp20x_power_remove(struct platform_device *pdev)
+{
+	struct axp20x_batt_ps *axp20x_batt = platform_get_drvdata(pdev);
+
+	return regmap_update_bits(axp20x_batt->regmap, AXP20X_OFF_CTRL,
+				  AXP20X_OFF_CTRL_BAT_DET, 0);
+}
+
 static struct platform_driver axp20x_batt_driver = {
 	.probe    = axp20x_power_probe,
+	.remove   = axp20x_power_remove,
 	.driver   = {
 		.name  = "axp20x-battery-power-supply",
 		.of_match_table = axp20x_battery_ps_id,
