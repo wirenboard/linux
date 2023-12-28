@@ -81,7 +81,14 @@ struct sunxi_priv_data {
 
 /* EMAC clock register @ 0x30 in the "system control" address range */
 static const struct reg_field sun8i_syscon_reg_field = {
-	.reg = 0x34,  // FIXME
+	.reg = 0x30,
+	.lsb = 0,
+	.msb = 31,
+};
+
+/* In T507 there is a second register for EMAC1 clock */
+static const struct reg_field sun50i_t507_emac1_syscon_reg_field = {
+	.reg = 0x34,
 	.lsb = 0,
 	.msb = 31,
 };
@@ -132,6 +139,17 @@ static const struct emac_variant emac_variant_r40 = {
 static const struct emac_variant emac_variant_a64 = {
 	.default_syscon_value = 0,
 	.syscon_field = &sun8i_syscon_reg_field,
+	.soc_has_internal_phy = false,
+	.support_mii = true,
+	.support_rmii = true,
+	.support_rgmii = true,
+	.rx_delay_max = 31,
+	.tx_delay_max = 7,
+};
+
+static const struct emac_variant emac_variant_t507_emac1 = {
+	.default_syscon_value = 0,
+	.syscon_field = &sun50i_t507_emac1_syscon_reg_field,
 	.soc_has_internal_phy = false,
 	.support_mii = true,
 	.support_rmii = true,
@@ -1340,6 +1358,8 @@ static const struct of_device_id sun8i_dwmac_match[] = {
 		.data = &emac_variant_a64 },
 	{ .compatible = "allwinner,sun50i-h6-emac",
 		.data = &emac_variant_h6 },
+	{ .compatible = "allwinner,sun50i-t507-emac1",
+		.data = &emac_variant_t507_emac1 },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, sun8i_dwmac_match);

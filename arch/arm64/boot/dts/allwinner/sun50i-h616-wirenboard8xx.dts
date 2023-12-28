@@ -523,7 +523,7 @@
 	phy-handle = <&ext_rmii_phy0>;
 	allwinner,rx-delay-ps = <3100>;
 	allwinner,tx-delay-ps = <700>;
-	status = "disabled";
+	status = "okay";
 };
 
 &emac1 {
