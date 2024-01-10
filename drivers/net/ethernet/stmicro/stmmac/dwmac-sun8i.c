@@ -153,7 +153,7 @@ static const struct emac_variant emac_variant_t507_emac1 = {
 	.soc_has_internal_phy = false,
 	.support_mii = true,
 	.support_rmii = true,
-	.support_rgmii = true,
+	.support_rgmii = false,
 	.rx_delay_max = 31,
 	.tx_delay_max = 7,
 };
