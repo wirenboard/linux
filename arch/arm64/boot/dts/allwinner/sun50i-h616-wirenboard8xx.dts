@@ -30,7 +30,7 @@
 		serial0 = &uart0;
 		mmc0 = &mmc2;
 		mmc1 = &mmc0;
-		mdio-gpio1 = &soft_mdio1;
+		mdio-gpio0 = &soft_mdio0;
 		ethernet0 = &emac0;
 		ethernet1 = &emac1;
 	};
@@ -492,11 +492,10 @@
 };
 
 / {
-	soft_mdio1: soft-mdio1 {
+	soft_mdio0: soft-mdio0 {
 		compatible = "virtual,mdio-gpio";
 		#address-cells = <1>;
 		#size-cells = <0>;
-
 		pinctrl-names = "default";
 		pinctrl-0 = <&ephy_25m_out_pins>;
 
