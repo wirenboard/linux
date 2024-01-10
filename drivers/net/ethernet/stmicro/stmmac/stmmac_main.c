@@ -14,8 +14,6 @@
 	https://bugzilla.stlinux.com/
 *******************************************************************************/
 
-#define DEBUG
-
 #include <linux/clk.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
