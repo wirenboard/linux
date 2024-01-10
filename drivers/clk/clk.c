@@ -6,8 +6,6 @@
  * Standard functionality for the common clock API.  See Documentation/driver-api/clk.rst
  */
 
-#define DEBUG
-
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/clk/clk-conf.h>
@@ -943,8 +941,6 @@ EXPORT_SYMBOL_GPL(clk_rate_exclusive_get);
 
 static void clk_core_unprepare(struct clk_core *core)
 {
-    printk("%s: %s\n", __func__, (core == NULL ? "<null-core>" : (core->name == NULL ? "<null-name>" : core->name)));
-
 	lockdep_assert_held(&prepare_lock);
 
 	if (!core)
@@ -1006,8 +1002,6 @@ EXPORT_SYMBOL_GPL(clk_unprepare);
 static int clk_core_prepare(struct clk_core *core)
 {
 	int ret = 0;
-
-    printk("%s: %s\n", __func__, (core == NULL ? "<null-core>" : (core->name == NULL ? "<null-name>" : core->name)));
 
 	lockdep_assert_held(&prepare_lock);
 
