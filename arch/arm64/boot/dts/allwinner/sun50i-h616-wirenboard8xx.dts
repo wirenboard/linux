@@ -125,6 +125,18 @@
 			regulator-always-on;
 		};
 	};
+
+	soc {
+		pwm: pwm@300a000 {
+			compatible = "allwinner,sun50i-t507-pwm";
+			reg = <0x0300a000 0x400>;
+			clocks = <&osc24M>, <&ccu CLK_BUS_PWM>;
+			clock-names = "mod", "bus";
+			resets = <&ccu RST_BUS_PWM>;
+			#pwm-cells = <3>;
+			status = "disabled";
+		};
+	};
 };
 
 &pio {
@@ -553,4 +565,31 @@
 			compatible = "ethernet-phy-ieee802.3-c22";
 		};
 	};
+};
+
+// USB
+
+&usbphy {
+	status = "okay";
+};
+
+&ohci0 {
+	status = "okay";
+};
+
+&ehci0 {
+	status = "okay";
+};
+
+&usbotg {
+	dr_mode = "host";
+	status = "okay";
+};
+
+&ohci1 {
+	status = "okay";
+};
+
+&ehci1 {
+	status = "okay";
 };
