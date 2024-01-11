@@ -384,7 +384,6 @@ static const struct of_device_id sun4i_pwm_dt_ids[] = {
 		.compatible = "allwinner,sun50i-h6-pwm",
 		.data = &sun50i_h6_pwm_data,
 	}, {
-	}, {
 		.compatible = "allwinner,sun50i-t507-pwm",
 		.data = &sun50i_t507_pwm_data,
 	}, {
