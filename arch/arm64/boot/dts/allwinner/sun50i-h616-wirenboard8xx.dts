@@ -129,6 +129,20 @@
 			regulator-always-on;
 		};
 	};
+
+	i2c_wbmz: i2c_wbmz {
+		compatible = "i2c-gpio";
+
+		sda-gpios = <&pio PD 13 GPIO_ACTIVE_HIGH>;
+		scl-gpios = <&pio PC 12 GPIO_ACTIVE_LOW>;  // connected via transistor thus inverting the signal
+		i2c-gpio,delay-us = <2>;  // ~100 kHz
+		i2c-gpio,scl-output-only;
+		i2c-gpio,scl-has-no-pullup;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "okay";
+	};
 };
 
 &pio {
