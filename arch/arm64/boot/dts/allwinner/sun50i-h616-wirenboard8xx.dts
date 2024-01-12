@@ -51,9 +51,13 @@
 	/* leds-pwm { */
 	/* 	compatible = "pwm-leds"; */
 
+	/* 	pinctrl-names = "default"; */
+	/* 	pinctrl-0 = <&pwm_ch5_pa_pins>; */
+
 	/* 	red { */
 	/* 		label = "red"; */
-	/* 		pwms = <&pwm0 0 5000000 0>; */
+	/* 		pwms = <&pwm 5 100000 0>; */
+
 	/* 		linux,default-trigger = "timer"; */
 	/* 	}; */
 	/* }; */
@@ -123,18 +127,6 @@
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
 			regulator-always-on;
-		};
-	};
-
-	soc {
-		pwm: pwm@300a000 {
-			compatible = "allwinner,sun50i-t507-pwm";
-			reg = <0x0300a000 0x400>;
-			clocks = <&osc24M>, <&ccu CLK_BUS_PWM>;
-			clock-names = "mod", "bus";
-			resets = <&ccu RST_BUS_PWM>;
-			#pwm-cells = <3>;
-			status = "disabled";
 		};
 	};
 };
