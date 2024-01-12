@@ -143,6 +143,18 @@
 		#size-cells = <0>;
 		status = "okay";
 	};
+
+	i2c_atecc_rtc: i2c_atecc_rtc {
+		compatible = "i2c-gpio";
+
+		sda-gpios = <&pio PE 19 GPIO_ACTIVE_HIGH>;
+		scl-gpios = <&pio PE 0 GPIO_ACTIVE_HIGH>;
+		i2c-gpio,delay-us = <2>;  // ~100 kHz
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "okay";
+	};
 };
 
 &pio {
