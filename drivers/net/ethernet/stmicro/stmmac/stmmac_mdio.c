@@ -590,37 +590,6 @@ int stmmac_mdio_register(struct net_device *ndev)
 	new_bus->phy_mask = mdio_bus_data->phy_mask;
 	new_bus->parent = priv->device;
 
-    /* get clock */
-    priv->clk = devm_clk_get_optional(dev, "ephy");
-    if (IS_ERR(priv->clk)) {
-        err = PTR_ERR(priv->clk);
-        if (err != -EPROBE_DEFER)
-            dev_err(dev, "failed to get ephy clock: %d\n", err);
-        goto bus_register_fail;
-    }
-
-    clk_prepare_enable(priv->clk);
-
-    {
-        printk("My personal reset\n");
-        void __iomem *emac1 = ioremap(0x05030000, 0x100);
-        u32 v = readl(emac1 + 0x04);
-        writel(v | 0x01, emac1 + 0x04);
-
-        /* The timeout was previoulsy set to 10ms, but some board (OrangePI0)
-         * need more if no cable plugged. 100ms seems OK
-         */
-        err = readl_poll_timeout(emac1 + 0x04, v,
-                     !(v & 0x01), 100, 100000);
-
-        iounmap(emac1);
-
-        if (err) {
-            printk("EMAC reset timeout in my personal reset\n");
-        }
-    }
-    printk("stmmac_mdio_register before of_mdiobus_register\n");
-
 	err = of_mdiobus_register(new_bus, mdio_node);
 	if (err != 0) {
 		dev_err_probe(dev, err, "Cannot register the MDIO bus\n");
@@ -708,8 +677,6 @@ int stmmac_mdio_unregister(struct net_device *ndev)
 
 	if (priv->hw->xpcs)
 		xpcs_destroy(priv->hw->xpcs);
-
-    clk_disable_unprepare(priv->clk);
 
 	mdiobus_unregister(priv->mii);
 	priv->mii->priv = NULL;
