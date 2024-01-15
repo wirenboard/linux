@@ -31,6 +31,7 @@
 		mmc0 = &mmc2;
 		mmc1 = &mmc0;
 		mdio-gpio0 = &soft_mdio0;
+		mdio-gpio1 = &soft_mdio1;
 		ethernet0 = &emac0;
 		ethernet1 = &emac1;
 	};
@@ -503,7 +504,7 @@
 
 	ext_emac1_rmii_pins: emac1-rmii-pins {
 		pins = "PA0", "PA1", "PA2", "PA3", "PA4",
-			"PA5", "PA6", "PA7", "PA8", "PA9";
+			"PA5", "PA6", "PA7";
 		function = "emac1";
 		drive-strength = <40>;
 	};
@@ -522,28 +523,60 @@
 };
 
 / {
-	soft_mdio0: soft-mdio0 {
-		compatible = "virtual,mdio-gpio";
+	external_ethernet_phys: external-ethernet-phys {
+		compatible = "simple-pm-bus";
 		#address-cells = <1>;
 		#size-cells = <0>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&ephy_25m_out_pins>;
-
-		gpios = <&pio PI 1 GPIO_ACTIVE_HIGH>,  /* MDC */
-				<&pio PI 0 GPIO_ACTIVE_HIGH>;  /* MDIO */
-
-		clocks = <&ccu CLK_EMAC_25M>;
-		clock-names = "ephy";
-
-		reset-gpios = <&pio PI 4 GPIO_ACTIVE_LOW>;
-		reset-delay-us = <50000>;
-
-		ext_rmii_phy0: ethernet-phy {
-			compatible = "ethernet-phy-ieee802.3-c22";
-		};
 	};
 };
 
+&external_ethernet_phys {
+		clocks = <&ccu CLK_EMAC_25M>;
+		clock-names = "emac-25m";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&ephy_25m_out_pins>;
+
+		status = "okay";
+
+		soft_mdio0: soft-mdio@0 {
+			compatible = "virtual,mdio-gpio";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "okay";
+			reg = <0>;
+
+			gpios = <&pio PI 1 GPIO_ACTIVE_HIGH>,  /* MDC */
+					<&pio PI 0 GPIO_ACTIVE_HIGH>;  /* MDIO */
+
+			reset-gpios = <&pio PI 4 GPIO_ACTIVE_LOW>;
+			reset-delay-us = <50000>;
+
+			ext_rmii_phy0: ethernet-phy {
+				compatible = "ethernet-phy-ieee802.3-c22";
+				status = "okay";
+			};
+		};
+
+		soft_mdio1: soft-mdio@1 {
+			compatible = "virtual,mdio-gpio";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "okay";
+			reg = <1>;
+
+			gpios = <&pio PA 8 GPIO_ACTIVE_HIGH>,  /* MDC */
+					<&pio PA 9 GPIO_ACTIVE_HIGH>;  /* MDIO */
+
+			reset-gpios = <&pio PI 8 GPIO_ACTIVE_LOW>;
+			reset-delay-us = <50000>;
+
+			ext_rmii_phy1: ethernet-phy {
+				compatible = "ethernet-phy-ieee802.3-c22";
+				status = "okay";
+			};
+		};
+};
 
 &emac0 {
 	pinctrl-names = "default";
@@ -563,26 +596,6 @@
 	allwinner,rx-delay-ps = <3100>;
 	allwinner,tx-delay-ps = <700>;
 	status = "okay";
-
-	snps,clk-csr = <0x3>;
-
-	mdio1: mdio {
-		compatible = "snps,dwmac-mdio";
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		/* pinctrl-names = "default"; */
-		/* pinctrl-0 = <&ephy_25m_out_pins>; */
-		reset-gpios = <&pio PI 8 GPIO_ACTIVE_LOW>;
-		reset-delay-us = <50000>;
-
-		clocks = <&ccu CLK_EMAC_25M>;
-		clock-names = "ephy";
-
-		ext_rmii_phy1: ethernet-phy {
-			compatible = "ethernet-phy-ieee802.3-c22";
-		};
-	};
 };
 
 // USB

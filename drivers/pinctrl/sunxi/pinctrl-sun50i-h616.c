@@ -33,8 +33,12 @@ static const struct sunxi_desc_pin h616_pins[] = {
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(A, 7),
 		  SUNXI_FUNCTION(0x2, "emac1")),	/* ETXEN */
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(A, 8),
+		  SUNXI_FUNCTION(0x0, "gpio_in"),
+		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION(0x2, "emac1")),	/* EMDC */
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(A, 9),
+		  SUNXI_FUNCTION(0x0, "gpio_in"),
+		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION(0x2, "emac1")),	/* EMDIO */
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(A, 10),
 		  SUNXI_FUNCTION(0x2, "i2c3")),		/* SCK */

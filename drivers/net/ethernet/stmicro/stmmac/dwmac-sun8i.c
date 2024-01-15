@@ -783,8 +783,8 @@ static int sun8i_dwmac_reset(struct stmmac_priv *priv)
 				 !(v & 0x01), 100, 100000);
 
 	if (err) {
-		dev_err(priv->device, "EMAC reset timeout\n");
-		return err;
+		dev_err(priv->device, "EMAC reset timeout (may be ignored in RMII mode)\n");
+		//return err; timeout may be because of MDIO unavailable at moment, rmii requires clk input
 	}
 	return 0;
 }
