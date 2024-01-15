@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb160) stable; urgency=medium
+
+  * pinctrl-mcp23s08: mcp_read: pass error of regmap_read
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Mon, 15 Jan 2024 16:21:22 +0300
+
 linux-wb (5.10.35-wb159) stable; urgency=medium
 
   * Fix edlc zero values after startup in case of full charge
