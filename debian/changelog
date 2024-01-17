@@ -1,3 +1,10 @@
+linux-wb (5.10.35-wb161) stable; urgency=medium
+
+  * scripts: make wb7x-factory-bootlet not work as regular bootlet; no functional
+    changes to kernel
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Wed, 17 Jan 2024 20:28:33 +0600
+
 linux-wb (5.10.35-wb160) stable; urgency=medium
 
   * pinctrl-mcp23s08: mcp_read: pass error of regmap_read
