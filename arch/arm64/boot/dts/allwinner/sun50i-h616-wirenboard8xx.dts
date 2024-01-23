@@ -79,18 +79,17 @@
 			regulator-min-microvolt = <5000000>;
 			regulator-max-microvolt = <5000000>;
 			enable-active-high;
-			regulator-always-on;  // FIXME: ehci driver does not enable it on boot
 		};
 
-		reg_usb_id_mux: regulator@2 {
-			compatible = "regulator-fixed";
-			gpio = <&pio PG 18 GPIO_ACTIVE_HIGH>;
-			regulator-name = "usb-id-mux";
-			regulator-min-microvolt = <3300000>;
-			regulator-max-microvolt = <3300000>;
-			enable-active-low;
-			regulator-always-on;
-		};
+		/* reg_usb_id_mux: regulator@2 { */
+		/* 	compatible = "regulator-fixed"; */
+		/* 	gpio = <&pio PG 18 GPIO_ACTIVE_HIGH>; */
+		/* 	regulator-name = "usb-id-mux"; */
+		/* 	regulator-min-microvolt = <3300000>; */
+		/* 	regulator-max-microvolt = <3300000>; */
+		/* 	enable-active-low; */
+		/* 	regulator-always-on; */
+		/* }; */
 
 		reg_wifi_on: regulator@3 {
 			compatible = "regulator-fixed";
@@ -98,7 +97,6 @@
 			regulator-name = "wifi-on";
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
-			regulator-always-on;  // FIXME: ehci driver does not enable it on boot
 		};
 
 		reg_modem_on: regulator@4 {
@@ -108,7 +106,6 @@
 			regulator-min-microvolt = <5000000>;
 			regulator-max-microvolt = <5000000>;
 			enable-active-high;
-			regulator-always-on;  // FIXME: ehci driver does not enable it on boot
 		};
 
 		reg_periph_on: regulator@5 {
@@ -127,7 +124,7 @@
 			regulator-name = "vdd-sd-power";
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
-			regulator-always-on;
+			regulator-boot-on;
 		};
 	};
 
@@ -474,7 +471,7 @@
 	bus-width = <4>;
 	cd-gpios = <&pio PF 6 GPIO_ACTIVE_LOW>;
 	status = "okay";
-	vmmc-supply = <&reg_dcdc1>;
+	vmmc-supply = <&reg_dcdc1>, <&vdd_sd_power>;
 };
 
 &mmc2 {
@@ -593,8 +590,12 @@
 // USB
 
 &usbphy {
+	usb0_vbus-supply = <&reg_usb_vbus>;
+	usb1_vbus-supply = <&reg_wifi_on>;
+	usb2_vbus-supply = <&reg_modem_on>;
+
 	usb0_id_det-gpios = <&pio PG 18 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
-	dr_mode = "otg";
+	dr_mode = "host";
 
 	status = "okay";
 };
@@ -608,7 +609,7 @@
 };
 
 &usbotg {
-	dr_mode = "otg";
+	dr_mode = "host";
 	usb0_id_det-gpios = <&pio PG 18 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
 	status = "okay";
 };
