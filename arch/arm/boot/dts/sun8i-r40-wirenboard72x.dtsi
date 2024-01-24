@@ -347,8 +347,14 @@
 };
 
 /* WBIO I2C */
-&i2c0 {
+&i2c1 {
 	status = "okay";
+
+	axp22x-battery: pmic@34 {
+		compatible = "x-powers,axp221";
+		reg = <0x34>;
+		interrupt-parent = <&nmi_intc>;
+	};
 };
 
 /* RTC + Temp sensor + ATECC */
@@ -743,7 +749,7 @@
 
 /* System power */
 
-&i2c1 {
+&i2c0 {
 	status = "okay";
 
 	axp22x: pmic@34 {
