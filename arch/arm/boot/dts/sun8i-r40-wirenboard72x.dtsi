@@ -355,6 +355,21 @@
 		reg = <0x34>;
 		interrupt-parent = <&pio>;
         interrupts = <8 16 IRQ_TYPE_NONE>; // PI 16
+
+        axp_aux_adc: adc {
+            compatible = "x-powers,axp221-adc";
+            #io-channel-cells = <1>;
+        };
+
+        aux_battery_power_supply: battery-power-supply {
+            compatible = "x-powers,axp221-battery-power-supply";
+            status = "okay";
+            monitored-battery = <&fallback_battery_desc>;
+
+            // it's ~40C conservative high temperature limit.
+            // to be overrided by battery overlay
+            x-powers,charge-high-temp-microvolt = <499200>;
+        };
 	};
 };
 
