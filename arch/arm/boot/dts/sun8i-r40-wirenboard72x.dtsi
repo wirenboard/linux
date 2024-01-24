@@ -347,7 +347,7 @@
 };
 
 /* WBIO I2C */
-&i2c1 {
+&i2c0 {
 	status = "okay";
 };
 
@@ -743,7 +743,7 @@
 
 /* System power */
 
-&i2c0 {
+&i2c1 {
 	status = "okay";
 
 	axp22x: pmic@34 {
