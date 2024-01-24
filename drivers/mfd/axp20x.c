@@ -642,6 +642,32 @@ static const struct mfd_cell axp221_cells[] = {
 	},
 };
 
+static const struct mfd_cell axp221_aux_cells[] = {
+	{
+		.name		= "axp221-aux-pek",
+		.num_resources	= ARRAY_SIZE(axp22x_pek_resources),
+		.resources	= axp22x_pek_resources,
+	}, {
+		.name		= "axp20x-aux-regulator",
+	}, {
+		.name		= "axp22x-aux-adc",
+		.of_compatible	= "x-powers,axp221-adc",
+	}, {
+		.name		= "axp20x-aux-ac-power-supply",
+		.of_compatible	= "x-powers,axp221-ac-power-supply",
+		.num_resources	= ARRAY_SIZE(axp20x_ac_power_supply_resources),
+		.resources	= axp20x_ac_power_supply_resources,
+	}, {
+		.name		= "axp20x-aux-battery-power-supply",
+		.of_compatible	= "x-powers,axp221-battery-power-supply",
+	}, {
+		.name		= "axp20x-aux-usb-power-supply",
+		.of_compatible	= "x-powers,axp221-usb-power-supply",
+		.num_resources	= ARRAY_SIZE(axp22x_usb_power_supply_resources),
+		.resources	= axp22x_usb_power_supply_resources,
+	},
+};
+
 static const struct mfd_cell axp223_cells[] = {
 	{
 		.name		= "axp221-pek",
@@ -860,6 +886,13 @@ int axp20x_match_device(struct axp20x_dev *axp20x)
 		break;
 	case AXP221_ID:
 		axp20x->nr_cells = ARRAY_SIZE(axp221_cells);
+		axp20x->cells = axp221_cells;
+		axp20x->regmap_cfg = &axp22x_regmap_config;
+		axp20x->regmap_irq_chip = &axp22x_regmap_irq_chip;
+		break;
+	case (AXP221_ID | 0x8000):
+        axp20x->variant = AXP221_ID;
+		axp20x->nr_cells = ARRAY_SIZE(axp221_aux_cells);
 		axp20x->cells = axp221_cells;
 		axp20x->regmap_cfg = &axp22x_regmap_config;
 		axp20x->regmap_irq_chip = &axp22x_regmap_irq_chip;
