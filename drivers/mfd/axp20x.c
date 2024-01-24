@@ -893,7 +893,7 @@ int axp20x_match_device(struct axp20x_dev *axp20x)
 	case (AXP221_ID | 0x8000):
         axp20x->variant = AXP221_ID;
 		axp20x->nr_cells = ARRAY_SIZE(axp221_aux_cells);
-		axp20x->cells = axp221_cells;
+		axp20x->cells = axp221_aux_cells;
 		axp20x->regmap_cfg = &axp22x_regmap_config;
 		axp20x->regmap_irq_chip = &axp22x_regmap_irq_chip;
 		break;
