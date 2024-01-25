@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb162) stable; urgency=medium
+
+  * wbec: rtc: build in kernel (not as module) - fix wrong timestamps in log while booting
+
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Thu, 25 Jan 2024 08:30:49 +0300
+
 linux-wb (5.10.35-wb161) stable; urgency=medium
 
   * scripts: make wb7x-factory-bootlet not work as regular bootlet; no functional
