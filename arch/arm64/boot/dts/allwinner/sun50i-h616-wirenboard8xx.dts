@@ -110,8 +110,23 @@
 			regulator-name = "vdd-sd-power";
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
-			regulator-boot-on;
+			regulator-always-on;
 		};
+	};
+
+	/*
+	Because PMIC battery driver must be enabled at boot time,
+	we have to give it  some battery description to
+	override default (or preserved from last boot) register
+	values when it comes to charging voltage and current
+	*/
+	fallback_battery_desc: fallback-battery-desc {
+		compatible = "simple-battery";
+		constant-charge-current-max-microamp = <600000>;
+		voltage-min-design-microvolt = <2900000>;
+		constant-charge-voltage-max-microvolt = <4100000>;
+		charge-full-design-microamp-hours = <2600000>;
+		status = "okay";
 	};
 
 	i2c_wbmz: i2c_wbmz {
@@ -119,13 +134,48 @@
 
 		sda-gpios = <&pio PD 13 GPIO_ACTIVE_HIGH>;
 		scl-gpios = <&pio PC 12 GPIO_ACTIVE_LOW>;  // connected via transistor thus inverting the signal
-		i2c-gpio,delay-us = <2>;  // ~100 kHz
+		i2c-gpio,delay-us = <32>;  // ~30 kHz
 		i2c-gpio,scl-output-only;
 		i2c-gpio,scl-has-no-pullup;
 
 		#address-cells = <1>;
 		#size-cells = <0>;
 		status = "okay";
+
+		axp22x: pmic@34 {
+			compatible = "x-powers,axp221";
+			reg = <0x34>;
+			interrupt-parent = <&pio>;
+			interrupts = <PD 20 IRQ_TYPE_LEVEL_LOW>;  // temporary use WBIO pin here
+
+			interrupt-controller;
+			#interrupt-cells = <1>;
+
+			ac_power_supply: ac-power-supply {
+				compatible = "x-powers,axp221-ac-power-supply";
+				status = "okay";
+			};
+
+			axp_adc: adc {
+				compatible = "x-powers,axp221-adc";
+				#io-channel-cells = <1>;
+			};
+
+			battery_power_supply: battery-power-supply {
+				compatible = "x-powers,axp221-battery-power-supply";
+				status = "okay";
+				monitored-battery = <&fallback_battery_desc>;
+
+				// it's ~40C conservative high temperature limit.
+				// to be overrided by battery overlay
+				x-powers,charge-high-temp-microvolt = <499200>;
+			};
+
+			usb_power_supply: usb_power_supply {
+				compatible = "x-powers,axp221-usb-power-supply";
+				status = "okay";
+			};
+		};
 	};
 
 	i2c_atecc_rtc: i2c_atecc_rtc {
@@ -355,6 +405,7 @@
 				regulator-max-microvolt = <3300000>;
 				regulator-step-delay-us = <25>;
 				regulator-final-delay-us = <50>;
+				regulator-always-on;  // FIXME should be enabled by gpiod
 			};
 
 			reg_bldo2: bldo2 {

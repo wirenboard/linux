@@ -879,7 +879,7 @@ static const struct mfd_cell axp221_cells[] = {
 		.num_resources	= ARRAY_SIZE(axp22x_pek_resources),
 		.resources	= axp22x_pek_resources,
 	}, {
-		.name		= "axp20x-regulator",
+		.name		= "axp221-regulator",
 	}, {
 		.name		= "axp22x-adc",
 		.of_compatible	= "x-powers,axp221-adc",
