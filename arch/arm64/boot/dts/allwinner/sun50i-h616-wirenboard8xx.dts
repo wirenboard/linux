@@ -67,17 +67,7 @@
 			enable-active-high;
 		};
 
-		/* reg_usb_id_mux: regulator@2 { */
-		/* 	compatible = "regulator-fixed"; */
-		/* 	gpio = <&pio PG 18 GPIO_ACTIVE_HIGH>; */
-		/* 	regulator-name = "usb-id-mux"; */
-		/* 	regulator-min-microvolt = <3300000>; */
-		/* 	regulator-max-microvolt = <3300000>; */
-		/* 	enable-active-low; */
-		/* 	regulator-always-on; */
-		/* }; */
-
-		reg_wifi_on: regulator@3 {
+		reg_wifi_on: regulator@2 {
 			compatible = "regulator-fixed";
 			gpio = <&pio PE 15 GPIO_ACTIVE_LOW>;
 			regulator-name = "wifi-on";
@@ -85,7 +75,7 @@
 			regulator-max-microvolt = <3300000>;
 		};
 
-		reg_modem_on: regulator@4 {
+		reg_modem_on: regulator@3 {
 			compatible = "regulator-fixed";
 			gpio = <&pio PE 13 GPIO_ACTIVE_HIGH>;
 			regulator-name = "modem-on";
@@ -94,7 +84,7 @@
 			enable-active-high;
 		};
 
-		reg_periph_on: regulator@5 {
+		reg_periph_on: regulator@4 {
 			compatible = "regulator-fixed";
 			gpio = <&pio PG 13 GPIO_ACTIVE_HIGH>;
 			regulator-name = "periph-on";
@@ -104,7 +94,7 @@
 			regulator-always-on;  // FIXME: ehci driver does not enable it on boot
 		};
 
-		vdd_sd_power: regulator@6 {
+		vdd_sd_power: regulator@5 {
 			compatible = "regulator-fixed";
 			gpio = <&pio PE 16 GPIO_ACTIVE_LOW>;
 			regulator-name = "vdd-sd-power";
@@ -632,6 +622,8 @@
 	usb2_vbus-supply = <&reg_modem_on>;
 
 	usb0_id_det-gpios = <&pio PG 18 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+	wirenboard,mux-on-id-pin;
+
 	dr_mode = "host";
 
 	status = "okay";
@@ -647,7 +639,6 @@
 
 &usbotg {
 	dr_mode = "host";
-	usb0_id_det-gpios = <&pio PG 18 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
 	status = "okay";
 };
 
