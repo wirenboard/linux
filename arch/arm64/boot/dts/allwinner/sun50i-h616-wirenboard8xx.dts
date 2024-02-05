@@ -181,6 +181,14 @@
 	};
 };
 
+/* WBIO I2C */
+&i2c3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c3_pa_pins>;
+
+	status = "okay";
+};
+
 &pio {
     gpio-line-names = 
 	/* PA */
