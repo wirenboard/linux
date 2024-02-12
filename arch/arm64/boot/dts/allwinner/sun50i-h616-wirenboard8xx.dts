@@ -181,6 +181,60 @@
 	};
 };
 
+&spi1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi1_pins>, <&spi1_cs0_pin>;
+	status = "okay";
+
+	wbec: wbec@0 {
+		spi-max-frequency = <1000000>;
+
+		compatible = "wirenboard,wbec";
+		reg = <0>;
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		wbec-watchdog@0 {
+			compatible = "wirenboard,wbec-watchdog";
+			reg = <0>;
+		};
+
+		wbec-pwrkey@0 {
+			compatible = "wirenboard,wbec-pwrkey";
+			reg = <0>;
+		};
+
+		rtc_onboard: wbec-rtc@0 {
+			compatible = "wirenboard,wbec-rtc";
+			reg = <0>;
+
+			wakeup-source;
+		};
+
+		wbec_gpio: wbec-gpio@0 {
+			compatible = "wirenboard,wbec-gpio";
+			reg = <0>;
+
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <5>;
+			gpio-line-names = "EC A1", "EC A2", "EC A3", "EC A4", "V_OUT ON";
+		};
+
+		wbec_adc: wbec-adc@0 {
+			compatible = "wirenboard,wbec-adc";
+			reg = <0>;
+			#io-channel-cells = <1>;
+		};
+
+		vin: wbec-power@0 {
+			compatible = "wirenboard,wbec-power";
+			reg = <0>;
+		};
+	};
+};
+
 /* WBIO I2C */
 &i2c3 {
 	pinctrl-names = "default";
