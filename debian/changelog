@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb163) stable; urgency=medium
+
+  * rtl8733bu: move BusyTraffic log messages to debug level
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Tue, 13 Feb 2024 14:11:00 +0400
+
 linux-wb (5.10.35-wb162) stable; urgency=medium
 
   * wbec: rtc: build in kernel (not as module) - fix wrong timestamps in log while booting
