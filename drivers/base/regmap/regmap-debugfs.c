@@ -290,7 +290,7 @@ static ssize_t regmap_map_read_file(struct file *file, char __user *user_buf,
 				   count, ppos);
 }
 
-#undef REGMAP_ALLOW_WRITE_DEBUGFS
+#define REGMAP_ALLOW_WRITE_DEBUGFS
 #ifdef REGMAP_ALLOW_WRITE_DEBUGFS
 /*
  * This can be dangerous especially when we have clients such as
@@ -641,7 +641,7 @@ void regmap_debugfs_init(struct regmap *map)
 	 * any real compile time configuration option for this feature. One will
 	 * have to modify the source code directly in order to use it.
 	 */
-#undef REGMAP_ALLOW_FORCE_WRITE_FIELD_DEBUGFS
+#define REGMAP_ALLOW_FORCE_WRITE_FIELD_DEBUGFS
 #ifdef REGMAP_ALLOW_FORCE_WRITE_FIELD_DEBUGFS
 	debugfs_create_bool("force_write_field", 0600, map->debugfs,
 			    &map->force_write_field);
