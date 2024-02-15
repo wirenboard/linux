@@ -127,7 +127,7 @@
 	fallback_battery_desc: fallback-battery-desc {
 		compatible = "simple-battery";
 		constant-charge-current-max-microamp = <600000>;
-		voltage-min-design-microvolt = <2600000>;
+		voltage-min-design-microvolt = <2900000>;
 		constant-charge-voltage-max-microvolt = <4100000>;
 		charge-full-design-microamp-hours = <2600000>;
 		status = "okay";
