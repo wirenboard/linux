@@ -179,6 +179,20 @@
 		#size-cells = <0>;
 		status = "okay";
 	};
+
+	soc {
+		dma: dma-controller@3002000 {
+			compatible = "allwinner,sun50i-h6-dma";
+			reg = <0x3002000 0x1000>;
+			interrupts = <GIC_SPI 42 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_DMA>, <&ccu CLK_MBUS_DMA>;
+			clock-names = "ahb", "mbus";
+			dma-channels = <16>;
+			dma-requests = <32>;
+			resets = <&ccu RST_BUS_DMA>;
+			#dma-cells = <1>;
+		};
+	};
 };
 
 &spi1 {
