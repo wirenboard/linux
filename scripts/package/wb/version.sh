@@ -66,6 +66,11 @@ setup_kernel_vars() {
 			BOOTLET_DEPS=
 			KDEB_WBDESC="Wiren Board 7 (factory bootlet)"
 			;;
+		wb8)
+			DEBARCH=arm64
+			KERNEL_DEFCONFIG=wb8_reduced_defconfig
+			KDEB_WBDESC="Wiren Board 8"
+			;;
 		*)
 			echo "Unsupported KERNEL_FLAVOUR, please specify one of: wb2, wb6, wb7"
 			return 1
