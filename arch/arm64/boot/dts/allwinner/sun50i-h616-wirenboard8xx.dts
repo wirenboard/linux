@@ -208,6 +208,9 @@
 		};
 
 		pwm: pwm@300A000 {
+			pinctrl-0 = <&pwm_ch1_pg_pins>;
+			pinctrl-names = "default";
+
 			compatible = "allwinner,sun50i-t507-pwm";
 			reg = <0x300A000 0x400>;
 			clocks = <&ccu CLK_BUS_PWM>, <&ccu CLK_APB1>, <&osc24M>;
@@ -368,6 +371,12 @@
 	pwm_ch5_pa_pins: pwm_ch5_pa_pins {
 		pins = "PA12";
 		function = "pwm5";
+		drive-strength = <40>;
+	};
+
+	pwm_ch1_pg_pins: pwm_ch1_pg_pins {
+		pins = "PG19";
+		function = "pwm1";
 		drive-strength = <40>;
 	};
 };
