@@ -49,6 +49,20 @@
 		};
 	};
 
+	leds-pwm {
+		compatible = "pwm-leds";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&pwm_ch5_pa_pins>;
+
+		red {
+			label = "red";
+			pwms = <&pwm 5 100000 0>;
+
+			linux,default-trigger = "timer";
+		};
+	};
+
 	chosen {
 		stdout-path = "serial0:115200n8";
 	};
@@ -191,6 +205,16 @@
 			dma-requests = <32>;
 			resets = <&ccu RST_BUS_DMA>;
 			#dma-cells = <1>;
+		};
+
+		pwm: pwm@300A000 {
+			compatible = "allwinner,sun50i-t507-pwm";
+			reg = <0x300A000 0x400>;
+			clocks = <&ccu CLK_BUS_PWM>, <&ccu CLK_APB1>, <&osc24M>;
+			clock-names = "bus", "apb0", "hosc";
+			resets = <&ccu RST_BUS_PWM>;
+			#pwm-cells = <0x3>;
+			status = "okay";
 		};
 	};
 };
@@ -340,6 +364,12 @@
 	"", "", "", "",  /* 20-23 */
 	"", "", "", "",  /* 24-27 */
 	"", "", "", "";  /* 28-31 */
+
+	pwm_ch5_pa_pins: pwm_ch5_pa_pins {
+		pins = "PA12";
+		function = "pwm5";
+		drive-strength = <40>;
+	};
 };
 
 &uart0 {
