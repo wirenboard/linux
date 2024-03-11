@@ -59,7 +59,7 @@
 			label = "red";
 			pwms = <&pwm 5 100000 0>;
 
-			linux,default-trigger = "timer";
+			linux,default-trigger = "heartbeat";
 		};
 	};
 
