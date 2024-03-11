@@ -200,7 +200,6 @@ if grep -q '^CONFIG_MODULES=y' $KCONFIG_CONFIG ; then
 fi
 
 if [ "$ARCH" != "um" ]; then
-	$MAKE headers_check KBUILD_SRC=
 	$MAKE headers_install KBUILD_SRC= INSTALL_HDR_PATH="$libc_headers_dir/usr"
 fi
 
