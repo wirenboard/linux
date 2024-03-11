@@ -91,17 +91,23 @@ setup_kernel_vars() {
 	case "$DEBARCH" in
 		armel)
 			CROSS_COMPILE=arm-linux-gnueabi-
+			KERNEL_ARCH=arm
+			KERNEL_IMAGE=zImage
 			;;
 		armhf)
 			CROSS_COMPILE=arm-linux-gnueabihf-
+			KERNEL_ARCH=arm
+			KERNEL_IMAGE=zImage
 			;;
 		arm64)
 			CROSS_COMPILE=aarch64-linux-gnu-
+			KERNEL_ARCH=arm64
+			KERNEL_IMAGE=Image.gz
 			;;
 		*)
 			echo "Unsupported DEBARCH, please specify one of: armel, armhf, arm64"
 			return 1
 			;;
 	esac
-	export DEBARCH KERNEL_DEFCONFIG KDEB_WBFLAVOUR_DESC CROSS_COMPILE BOOTLET_DTB INITRAMFS_VERSION KDEB_WBDESC BOOTLET_DEPS PROVIDES_BOOTLET_FOR_FITS
+	export DEBARCH KERNEL_ARCH KERNEL_IMAGE KERNEL_DEFCONFIG KDEB_WBFLAVOUR_DESC CROSS_COMPILE BOOTLET_DTB INITRAMFS_VERSION KDEB_WBDESC BOOTLET_DEPS PROVIDES_BOOTLET_FOR_FITS
 }
