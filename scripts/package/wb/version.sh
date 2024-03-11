@@ -95,8 +95,11 @@ setup_kernel_vars() {
 		armhf)
 			CROSS_COMPILE=arm-linux-gnueabihf-
 			;;
+		arm64)
+			CROSS_COMPILE=aarch64-linux-gnu-
+			;;
 		*)
-			echo "Unsupported DEBARCH, please specify one of: armel, armhf"
+			echo "Unsupported DEBARCH, please specify one of: armel, armhf, arm64"
 			return 1
 			;;
 	esac
