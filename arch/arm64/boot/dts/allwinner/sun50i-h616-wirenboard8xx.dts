@@ -36,6 +36,31 @@
 		ethernet1 = &emac1;
 	};
 
+	wirenboard {
+		adc-type = <3>;
+		pwm-buzzer = <1>;
+
+		analog-inputs {
+		};
+
+		gpios {
+		};
+
+		hwmon-nodes {
+			cputemp {
+				title = "CPU Temperature";
+				hwmon-node-name = "cpu0_thermal";
+				hwmon-channel = "temp1";
+			};
+
+			pcbtemp {
+				title = "Board Temperature";
+				hwmon-node-name = "iio-hwmon-pcb-temp";
+				hwmon-channel = "temp1";
+			};
+		};
+	};
+
 	leds-gpio {
 		compatible = "gpio-leds";
 
