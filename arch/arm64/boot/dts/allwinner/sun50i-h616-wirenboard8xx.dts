@@ -36,6 +36,108 @@
 		ethernet1 = &emac1;
 	};
 
+	wirenboard {
+		adc-type = <3>;
+		pwm-buzzer = <1>;
+
+		analog-inputs {
+		};
+
+		gpios {
+			A1_OUT {
+				io-gpios = <&pio PE 5 GPIO_ACTIVE_HIGH>;
+				gpio-xlate-type = "bank_pin";
+				gpio-pins-per-bank = <32>;
+				output-low;
+				sort-order = <0>;
+			};
+
+			A2_OUT {
+				io-gpios = <&pio PD 23 GPIO_ACTIVE_HIGH>;
+				gpio-xlate-type = "bank_pin";
+				gpio-pins-per-bank = <32>;
+				output-low;
+				sort-order = <1>;
+			};
+
+			A3_OUT {
+				io-gpios = <&pio PG 9 GPIO_ACTIVE_HIGH>;
+				gpio-xlate-type = "bank_pin";
+				gpio-pins-per-bank = <32>;
+				output-low;
+				sort-order = <2>;
+			};
+
+			A4_OUT {
+				io-gpios = <&pio PG 11 GPIO_ACTIVE_HIGH>;
+				gpio-xlate-type = "bank_pin";
+				gpio-pins-per-bank = <32>;
+				output-low;
+				sort-order = <3>;
+			};
+
+			A1_IN {
+				io-gpios = <&pio PH 9 GPIO_ACTIVE_LOW>;
+				gpio-xlate-type = "bank_pin";
+				gpio-pins-per-bank = <32>;
+				input;
+				sort-order = <4>;
+			};
+
+			A2_IN {
+				io-gpios = <&pio PH 4 GPIO_ACTIVE_LOW>;
+				gpio-xlate-type = "bank_pin";
+				gpio-pins-per-bank = <32>;
+				input;
+				sort-order = <5>;
+			};
+
+			A3_IN {
+				io-gpios = <&pio PD 25 GPIO_ACTIVE_LOW>;
+				gpio-xlate-type = "bank_pin";
+				gpio-pins-per-bank = <32>;
+				input;
+				sort-order = <6>;
+			};
+
+			A4_IN {
+				io-gpios = <&pio PD 20 GPIO_ACTIVE_LOW>;
+				gpio-xlate-type = "bank_pin";
+				gpio-pins-per-bank = <32>;
+				input;
+				sort-order = <7>;
+			};
+
+			5V_OUT {
+				io-gpios = <&pio PE 9 GPIO_ACTIVE_HIGH>;
+				gpio-xlate-type = "bank_pin";
+				gpio-pins-per-bank = <32>;
+				output-high;
+				sort-order = <8>;
+			};
+
+			V_OUT {
+				io-gpios = <&wbec_gpio 4 GPIO_ACTIVE_HIGH>;
+				output-high;
+				sort-order = <9>;
+			};
+		};
+
+		hwmon-nodes {
+			cputemp {
+				title = "CPU Temperature";
+				hwmon-node-name = "cpu0_thermal";
+				hwmon-channel = "temp1";
+			};
+
+			pcbtemp {
+				title = "Board Temperature";
+				hwmon-node-name = "iio-hwmon-pcb-temp";
+				hwmon-channel = "temp1";
+			};
+		};
+	};
+
 	leds-gpio {
 		compatible = "gpio-leds";
 
