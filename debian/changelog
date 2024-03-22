@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb159+wb1) stable; urgency=medium
+
+  * wb6, wb7: add config options required for wg-quick tool
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Fri, 22 Mar 2024 19:50:01 +0500
+
 linux-wb (5.10.35-wb159) stable; urgency=medium
 
   * Fix edlc zero values after startup in case of full charge
