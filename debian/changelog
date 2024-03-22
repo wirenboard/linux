@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb164) stable; urgency=medium
+
+  * wb6, wb7: add config options required for wg-quick tool
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Fri, 22 Mar 2024 14:41:13 +0500
+
 linux-wb (5.10.35-wb163) stable; urgency=medium
 
   * rtl8733bu: move BusyTraffic log messages to debug level
