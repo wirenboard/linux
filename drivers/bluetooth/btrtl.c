@@ -177,6 +177,7 @@ static const struct id_table ic_id_table[] = {
 	  .cfg_name = "rtl_bt/rtl8723fu_config" },
 	};
 
+
 static const struct id_table *btrtl_match_ic(u16 lmp_subver, u16 hci_rev,
 					     u8 hci_ver, u8 hci_bus)
 {
