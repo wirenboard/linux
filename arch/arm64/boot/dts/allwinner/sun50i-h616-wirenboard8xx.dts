@@ -28,6 +28,10 @@
 
 	aliases {
 		serial0 = &uart0;
+		serial1 = &uart1;
+		serial2 = &uart2;
+		serial4 = &uart4;
+		serial5 = &uart5;
 		mmc0 = &mmc2;
 		mmc1 = &mmc0;
 		mdio-gpio0 = &soft_mdio0;
@@ -481,13 +485,72 @@
 		function = "pwm1";
 		drive-strength = <40>;
 	};
+
+	uart2_pg_pins: uart2_pg_pins {
+		pins = "PG15", "PG16";
+		function = "uart2";
+	};
+
+	uart4_pi_pins: uart4_pi_pins {
+		pins = "PI13", "PI14";
+		function = "uart4";
+	};
+
+	uart5_ph_pins: uart5_ph_pins {
+		pins = "PH2", "PH3";
+		function = "uart5";
+	};
 };
 
+/* Debug UART */
 &uart0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart0_ph_pins>;
 	status = "okay";
 };
+
+/* UARTs */
+&uart1 { /* RS485-2 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1_pins>;
+
+	linux,rs485-enabled-at-boot-time;
+	rts-gpios = <&pio PD 16 GPIO_ACTIVE_LOW>;
+	
+	status = "okay";
+};
+
+&uart2 { /* RS485-1 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart2_pg_pins>;
+
+	linux,rs485-enabled-at-boot-time;
+	rts-gpios = <&pio PD 15 GPIO_ACTIVE_LOW>;
+
+	status = "okay";
+};
+
+/* UART3 pins are used for Ethernet */
+
+/* MOD1 is a software UART on PE10 (TX), PD11 (RX) */
+
+&uart4 { /* MOD2 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart4_pi_pins>;
+
+	cts-override;
+	status = "disabled";
+};
+
+&uart5 { /* MOD3 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart5_ph_pins>;
+
+	cts-override;
+	status = "disabled";
+};
+
+/* MOD4 is a software UART on PD26 (TX), PD14 (RX) */
 
 &r_i2c {
 	status = "okay";
