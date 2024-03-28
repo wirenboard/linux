@@ -515,8 +515,8 @@
 	pinctrl-0 = <&uart1_pins>;
 
 	linux,rs485-enabled-at-boot-time;
-	rts-gpios = <&pio PD 16 GPIO_ACTIVE_LOW>;
-	
+	rts-gpios = <&pio PD 15 GPIO_ACTIVE_HIGH>;
+
 	status = "okay";
 };
 
@@ -525,7 +525,7 @@
 	pinctrl-0 = <&uart2_pg_pins>;
 
 	linux,rs485-enabled-at-boot-time;
-	rts-gpios = <&pio PD 15 GPIO_ACTIVE_LOW>;
+	rts-gpios = <&pio PD 16 GPIO_ACTIVE_HIGH>;
 
 	status = "okay";
 };
