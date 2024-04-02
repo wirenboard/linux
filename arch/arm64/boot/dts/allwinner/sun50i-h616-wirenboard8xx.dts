@@ -38,6 +38,8 @@
 		mdio-gpio1 = &soft_mdio1;
 		ethernet0 = &emac0;
 		ethernet1 = &emac1;
+		watchdog0 = &watchdog;  // internal
+		watchdog1 = &wbec_watchdog;
 	};
 
 	wirenboard {
@@ -342,7 +344,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		wbec-watchdog@0 {
+		wbec_watchdog: wbec-watchdog@0 {
 			compatible = "wirenboard,wbec-watchdog";
 			reg = <0>;
 		};
