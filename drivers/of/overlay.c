@@ -14,6 +14,7 @@
 #include <linux/of_device.h>
 #include <linux/of_fdt.h>
 #include <linux/string.h>
+#include <linux/kstrtox.h>
 #include <linux/ctype.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
@@ -923,7 +924,7 @@ static ssize_t enable_store(struct kobject *kobj,
 	int ret;
 	bool new_enable;
 
-	ret = strtobool(buf, &new_enable);
+	ret = kstrtobool(buf, &new_enable);
 	if (ret != 0)
 		return ret;
 	/* if we've disabled it, no going back */
