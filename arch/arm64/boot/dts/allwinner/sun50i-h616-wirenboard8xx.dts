@@ -452,7 +452,7 @@
 	"", "", "", "",  /* 0-3 */
 	"", "", "", "",  /* 4-7 */
 	"W1 UP", "A3 OUT", "", "A4 OUT",  /* 8-11 */
-	"RS-485-2 TERMINATION", "", "", "",  /* 12-15 */
+	"RS-485-2 TERMINATION", "", "GSM PWRKEY", "",  /* 12-15 */
 	"", "MOD1 RTS", "", "BUZZER",  /* 16-19 */
 	"", "", "", "",  /* 20-23 */
 	"", "", "", "",  /* 24-27 */
@@ -932,4 +932,31 @@
 
 &ehci1 {
 	status = "okay";
+};
+
+&ohci2 {
+	status = "okay";
+};
+
+&ehci2 {
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+	/* wbc-modem is connected to 1st port of usb bus */
+	wbc_modem: wbc-modem@1 {
+		reg = <1>;
+
+		compatible = "wirenboard,wbc-usb";
+		power-type = <2>;
+		status = "disabled";
+
+		/* keeps compatibility in wb of-parsing tools */
+		gpio-xlate-type = "bank_pin";
+		gpio-pins-per-bank = <32>;
+		power-gpios = <&pio PE 26 GPIO_ACTIVE_HIGH>;
+		pwrkey-gpios = <&pio PG 14 GPIO_ACTIVE_HIGH>;
+		status-gpios = <&pio PE 12 GPIO_ACTIVE_LOW>;
+		simselect-gpios = <&pio PE 2 GPIO_ACTIVE_HIGH>;
+	};
 };
