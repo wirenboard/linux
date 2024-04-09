@@ -25,18 +25,12 @@ static const struct regmap_config wbec_regmap_config = {
 };
 
 struct wbec_uart {
-	// static struct spi_device *spi_dev;
 	struct device *dev;
 	struct uart_port port;
 	struct regmap *regmap;
-	// struct kthread_worker		kworker;
-	// struct task_struct		*kworker_task;
-	struct delayed_work rx_poll;
-	struct delayed_work tx_poll;
 	struct task_struct *poll_thread;
 	bool ignore_first_zero_byte;
 	bool start_read;
-	u16 bytes_read;
 };
 
 union uart_tx {
@@ -75,7 +69,6 @@ static int wbec_uart_poll_thread(void *data)
 	union uart_tx tx;
 	union uart_rx rx;
 
-
 	printk(KERN_INFO "%s called\n", __func__);
 
 	while (!kthread_should_stop()) {
@@ -86,8 +79,6 @@ static int wbec_uart_poll_thread(void *data)
 
 		tx.number_of_read_bytes = rx.read_bytes_count;
 		tx.bytes_to_send_count = to_send;
-		// buf[0] = wbec_uart->bytes_read;
-		// buf[1] = to_send;
 
 		if (to_send) {
 			// printk(KERN_INFO "minimum to_send: %d; head: %d; tail: %d\n", to_send, xmit->head, xmit->tail);
@@ -107,20 +98,16 @@ static int wbec_uart_poll_thread(void *data)
 		regmap_bulk_read(wbec_uart->regmap, 0x60, rx.buf, ARRAY_SIZE(rx.buf));
 
 		// Bytes actually sent
-		// to_send = buf[0];
 		to_send = rx.number_of_send_bytes;
 		// printk(KERN_INFO "bytes actually sent: %d\n", to_send);
 		port->icount.tx += to_send;
 		xmit->tail = (xmit->tail + to_send) & (UART_XMIT_SIZE - 1);
 
 		// Read bytes
-		// wbec_uart->bytes_read = buf[1];
-		wbec_uart->bytes_read = rx.read_bytes_count;
-		// printk(KERN_INFO "bytes read: %d\n", wbec_uart->bytes_read);
-
-		if (wbec_uart->bytes_read > 0) {
-			// printk(KERN_INFO "received_bytes: %d\n", wbec_uart->bytes_read);
-			for (i = 0; i < wbec_uart->bytes_read; i++) {
+		// printk(KERN_INFO "bytes read: %d\n", rx.read_bytes_count);
+		if (rx.read_bytes_count > 0) {
+			// printk(KERN_INFO "received_bytes: %d\n", rx.read_bytes_count);
+			for (i = 0; i < rx.read_bytes_count; i++) {
 				// printk(KERN_INFO "buf[%d]: %.2X\n", i + 2, buf[i + 2]);
 				c = rx.read_bytes[i];
 				if (wbec_uart->ignore_first_zero_byte && i == 0 && c == 0) {
@@ -132,7 +119,6 @@ static int wbec_uart_poll_thread(void *data)
 				wbec_uart->port.icount.rx++;
 				uart_insert_char(&wbec_uart->port, 0, 0, c, TTY_NORMAL);
 			}
-			// tty_flip_buffer_push(&wbec_uart->port.state->port);
 		} else if (wbec_uart->start_read) {
 			wbec_uart->start_read = false;
 			tty_flip_buffer_push(&wbec_uart->port.state->port);
@@ -153,7 +139,6 @@ static unsigned int wbec_uart_tx_empty(struct uart_port *port)
 					      struct wbec_uart,
 					      port);
 	printk(KERN_INFO "%s called\n", __func__);
-	// cancel_delayed_work_sync(&wbec_uart->tx_poll);
 
 	return TIOCSER_TEMT;
 }
@@ -169,8 +154,6 @@ static void wbec_uart_start_tx(struct uart_port *port)
 
 	wbec_uart->ignore_first_zero_byte = true;
 	printk(KERN_INFO "%s called\n", __func__);
-
-	// schedule_delayed_work(&wbec_uart->tx_poll, 0);
 }
 
 static void wbec_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
@@ -190,7 +173,6 @@ static void wbec_uart_stop_tx(struct uart_port *port)
 					      struct wbec_uart,
 					      port);
 	printk(KERN_INFO "%s called\n", __func__);
-	// cancel_delayed_work_sync(&wbec_uart->tx_poll);
 }
 
 static void wbec_uart_stop_rx(struct uart_port *port)
@@ -199,7 +181,6 @@ static void wbec_uart_stop_rx(struct uart_port *port)
 					      struct wbec_uart,
 					      port);
 	printk(KERN_INFO "%s called\n", __func__);
-	// cancel_delayed_work_sync(&wbec_uart->rx_poll);
 }
 
 static void wbec_uart_break_ctl(struct uart_port *port, int break_state)
@@ -214,12 +195,9 @@ static int wbec_uart_startup(struct uart_port *port)
 					      port);
 	int rx_buf_size;
 	printk(KERN_INFO "%s called\n", __func__);
-	// schedule_delayed_work(&wbec_uart->rx_poll, msecs_to_jiffies(20));
-	// schedule_delayed_work(&wbec_uart->tx_poll, 0);
 	wbec_uart->poll_thread = kthread_run(wbec_uart_poll_thread, wbec_uart, "wbec_uart_poll_thread");
 	wbec_uart->ignore_first_zero_byte = false;
 	wbec_uart->start_read = false;
-	wbec_uart->bytes_read = 0;
 
 	// flush the RX buffer
 	regmap_read(wbec_uart->regmap, 0x61, &rx_buf_size);
@@ -234,7 +212,6 @@ static void wbec_uart_shutdown(struct uart_port *port)
 					      struct wbec_uart,
 					      port);
 	printk(KERN_INFO "%s called\n", __func__);
-	// cancel_delayed_work_sync(&wbec_uart->tx_poll);
 	kthread_stop(wbec_uart->poll_thread);
 }
 
@@ -294,161 +271,6 @@ static const struct uart_ops wbec_uart_ops = {
 	.verify_port	= wbec_uart_verify_port,
 	.pm		= wbec_uart_pm,
 };
-
-void wbec_uart_rx_poll_wq(struct work_struct *work)
-{
-	unsigned int reg, i, ret;
-	struct wbec_uart *wbec_uart =
-		container_of(work, struct wbec_uart, rx_poll.work);
-	u16 buf[33];
-	u16 received_bytes;
-
-	// printk(KERN_INFO "%s called\n", __func__);
-	regmap_bulk_read(wbec_uart->regmap, 0x61, buf, ARRAY_SIZE(buf));
-
-	received_bytes = buf[0];
-
-
-	if (received_bytes > 32) {
-		printk(KERN_INFO "received_bytes > 32: %d\n", received_bytes);
-	} else if (received_bytes > 0) {
-		printk(KERN_INFO "received_bytes: %d\n", received_bytes);
-		for (i = 0; i < received_bytes; i++) {
-			printk(KERN_INFO "buf[%d]: %.2X\n", i + 1, buf[i + 1]);
-			// uart_insert_char(&wbec_uart->port, 0, 0, 'A', TTY_NORMAL);
-			if (wbec_uart->ignore_first_zero_byte && i == 0 && buf[i + 1] == 0) {
-				wbec_uart->ignore_first_zero_byte = false;
-				dev_info(wbec_uart->dev, "ignore first zero byte\n");
-				continue;
-			}
-			wbec_uart->port.icount.rx++;
-			uart_insert_char(&wbec_uart->port, 0, 0, buf[i + 1], TTY_NORMAL);
-		}
-		tty_flip_buffer_push(&wbec_uart->port.state->port);
-	}
-
-	// clear the RX buffer
-	ret = regmap_write(wbec_uart->regmap, 0x60, received_bytes);
-	if (ret < 0) {
-		dev_err(wbec_uart->dev, "failed to write the RX buffer at 0x60\n");
-	}
-
-	// Schedule the next work
-	schedule_delayed_work(&wbec_uart->rx_poll, usecs_to_jiffies(2000));
-}
-
-void wbec_uart_tx_poll_wq(struct work_struct *work)
-{
-	unsigned int reg, i, to_send, c;
-	int ret;
-	int wbec_tx_size;
-	u16 buf[34];
-	struct wbec_uart *wbec_uart =
-		container_of(work, struct wbec_uart, tx_poll.work);
-	struct uart_port *port = &wbec_uart->port;
-	struct circ_buf *xmit = &wbec_uart->port.state->xmit;
-
-	printk(KERN_INFO "%s called\n", __func__);
-
-	// Read available TX buffer size
-	// ret = regmap_read(wbec_uart->regmap, 0x30, &wbec_tx_size);
-	// if (ret < 0) {
-	// 	dev_err(wbec_uart->dev, "failed to read the wbec_tx_size at 0x100\n");
-	// }
-	// dev_info(wbec_uart->dev, "wbec_tx_size: %d\n", wbec_tx_size);
-
-
-	to_send = uart_circ_chars_pending(xmit);
-	dev_info(wbec_uart->dev, "uart circ chars pending: %d\n", to_send);
-
-	// Select the minimum of the two
-	// to_send = min(to_send, wbec_tx_size);
-
-	to_send = min(to_send, 32);
-	printk(KERN_INFO "minimum to_send: %d\n", to_send);
-
-	buf[0] = wbec_uart->bytes_read;
-	buf[1] = to_send;
-
-	if (to_send) {
-		printk(KERN_INFO "xmit->head: %d\n", xmit->head);
-		printk(KERN_INFO "xmit->tail: %d\n", xmit->tail);
-
-
-		buf[0] = 0;
-		buf[1] = to_send;
-		/* Convert to linear buffer */
-		for (i = 0; i < to_send; ++i) {
-			// c = xmit->buf[xmit->tail];
-			// xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
-			c = xmit->buf[(xmit->tail + i) & (UART_XMIT_SIZE - 1)];
-			buf[2 + i] = c;
-			printk(KERN_INFO "char to send: '%c' / 0x%.2X\n", c, c);
-		}
-	}
-	regmap_bulk_write(wbec_uart->regmap, 0x30, buf, ARRAY_SIZE(buf));
-
-	usleep_range(50, 150);
-
-	regmap_bulk_read(wbec_uart->regmap, 0x60, buf, ARRAY_SIZE(buf));
-
-	// Bytes actually sent
-	to_send = buf[0];
-	printk(KERN_INFO "bytes actually sent: %d\n", to_send);
-	port->icount.tx += to_send;
-	xmit->tail = (xmit->tail + to_send) & (UART_XMIT_SIZE - 1);
-
-	// Read bytes
-	wbec_uart->bytes_read = buf[1];
-	printk(KERN_INFO "bytes read: %d\n", wbec_uart->bytes_read);
-
-	if (wbec_uart->bytes_read > 0) {
-		printk(KERN_INFO "received_bytes: %d\n", wbec_uart->bytes_read);
-		for (i = 0; i < wbec_uart->bytes_read; i++) {
-			printk(KERN_INFO "buf[%d]: %.2X\n", i + 2, buf[i + 2]);
-			if (wbec_uart->ignore_first_zero_byte && i == 0 && buf[i + 2] == 0) {
-				wbec_uart->ignore_first_zero_byte = false;
-				dev_info(wbec_uart->dev, "ignore first zero byte\n");
-				continue;
-			}
-			wbec_uart->port.icount.rx++;
-			uart_insert_char(&wbec_uart->port, 0, 0, buf[i + 2], TTY_NORMAL);
-		}
-		tty_flip_buffer_push(&wbec_uart->port.state->port);
-	}
-
-
-	// 	// Check if the TX buffer is empty
-	// 	to_send = uart_circ_chars_pending(xmit);
-	// 	if (to_send) {
-	// 		dev_info(wbec_uart->dev, "tx buffer not empty, schedule next tx_poll %d bytes\n", to_send);
-	// 		schedule_delayed_work(&wbec_uart->tx_poll, usecs_to_jiffies(100));
-	// 	} else {
-	// 		dev_info(wbec_uart->dev, "tx buffer empty\n");
-	// 	}
-	// }
-
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
-
-	// Read the UART data
-	// regmap_read(wbec_uart->regmap, 0x00, &reg);
-	// reg = 'A';
-	// printk(KERN_INFO "reg: %.2X\n", reg);
-
-	// // put read data to tty buffer
-	// if (uart_circ_chars_pending(xmit) < UART_XMIT_SIZE) {
-	// 	xmit->buf[xmit->head] = reg;
-	// 	xmit->head = (xmit->head + 1) & (UART_XMIT_SIZE - 1);
-	// }
-
-	// uart_insert_char(&wbec_uart->port, 0, 0, 'A', TTY_NORMAL);
-	// tty_flip_buffer_push(&wbec_uart->port.state->port);
-
-
-	// Schedule the next work
-	schedule_delayed_work(&wbec_uart->tx_poll, msecs_to_jiffies(2));
-}
 
 static int wbec_uart_probe(struct spi_device *spi)
 {
@@ -518,9 +340,6 @@ static int wbec_uart_probe(struct spi_device *spi)
 		return ret;
 	}
 
-	INIT_DELAYED_WORK(&wbec_uart->rx_poll, wbec_uart_rx_poll_wq);
-	INIT_DELAYED_WORK(&wbec_uart->tx_poll, wbec_uart_tx_poll_wq);
-
 	printk(KERN_INFO "WBE UART driver loaded\n");
 
 	return 0;
@@ -532,8 +351,8 @@ static int wbec_uart_remove(struct spi_device *spi)
 
 	struct wbec_uart *wbec_uart = dev_get_drvdata(&spi->dev);
 
-	cancel_delayed_work_sync(&wbec_uart->rx_poll);
-	cancel_delayed_work_sync(&wbec_uart->tx_poll);
+	// Stop the poll thread
+	kthread_stop(wbec_uart->poll_thread);
 
 	// Unregister the UART port
 	uart_remove_one_port(&wbec_uart_driver, &wbec_uart->port);
