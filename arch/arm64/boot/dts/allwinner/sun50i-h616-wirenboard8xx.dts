@@ -246,7 +246,7 @@
 
 		sda-gpios = <&pio PD 13 GPIO_ACTIVE_HIGH>;
 		scl-gpios = <&pio PC 12 GPIO_ACTIVE_LOW>;  // connected via transistor thus inverting the signal
-		i2c-gpio,delay-us = <32>;  // ~30 kHz
+		i2c-gpio,delay-us = <32>;  // ~30 kHz long period to compensate for slow fronts
 		i2c-gpio,scl-output-only;
 		i2c-gpio,scl-has-no-pullup;
 
