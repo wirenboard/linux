@@ -30,8 +30,9 @@ struct wbec_uart {
 	struct regmap *regmap;
 	// struct task_struct *poll_thread;
 	struct delayed_work tx_poll;
-	bool ignore_first_zero_byte;
-	bool start_read;
+	struct delayed_work rx_work;
+	// bool ignore_first_zero_byte;
+	// bool start_read;
 };
 
 union uart_tx {
@@ -173,7 +174,7 @@ static void wbec_uart_start_tx(struct uart_port *port)
 					      port);
 
 
-	wbec_uart->ignore_first_zero_byte = true;
+	// wbec_uart->ignore_first_zero_byte = true;
 	schedule_delayed_work(&wbec_uart->tx_poll, 0);
 	// wbec_uart->poll_thread = kthread_run(wbec_uart_poll_thread, wbec_uart, "wbec_uart_poll_thread");
 	printk(KERN_INFO "%s called\n", __func__);
@@ -206,6 +207,7 @@ static void wbec_uart_stop_rx(struct uart_port *port)
 					      struct wbec_uart,
 					      port);
 	printk(KERN_INFO "%s called\n", __func__);
+	cancel_delayed_work_sync(&wbec_uart->rx_work);
 }
 
 static void wbec_uart_break_ctl(struct uart_port *port, int break_state)
@@ -221,8 +223,8 @@ static int wbec_uart_startup(struct uart_port *port)
 	int rx_buf_size;
 	printk(KERN_INFO "%s called\n", __func__);
 	// wbec_uart->poll_thread = kthread_run(wbec_uart_poll_thread, wbec_uart, "wbec_uart_poll_thread");
-	wbec_uart->ignore_first_zero_byte = false;
-	wbec_uart->start_read = false;
+	// wbec_uart->ignore_first_zero_byte = false;
+	// wbec_uart->start_read = false;
 
 	// flush the RX buffer
 	regmap_read(wbec_uart->regmap, 0x60, &rx_buf_size);
@@ -237,6 +239,8 @@ static void wbec_uart_shutdown(struct uart_port *port)
 					      struct wbec_uart,
 					      port);
 	printk(KERN_INFO "%s called\n", __func__);
+	cancel_delayed_work_sync(&wbec_uart->tx_poll);
+	cancel_delayed_work_sync(&wbec_uart->rx_work);
 	// kthread_stop(wbec_uart->poll_thread);
 }
 
@@ -278,15 +282,16 @@ static const char * wbec_uart_type(struct uart_port *port)
 	return 0;
 }
 
-static irqreturn_t wbec_uart_irq(int irq, void *dev_id)
+static void wbec_uart_rx_work_wq(struct work_struct *work)
 {
-	struct wbec_uart *wbec_uart = dev_id;
+	struct wbec_uart *wbec_uart =
+		container_of(work, struct wbec_uart, rx_work.work);
 	union uart_rx rx;
 	int i;
 	u8 c;
-	regmap_bulk_read(wbec_uart->regmap, 0x60, rx.buf, ARRAY_SIZE(rx.buf));
-
 	printk(KERN_INFO "%s called\n", __func__);
+
+	regmap_bulk_read(wbec_uart->regmap, 0x60, rx.buf, ARRAY_SIZE(rx.buf));
 
 
 	printk(KERN_INFO "received_bytes: %d\n", rx.read_bytes_count);
@@ -294,17 +299,19 @@ static irqreturn_t wbec_uart_irq(int irq, void *dev_id)
 		for (i = 0; i < rx.read_bytes_count; i++) {
 			c = rx.read_bytes[i];
 			printk(KERN_INFO "byte[%d]: %.2X\n", i, c);
-			if (wbec_uart->ignore_first_zero_byte && i == 0 && c == 0) {
-				wbec_uart->ignore_first_zero_byte = false;
-				dev_info(wbec_uart->dev, "ignore first zero byte\n");
-				continue;
-			}
-			wbec_uart->start_read = true;
 			wbec_uart->port.icount.rx++;
 			uart_insert_char(&wbec_uart->port, 0, 0, c, TTY_NORMAL);
 		}
 		tty_flip_buffer_push(&wbec_uart->port.state->port);
 	}
+}
+
+static irqreturn_t wbec_uart_irq(int irq, void *dev_id)
+{
+	struct wbec_uart *wbec_uart = dev_id;
+
+	printk(KERN_INFO "%s called\n", __func__);
+	schedule_delayed_work(&wbec_uart->rx_work, 0);
 
 	return IRQ_HANDLED;
 }
@@ -377,8 +384,8 @@ static int wbec_uart_probe(struct spi_device *spi)
 
 	dev_info(&spi->dev, "IRQ: %d\n", spi->irq);
 
-	ret = devm_request_threaded_irq(wbec_uart->dev, spi->irq, NULL, wbec_uart_irq,
-					IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
+	ret = devm_request_irq(wbec_uart->dev, spi->irq, wbec_uart_irq,
+					IRQF_TRIGGER_RISING,
 					dev_name(wbec_uart->dev), wbec_uart);
 	if (ret) {
 		dev_err(&spi->dev, "Failed to request IRQ: %d\n", ret);
@@ -397,7 +404,7 @@ static int wbec_uart_probe(struct spi_device *spi)
 	// wbec_uart->port.flags = UPF_BOOT_AUTOCONF;
 
 	wbec_uart->port.uartclk = 115200;
-	wbec_uart->port.fifosize = 256;
+	wbec_uart->port.fifosize = 1024;
 	wbec_uart->port.line = 0;
 
 	ret = uart_add_one_port(&wbec_uart_driver, &wbec_uart->port);
@@ -407,6 +414,7 @@ static int wbec_uart_probe(struct spi_device *spi)
 	}
 
 	INIT_DELAYED_WORK(&wbec_uart->tx_poll, wbec_uart_tx_poll_wq);
+	INIT_DELAYED_WORK(&wbec_uart->rx_work, wbec_uart_rx_work_wq);
 
 	printk(KERN_INFO "WBE UART driver loaded\n");
 
@@ -420,6 +428,7 @@ static int wbec_uart_remove(struct spi_device *spi)
 	struct wbec_uart *wbec_uart = dev_get_drvdata(&spi->dev);
 
 	cancel_delayed_work_sync(&wbec_uart->tx_poll);
+	cancel_delayed_work_sync(&wbec_uart->rx_work);
 
 	// Stop the poll thread
 	// kthread_stop(wbec_uart->poll_thread);
