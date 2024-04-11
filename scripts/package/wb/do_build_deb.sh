@@ -77,8 +77,8 @@ make_bootlet_deb() {
 
     mkdir -p "$BOOTLET_DIR"
 
-    cp "$KBUILD_OUTPUT/arch/arm/boot/$KERNEL_IMAGE" "$BOOTLET_DIR/$KERNEL_IMAGE"
-    cp "$KBUILD_OUTPUT/arch/arm/boot/dts/$BOOTLET_DTB" "$BOOTLET_DIR/boot.dtb"
+    cp "$KBUILD_OUTPUT/arch/$KERNEL_ARCH/boot/$KERNEL_IMAGE" "$BOOTLET_DIR/$KERNEL_IMAGE"
+    cp "$KBUILD_OUTPUT/arch/$KERNEL_ARCH/boot/dts/$BOOTLET_DTB" "$BOOTLET_DIR/boot.dtb"
 
     rm -f "$PACKAGE_NAME"*.deb || true
     fpm -s dir -t deb -n "$PACKAGE_NAME" -v "$(get_kernel_full_version)${VERSION_SUFFIX}-fs${INITRAMFS_VERSION}" \
