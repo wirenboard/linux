@@ -305,3 +305,5 @@ dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard72x-factory.dtb
 DTC_FLAGS_sun8i-r40-wirenboard72x-factory := -@
 dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard742.dtb
 DTC_FLAGS_sun8i-r40-wirenboard742 := -@
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard742-38071cb.dtb
+DTC_FLAGS_sun8i-r40-wirenboard742-38071cb := -@
