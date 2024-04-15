@@ -16,6 +16,7 @@
 
 #define printk(...)
 #define dev_info(...)
+#define snprintf(...)
 
 static const struct regmap_config wbec_regmap_config = {
 	.reg_bits = 16,
@@ -75,13 +76,13 @@ void wbec_uart_tx_poll_wq(struct work_struct *work)
 	tx.bytes_to_send_count = to_send;
 
 	if (to_send) {
-		sprintf(str, "to_send: %d; ", to_send);
+		snprintf(str, ARRAY_SIZE(str), "to_send: %d; ", to_send);
 
 		/* Convert to linear buffer */
 		for (i = 0; i < to_send; ++i) {
 			c = xmit->buf[(xmit->tail + i) & (UART_XMIT_SIZE - 1)];
 			tx.bytes_to_send[i] = c;
-			sprintf(str, "%s[%.2X]", str, c);
+			snprintf(str, ARRAY_SIZE(str), "%s[%.2X]", str, c);
 		}
 	}
 	regmap_bulk_write(wbec_uart->regmap, 0x31, tx.buf, 1 + (to_send + 1) / 2);
@@ -91,7 +92,7 @@ void wbec_uart_tx_poll_wq(struct work_struct *work)
 	regmap_read(wbec_uart->regmap, 0x30, &bytes_sent);
 
 	// Bytes actually sent
-	sprintf(str, "%s; actually sent: %d", str, bytes_sent);
+	snprintf(str, ARRAY_SIZE(str), "%s; actually sent: %d", str, bytes_sent);
 	port->icount.tx += bytes_sent;
 	xmit->tail = (xmit->tail + bytes_sent) & (UART_XMIT_SIZE - 1);
 
@@ -240,11 +241,11 @@ static void wbec_uart_rx_work_wq(struct work_struct *work)
 
 	regmap_bulk_read(wbec_uart->regmap, 0x60, rx.buf, ARRAY_SIZE(rx.buf));
 
-	sprintf(str, "received_bytes: %d: ", rx.read_bytes_count);
+	snprintf(str, ARRAY_SIZE(str), "received_bytes: %d: ", rx.read_bytes_count);
 	if (rx.read_bytes_count > 0) {
 		for (i = 0; i < rx.read_bytes_count; i++) {
 			c = rx.read_bytes[i];
-			sprintf(str, "%s[%.2X]", str, c);
+			snprintf(str, ARRAY_SIZE(str), "%s[%.2X]", str, c);
 			wbec_uart->port.icount.rx++;
 			uart_insert_char(&wbec_uart->port, 0, 0, c, TTY_NORMAL);
 		}
@@ -334,6 +335,9 @@ static int wbec_uart_probe(struct spi_device *spi)
 		return ret;
 	}
 
+	INIT_DELAYED_WORK(&wbec_uart->tx_poll, wbec_uart_tx_poll_wq);
+	INIT_DELAYED_WORK(&wbec_uart->rx_work, wbec_uart_rx_work_wq);
+
 	dev_info(&spi->dev, "IRQ: %d\n", spi->irq);
 
 	ret = devm_request_irq(wbec_uart->dev, spi->irq, wbec_uart_irq,
@@ -365,9 +369,6 @@ static int wbec_uart_probe(struct spi_device *spi)
 		pr_err("Failed to register UART port\n");
 		return ret;
 	}
-
-	INIT_DELAYED_WORK(&wbec_uart->tx_poll, wbec_uart_tx_poll_wq);
-	INIT_DELAYED_WORK(&wbec_uart->rx_work, wbec_uart_rx_work_wq);
 
 	printk(KERN_INFO "WBE UART driver loaded\n");
 
