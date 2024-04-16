@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb165) stable; urgency=medium
+
+  * wb74: add 38071cb dts
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Tue, 16 Apr 2024 11:22:21 +0300
+
 linux-wb (5.10.35-wb164) stable; urgency=medium
 
   * wb6, wb7: add config options required for wg-quick tool
