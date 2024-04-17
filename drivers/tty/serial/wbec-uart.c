@@ -113,6 +113,11 @@ struct wbec_uart {
 	struct delayed_work tx_poll;
 	struct delayed_work rx_work;
 
+	struct spi_message rx_msg;
+	struct spi_transfer rx_xfer;
+	u8 spi_rx_buf[512];
+	u8 spi_tx_buf[512];
+
 	struct dentry *wbec_uart_dir;
 
 	u8 rx_buf_size_stat[400000];
@@ -121,6 +126,7 @@ struct wbec_uart {
 	u8 tx_buf_size_stat[400000];
 	int tx_buf_size_stat_idx;
 };
+
 
 union uart_tx {
 	struct {
@@ -144,6 +150,74 @@ static struct uart_driver wbec_uart_driver = {
 	.dev_name = "ttyWBE",
 	.nr = 1,
 };
+
+
+static void wbec_read_regs_async_complete(void *context)
+{
+	struct wbec_uart *wbec_uart = context;
+	struct spi_transfer *xfer = &wbec_uart->rx_xfer;
+	u8 *rx_buf = xfer->rx_buf;
+	int i;
+	u8 c;
+	char str[256] = "";
+	const int len_words = xfer->len / 2 - 1 - WBEC_REGMAP_PAD_WORDS_COUNT;
+	union uart_rx rx;
+
+
+	for (i = 0; i < len_words; i++) {
+		rx.buf[i] = rx_buf[(1 + WBEC_REGMAP_PAD_WORDS_COUNT) * 2 + i * 2 + 1] |
+			(rx_buf[(1 + WBEC_REGMAP_PAD_WORDS_COUNT) * 2 + i * 2] << 8);
+	}
+
+	if (wbec_uart->rx_buf_size_stat_idx < ARRAY_SIZE(wbec_uart->rx_buf_size_stat)) {
+		wbec_uart->rx_buf_size_stat[wbec_uart->rx_buf_size_stat_idx++] = rx.read_bytes_count;
+	}
+
+	snprintf(str, ARRAY_SIZE(str), "received_bytes: %d: ", rx.read_bytes_count);
+	if (rx.read_bytes_count > 0) {
+		for (i = 0; i < rx.read_bytes_count; i++) {
+			c = rx.read_bytes[i];
+			snprintf(str, ARRAY_SIZE(str), "%s[%.2X]", str, c);
+			wbec_uart->port.icount.rx++;
+			uart_insert_char(&wbec_uart->port, 0, 0, c, TTY_NORMAL);
+		}
+		tty_flip_buffer_push(&wbec_uart->port.state->port);
+	}
+	printk(KERN_INFO "%s\n", str);
+}
+
+
+static int wbec_start_read_regs_async(struct wbec_uart *wbec_uart, u16 addr, int len_words)
+{
+	const int transfer_len_words = 1 + WBEC_REGMAP_PAD_WORDS_COUNT + len_words;
+	const int transfer_len_bytes = transfer_len_words * sizeof(u16);
+	struct spi_transfer *xfer = &wbec_uart->rx_xfer;
+	struct spi_device *spi = wbec_uart->spi;
+	u8 *tx_buf = wbec_uart->spi_tx_buf;
+	u8 *rx_buf = wbec_uart->spi_rx_buf;
+	int ret, i;
+
+	memset(xfer, 0, sizeof(*xfer));
+	xfer->tx_buf = tx_buf;
+	xfer->rx_buf = rx_buf;
+	xfer->len = transfer_len_bytes;
+
+	u16_word_to_spi_buf(addr | WBEC_REGMAP_READ_BIT, tx_buf, 0);
+	for (i = 1; i < transfer_len_words; i++) {
+		u16_word_to_spi_buf(i, tx_buf, i);
+	}
+
+	spi_message_init_with_transfers(&wbec_uart->rx_msg, xfer, 1);
+	wbec_uart->rx_msg.complete = wbec_read_regs_async_complete;
+	wbec_uart->rx_msg.context = wbec_uart;
+
+	ret = spi_async(spi, &wbec_uart->rx_msg);
+	if (ret < 0) {
+		dev_err(&spi->dev, "Failed to read registers: %d\n", ret);
+	}
+	return ret;
+}
+
 
 void wbec_uart_tx_poll_wq(struct work_struct *work)
 {
@@ -332,28 +406,30 @@ static void wbec_uart_rx_work_wq(struct work_struct *work)
 {
 	struct wbec_uart *wbec_uart =
 		container_of(work, struct wbec_uart, rx_work.work);
-	union uart_rx rx;
-	int i;
-	u8 c;
-	char str[256] = "";
+	// union uart_rx rx;
+	// int i;
+	// u8 c;
+	// char str[256] = "";
 
-	wbec_read_regs_sync(wbec_uart->spi, 0x60, rx.buf, ARRAY_SIZE(rx.buf));
+	wbec_start_read_regs_async(wbec_uart, 0x60, 33);
 
-	if (wbec_uart->rx_buf_size_stat_idx < ARRAY_SIZE(wbec_uart->rx_buf_size_stat)) {
-		wbec_uart->rx_buf_size_stat[wbec_uart->rx_buf_size_stat_idx++] = rx.read_bytes_count;
-	}
+	// wbec_read_regs_sync(wbec_uart->spi, 0x60, rx.buf, ARRAY_SIZE(rx.buf));
 
-	snprintf(str, ARRAY_SIZE(str), "received_bytes: %d: ", rx.read_bytes_count);
-	if (rx.read_bytes_count > 0) {
-		for (i = 0; i < rx.read_bytes_count; i++) {
-			c = rx.read_bytes[i];
-			snprintf(str, ARRAY_SIZE(str), "%s[%.2X]", str, c);
-			wbec_uart->port.icount.rx++;
-			uart_insert_char(&wbec_uart->port, 0, 0, c, TTY_NORMAL);
-		}
-		tty_flip_buffer_push(&wbec_uart->port.state->port);
-	}
-	printk(KERN_INFO "%s\n", str);
+	// if (wbec_uart->rx_buf_size_stat_idx < ARRAY_SIZE(wbec_uart->rx_buf_size_stat)) {
+	// 	wbec_uart->rx_buf_size_stat[wbec_uart->rx_buf_size_stat_idx++] = rx.read_bytes_count;
+	// }
+
+	// snprintf(str, ARRAY_SIZE(str), "received_bytes: %d: ", rx.read_bytes_count);
+	// if (rx.read_bytes_count > 0) {
+	// 	for (i = 0; i < rx.read_bytes_count; i++) {
+	// 		c = rx.read_bytes[i];
+	// 		snprintf(str, ARRAY_SIZE(str), "%s[%.2X]", str, c);
+	// 		wbec_uart->port.icount.rx++;
+	// 		uart_insert_char(&wbec_uart->port, 0, 0, c, TTY_NORMAL);
+	// 	}
+	// 	tty_flip_buffer_push(&wbec_uart->port.state->port);
+	// }
+	// printk(KERN_INFO "%s\n", str);
 }
 
 static irqreturn_t wbec_uart_irq(int irq, void *dev_id)
@@ -361,7 +437,8 @@ static irqreturn_t wbec_uart_irq(int irq, void *dev_id)
 	struct wbec_uart *wbec_uart = dev_id;
 
 	printk(KERN_INFO "%s called\n", __func__);
-	schedule_delayed_work(&wbec_uart->rx_work, 0);
+	// schedule_delayed_work(&wbec_uart->rx_work, 0);
+	wbec_start_read_regs_async(wbec_uart, 0x60, 33);
 
 	return IRQ_HANDLED;
 }
