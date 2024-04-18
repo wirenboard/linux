@@ -489,7 +489,7 @@
 };
 
 &pio {
-	/*input-debounce = <1>;*/
+	input-debounce = <1>;
 	vcc-pa-supply = <&reg_dcdc1>; //ok
 	// vcc-pb-supply = <&reg_dcdc1>; /* VCC-IO */
 	vcc-pc-supply = <&reg_aldo2>; /* eMMC, SoM wi-fi gpios*/
