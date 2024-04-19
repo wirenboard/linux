@@ -1,9 +1,6 @@
 /dts-v1/;
 #include "sun50i-h616-wirenboard8xx.dtsi"
 
-// This file is used for compatibility with already produced test boards
-// and should be removed when production starts.
-
 / {
 	model = "Wiren Board 8 board rev. 7.4.3 (T507)";
 	compatible = "wirenboard,wirenboard-8-b743", "wirenboard,wirenboard-8xx", "allwinner,sun50i-h616";
