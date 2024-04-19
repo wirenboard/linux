@@ -95,6 +95,8 @@ struct sun6i_spi {
 	u8			*rx_buf;
 	int			len;
 	unsigned long		fifo_depth;
+
+	struct spi_transfer	*cur_transfer;
 };
 
 static inline u32 sun6i_spi_read(struct sun6i_spi *sspi, u32 reg)
@@ -198,6 +200,8 @@ static int sun6i_spi_transfer_one(struct spi_master *master,
 
 	if (tfr->len > SUN6I_MAX_XFER_SIZE)
 		return -EINVAL;
+
+	sspi->cur_transfer = NULL;
 
 	reinit_completion(&sspi->done);
 	sspi->tx_buf = tfr->tx_buf;
@@ -322,6 +326,23 @@ static int sun6i_spi_transfer_one(struct spi_master *master,
 	return 1;
 }
 
+static int sun6i_spi_transfer_one_message(struct spi_master *master,
+					  struct spi_message *msg)
+{
+	struct spi_device *spi = msg->spi;
+	struct sun6i_spi *sspi = spi_master_get_devdata(master);
+	struct spi_transfer *cur = NULL;
+	int ret;
+
+	cur = list_first_entry(&msg->transfers, struct spi_transfer, transfer_list);
+	sspi->cur_transfer = cur;
+
+	ret = sun6i_spi_transfer_one(master, spi, cur);
+	if (ret < 0)
+		return ret;
+	return 0;
+}
+
 static irqreturn_t sun6i_spi_handler(int irq, void *dev_id)
 {
 	struct sun6i_spi *sspi = dev_id;
@@ -332,6 +353,21 @@ static irqreturn_t sun6i_spi_handler(int irq, void *dev_id)
 		sun6i_spi_write(sspi, SUN6I_INT_STA_REG, SUN6I_INT_CTL_TC);
 		sun6i_spi_drain_fifo(sspi);
 		sun6i_spi_write(sspi, SUN6I_INT_CTL_REG, 0);
+		if (sspi->cur_transfer) {
+			spi_finalize_current_transfer(sspi->master);
+		} else {
+			struct spi_message *msg = sspi->master->cur_msg;
+			struct spi_transfer *cur = sspi->cur_transfer;
+
+			if (!list_is_last(&cur->transfer_list, &msg->transfers)) {
+				struct spi_transfer *next = list_next_entry(cur, transfer_list);
+				sspi->cur_transfer = next;
+				sun6i_spi_transfer_one(sspi->master, msg->spi, next);
+			} else {
+				spi_finalize_current_message(sspi->master);
+			}
+		}
+
 		spi_finalize_current_transfer(sspi->master);
 		return IRQ_HANDLED;
 	}
@@ -452,6 +488,7 @@ static int sun6i_spi_probe(struct platform_device *pdev)
 	master->use_gpio_descriptors = true;
 	master->set_cs = sun6i_spi_set_cs;
 	master->transfer_one = sun6i_spi_transfer_one;
+	master->transfer_one_message = sun6i_spi_transfer_one_message;
 	master->num_chipselect = 4;
 	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_CS_HIGH | SPI_LSB_FIRST;
 	master->bits_per_word_mask = SPI_BPW_MASK(8);
