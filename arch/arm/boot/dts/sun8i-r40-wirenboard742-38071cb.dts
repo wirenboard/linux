@@ -7,25 +7,25 @@
 	compatible = "wirenboard,wirenboard-742-38071cb", "wirenboard,wirenboard-7xx-38071cb", "wirenboard,wirenboard-7xx", "allwinner,sun8i-r40";
 
 	mod1_pinmux_dummy {
-        compatible = "regulator-fixed";
-        regulator-name = "mod1_pinmux_dummy";
-        pinctrl-names = "default";
-        pinctrl-0 = <&pinctrl_mod1_de_gpio>;
-    };
+		compatible = "regulator-fixed";
+		regulator-name = "mod1_pinmux_dummy";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_mod1_de_gpio>;
+	};
 
 	mod2_pinmux_dummy {
-        compatible = "regulator-fixed";
-        regulator-name = "mod2_pinmux_dummy";
-        pinctrl-names = "default";
-        pinctrl-0 = <&pinctrl_mod2_de_gpio>;
-    };
+		compatible = "regulator-fixed";
+		regulator-name = "mod2_pinmux_dummy";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_mod2_de_gpio>;
+	};
 
 	mod3_pinmux_dummy {
-        compatible = "regulator-fixed";
-        regulator-name = "mod3_pinmux_dummy";
-        pinctrl-names = "default";
-        pinctrl-0 = <&pinctrl_mod3_de_gpio>;
-    };
+		compatible = "regulator-fixed";
+		regulator-name = "mod3_pinmux_dummy";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_mod3_de_gpio>;
+	};
 
 	wirenboard {
 		gpios {
@@ -37,10 +37,10 @@
 
 	mod4_pps {
 		compatible = "pps-gpio";
-        pinctrl-names = "default";
-        pinctrl-0 = <&pinctrl_mod4_de_gpio>;
-        gpios = <&pio 8 14 0>;
-    };
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_mod4_de_gpio>;
+		gpios = <&pio 8 14 0>;
+	};
 };
 
 &uart3 { /* MOD4 */
