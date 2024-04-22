@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb167) stable; urgency=medium
+
+  * wbec: add 'uid' sysfs attribute
+
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Mon, 22 Apr 2024 17:26:09 +0300
+
 linux-wb (5.10.35-wb166) stable; urgency=medium
 
   * wb74-38071cb: add necessary wbec modules; add modules to dts
