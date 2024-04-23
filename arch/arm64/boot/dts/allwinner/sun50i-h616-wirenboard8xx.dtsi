@@ -133,7 +133,7 @@
 		hwmon-nodes {
 			cputemp {
 				title = "CPU Temperature";
-				hwmon-node-name = "cpu0_thermal";
+				hwmon-node-name = "cpu_thermal";
 				hwmon-channel = "temp1";
 			};
 
