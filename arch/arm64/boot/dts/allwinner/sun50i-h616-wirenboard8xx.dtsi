@@ -303,6 +303,18 @@
 		status = "okay";
 	};
 
+	i2c_wbec: i2c_wbec {
+		compatible = "i2c-gpio";
+		sda-gpios = <&pio PH 7 GPIO_ACTIVE_HIGH>; /* sda/mosi */
+		scl-gpios = <&pio PH 8 GPIO_ACTIVE_HIGH>; /* scl/miso */
+
+		i2c-gpio,delay-us = <2>;	/* ~100 kHz */
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "disabled";
+	};
+
 	soc {
 		dma: dma-controller@3002000 {
 			compatible = "allwinner,sun50i-h6-dma";
@@ -543,6 +555,12 @@
 	pinctrl_mod3_de_gpio: mod3-de-gpio-pins {
 		pins = "PD10";
 		function = "gpio_in";
+	};
+
+	pinctrl_wbec_i2c_gpio: wbec-i2c-pb-pins {
+		pins = "PH7", "PH8";
+		function = "gpio_in";
+		bias-pull-up;
 	};
 };
 
