@@ -48,6 +48,72 @@
 		pwm-buzzer = <1>;
 
 		analog-inputs {
+			/* we don't use standard 'io-channels = <&adc1 N>' here because
+			   there is seemingly no way to associate iio channel index (N
+			   in above example) with channel name as in sysfs path
+			*/
+			A1 {
+				iio-device = <&a1_volt>;
+				decimal-places = <1>;
+				averaging-window = <1>;
+				sort-order = <0>;
+			};
+
+			A2 {
+				iio-device = <&a2_volt>;
+				decimal-places = <1>;
+				averaging-window = <1>;
+				sort-order = <1>;
+			};
+
+			A3 {
+				iio-device = <&a3_volt>;
+				decimal-places = <1>;
+				averaging-window = <1>;
+				sort-order = <2>;
+			};
+
+			A4 {
+				iio-device = <&a4_volt>;
+				decimal-places = <1>;
+				averaging-window = <1>;
+				sort-order = <2>;
+			};
+
+			Vin {
+				iio-device = <&vin_volt>;
+				decimal-places = <1>;
+				averaging-window = <1>;
+				sort-order = <3>;
+			};
+
+			V3_3 {
+				iio-device = <&v33_volt>;
+				decimal-places = <3>;
+				averaging-window = <1>;
+				sort-order = <4>;
+			};
+
+			V5_0 {
+				iio-device = <&v50_volt>;
+				decimal-places = <3>;
+				averaging-window = <1>;
+				sort-order = <5>;
+			};
+
+			Vbus_debug {
+				iio-device = <&vbus_debug_volt>;
+				decimal-places = <2>;
+				averaging-window = <1>;
+				sort-order = <6>;
+			};
+
+			Vbus_network {
+				iio-device = <&vbus_network_volt>;
+				decimal-places = <2>;
+				averaging-window = <1>;
+				sort-order = <7>;
+			};
 		};
 
 		gpios {
@@ -143,6 +209,56 @@
 				hwmon-channel = "temp1";
 			};
 		};
+	};
+
+	iio-hwmon-pcb-temp {
+		compatible = "iio-hwmon";
+		io-channels = <&wbec_adc 5>;
+	};
+
+	vin_volt: vin-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_adc 0>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
+	};
+
+	v33_volt: v33-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_adc 1>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
+	};
+
+	v50_volt: v50-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_adc 2>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
+	};
+
+	vbus_debug_volt: vbus-debug-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_adc 3>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
+	};
+
+	vbus_network_volt: vbus-network-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_adc 4>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <1>;
+		full-ohms = <1>;
 	};
 
 	leds-gpio {
