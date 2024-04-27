@@ -432,6 +432,20 @@
 		status = "disabled";
 	};
 
+	onewire_w1: onewire_w1 {
+		compatible = "w1-gpio";
+		gpios = <&pio PD 24 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		pu-gpios = <&pio PG 8 GPIO_ACTIVE_HIGH>;
+		status = "okay";
+	};
+
+	onewire_w2: onewire_w2 {
+		compatible = "w1-gpio";
+		gpios = <&pio PE 11 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		pu-gpios = <&pio PE 21 GPIO_ACTIVE_HIGH>;
+		status = "okay";
+	};
+
 	soc {
 		dma: dma-controller@3002000 {
 			compatible = "allwinner,sun50i-h6-dma";
@@ -558,7 +572,7 @@
 	"", "BAT SDA", "MOD4 RX", "RS-485-1 RTS",  /* 12-15 */
 	"RS-485-2 RTS", "RS-485-1 FAILSAFE", "RS-485-2 FAILSAFE", "RS-485-1 TERMINATION",  /* 16-19 */
 	"A4 IN", "", "", "A2 OUT",  /* 20-23 */
-	"", "A3 IN", "MOD4 TX", "",  /* 24-27 */
+	"W1", "A3 IN", "MOD4 TX", "",  /* 24-27 */
 	"", "", "", "",  /* 28-31 */
 	/* PE */
 	"RTC SCK", "", "SIM_SELECT", "",  /* 0-3 */
