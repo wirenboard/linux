@@ -357,17 +357,16 @@
 		#size-cells = <0>;
 		status = "okay";
 
-		axp22x: pmic@34 {
+		axp22x_wbmz5: pmic@34 {
 			compatible = "x-powers,axp221";
 			reg = <0x34>;
+
+			wirenboard,wbmz-pmic;  // keeps only ADC and battery sysfs nodes to fix conflict with main PMIC
 
 			interrupt-controller;
 			#interrupt-cells = <1>;
 
-			ac_power_supply: ac-power-supply {
-				compatible = "x-powers,axp221-ac-power-supply";
-				status = "okay";
-			};
+			status = "disabled";
 
 			axp_adc: adc {
 				compatible = "x-powers,axp221-adc";
@@ -382,11 +381,6 @@
 				// it's ~40C conservative high temperature limit.
 				// to be overrided by battery overlay
 				x-powers,charge-high-temp-microvolt = <499200>;
-			};
-
-			usb_power_supply: usb_power_supply {
-				compatible = "x-powers,axp221-usb-power-supply";
-				status = "okay";
 			};
 		};
 	};
