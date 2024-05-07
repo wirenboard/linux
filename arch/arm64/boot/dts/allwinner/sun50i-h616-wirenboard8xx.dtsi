@@ -444,6 +444,11 @@
 		status = "okay";
 	};
 
+	mod1_dummy: mod1_dummy {
+		// only to provide wb-hwconf-manager compatibility
+		status = "disabled";
+	};
+
 	soc {
 		dma: dma-controller@3002000 {
 			compatible = "allwinner,sun50i-h6-dma";
