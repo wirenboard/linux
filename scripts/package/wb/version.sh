@@ -68,7 +68,7 @@ setup_kernel_vars() {
 			;;
 		wb8)
 			DEBARCH=arm64
-			KERNEL_DEFCONFIG=wb8_reduced_defconfig
+			KERNEL_DEFCONFIG=debian_defconfig
 			KDEB_WBDESC="Wiren Board 8"
 			;;
 		wb8x-bootlet)
