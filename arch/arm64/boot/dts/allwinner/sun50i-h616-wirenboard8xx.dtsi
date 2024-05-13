@@ -274,19 +274,12 @@
 			active-low;
 			linux,default-trigger = "default-off";
 		};
-	};
-
-	leds-pwm {
-		compatible = "pwm-leds";
-
-		pinctrl-names = "default";
-		pinctrl-0 = <&pwm_ch5_pa_pins>;
 
 		red {
 			label = "red";
-			pwms = <&pwm 5 100000 0>;
-
-			linux,default-trigger = "timer";
+			color = <LED_COLOR_ID_RED>;
+			gpios = <&pio PA 12 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "default-off";
 		};
 	};
 
