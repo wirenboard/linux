@@ -42,6 +42,7 @@
 		i2c1 = &i2c3;  // WBIO
 		i2c2 = &i2c_atecc_rtc;  // ATECC must be on i2c2 for compatibility
 		i2c3 = &i2c_wbmz;
+		wbc_modem = &wbc_modem;
 	};
 
 	wirenboard {
@@ -313,15 +314,6 @@
 			regulator-name = "wifi-on";
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
-		};
-
-		reg_modem_on: regulator@3 {
-			compatible = "regulator-fixed";
-			gpio = <&pio PE 13 GPIO_ACTIVE_HIGH>;
-			regulator-name = "modem-on";
-			regulator-min-microvolt = <5000000>;
-			regulator-max-microvolt = <5000000>;
-			enable-active-high;
 		};
 
 		reg_periph_on: regulator@4 {
@@ -1097,7 +1089,6 @@
 &usbphy {
 	usb0_vbus-supply = <&reg_usb_vbus>;
 	usb1_vbus-supply = <&reg_wifi_on>;
-	usb2_vbus-supply = <&reg_modem_on>;
 
 	usb0_id_det-gpios = <&pio PG 18 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
 	wirenboard,mux-on-id-pin;
@@ -1148,7 +1139,7 @@
 		/* keeps compatibility in wb of-parsing tools */
 		gpio-xlate-type = "bank_pin";
 		gpio-pins-per-bank = <32>;
-		power-gpios = <&pio PE 26 GPIO_ACTIVE_HIGH>;
+		power-gpios = <&pio PE 13 GPIO_ACTIVE_HIGH>;
 		pwrkey-gpios = <&pio PG 14 GPIO_ACTIVE_HIGH>;
 		status-gpios = <&pio PE 12 GPIO_ACTIVE_LOW>;
 		simselect-gpios = <&pio PE 2 GPIO_ACTIVE_HIGH>;
