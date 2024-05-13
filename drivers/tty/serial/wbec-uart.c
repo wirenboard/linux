@@ -352,60 +352,6 @@ static void wbec_tx_async_start(struct wbec_uart *wbec_uart)
 	printk(KERN_INFO "%s\n", str);
 }
 
-// void wbec_uart_tx_poll_wq(struct work_struct *work)
-// {
-// 	unsigned int reg, i, to_send, c;
-// 	int ret;
-// 	u16 bytes_sent;
-// 	struct wbec_uart *wbec_uart =
-// 		container_of(work, struct wbec_uart, tx_poll.work);
-// 	struct uart_port *port = &wbec_uart->port;
-// 	struct circ_buf *xmit = &wbec_uart->port.state->xmit;
-// 	union uart_tx tx;
-// 	char str[256] = "";
-
-// 	// printk(KERN_INFO "%s called\n", __func__);
-
-// 	to_send = uart_circ_chars_pending(xmit);
-// 	to_send = min(to_send, ARRAY_SIZE(tx.bytes_to_send));
-
-// 	tx.bytes_to_send_count = to_send;
-
-// 	if (to_send) {
-// 		snprintf(str, ARRAY_SIZE(str), "to_send: %d; ", to_send);
-
-// 		/* Convert to linear buffer */
-// 		for (i = 0; i < to_send; ++i) {
-// 			c = xmit->buf[(xmit->tail + i) & (UART_XMIT_SIZE - 1)];
-// 			tx.bytes_to_send[i] = c;
-// 			snprintf(str, ARRAY_SIZE(str), "%s[%.2X]", str, c);
-// 		}
-// 	}
-// 	wbec_write_regs_sync(wbec_uart->spi, 0x31, tx.buf, 1 + (to_send + 1) / 2);
-
-// 	usleep_range(50, 150);
-
-// 	wbec_read_regs_sync(wbec_uart->spi, 0x30, &bytes_sent, 1);
-
-// 	// Bytes actually sent
-// 	snprintf(str, ARRAY_SIZE(str), "%s; actually sent: %d", str, bytes_sent);
-// 	port->icount.tx += bytes_sent;
-// 	xmit->tail = (xmit->tail + bytes_sent) & (UART_XMIT_SIZE - 1);
-
-// 	if (wbec_uart->tx_buf_size_stat_idx < ARRAY_SIZE(wbec_uart->tx_buf_size_stat)) {
-// 		wbec_uart->tx_buf_size_stat[wbec_uart->tx_buf_size_stat_idx++] = bytes_sent;
-// 	}
-
-// 	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-// 		uart_write_wakeup(port);
-
-// 	if (!uart_circ_empty(xmit)) {
-// 		usleep_range(500, 1000);
-// 		// schedule_delayed_work(&wbec_uart->tx_poll, 0);
-// 	}
-// 	printk(KERN_INFO "%s\n", str);
-// }
-
 static unsigned int wbec_uart_tx_empty(struct uart_port *port)
 {
 	struct wbec_uart *wbec_uart = container_of(port,
