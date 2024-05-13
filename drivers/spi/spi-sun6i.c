@@ -95,8 +95,6 @@ struct sun6i_spi {
 	u8			*rx_buf;
 	int			len;
 	unsigned long		fifo_depth;
-
-	struct spi_transfer	*cur_transfer;
 };
 
 static inline u32 sun6i_spi_read(struct sun6i_spi *sspi, u32 reg)
@@ -200,8 +198,6 @@ static int sun6i_spi_transfer_one(struct spi_master *master,
 
 	if (tfr->len > SUN6I_MAX_XFER_SIZE)
 		return -EINVAL;
-
-	sspi->cur_transfer = NULL;
 
 	reinit_completion(&sspi->done);
 	sspi->tx_buf = tfr->tx_buf;
@@ -335,8 +331,8 @@ static int sun6i_spi_transfer_one_message(struct spi_master *master,
 	int ret;
 
 	cur = list_first_entry(&msg->transfers, struct spi_transfer, transfer_list);
-	sspi->cur_transfer = cur;
 
+	sun6i_spi_set_cs(spi, false);
 	ret = sun6i_spi_transfer_one(master, spi, cur);
 	if (ret < 0)
 		return ret;
@@ -353,22 +349,23 @@ static irqreturn_t sun6i_spi_handler(int irq, void *dev_id)
 		sun6i_spi_write(sspi, SUN6I_INT_STA_REG, SUN6I_INT_CTL_TC);
 		sun6i_spi_drain_fifo(sspi);
 		sun6i_spi_write(sspi, SUN6I_INT_CTL_REG, 0);
-		if (sspi->cur_transfer) {
-			spi_finalize_current_transfer(sspi->master);
-		} else {
-			struct spi_message *msg = sspi->master->cur_msg;
-			struct spi_transfer *cur = sspi->cur_transfer;
 
+		do {
+			struct spi_message *msg = sspi->master->cur_msg;
+			struct spi_transfer *cur = list_first_entry(&msg->transfers,
+				struct spi_transfer, transfer_list);
+
+			// check if there is another transfer in the message
 			if (!list_is_last(&cur->transfer_list, &msg->transfers)) {
-				struct spi_transfer *next = list_next_entry(cur, transfer_list);
-				sspi->cur_transfer = next;
-				sun6i_spi_transfer_one(sspi->master, msg->spi, next);
+				cur = list_next_entry(cur, transfer_list);
+				sun6i_spi_transfer_one(sspi->master, msg->spi, cur);
 			} else {
+				sun6i_spi_set_cs(msg->spi, true);
+				msg->status = 0;
 				spi_finalize_current_message(sspi->master);
 			}
-		}
+		} while (0);
 
-		spi_finalize_current_transfer(sspi->master);
 		return IRQ_HANDLED;
 	}
 
@@ -487,7 +484,7 @@ static int sun6i_spi_probe(struct platform_device *pdev)
 	master->min_speed_hz = 3 * 1000;
 	master->use_gpio_descriptors = true;
 	master->set_cs = sun6i_spi_set_cs;
-	master->transfer_one = sun6i_spi_transfer_one;
+	// master->transfer_one = sun6i_spi_transfer_one;
 	master->transfer_one_message = sun6i_spi_transfer_one_message;
 	master->num_chipselect = 4;
 	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_CS_HIGH | SPI_LSB_FIRST;
