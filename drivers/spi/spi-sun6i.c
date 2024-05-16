@@ -360,9 +360,9 @@ static irqreturn_t sun6i_spi_handler(int irq, void *dev_id)
 				cur = list_next_entry(cur, transfer_list);
 				sun6i_spi_transfer_one(sspi->master, msg->spi, cur);
 			} else {
-				sun6i_spi_set_cs(msg->spi, true);
 				msg->status = 0;
 				spi_finalize_current_message(sspi->master);
+				sun6i_spi_set_cs(msg->spi, true);
 			}
 		} while (0);
 
