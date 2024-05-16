@@ -18,9 +18,9 @@
 
 #define DRIVER_NAME "wbec-uart"
 
-// #define printk(...)
-// #define dev_info(...)
-// #define snprintf(...)
+#define printk(...)
+#define dev_info(...)
+#define snprintf(...)
 
 #define WBEC_REGMAP_PAD_WORDS_COUNT   		5
 #define WBEC_REGMAP_READ_BIT				BIT(15)
@@ -113,7 +113,7 @@ struct wbec_uart {
 	struct device *dev;
 	struct spi_device *spi;
 	struct uart_port port;
-	// struct completion spi_transfer_complete;
+	struct completion spi_transfer_complete;
 
 	struct dentry *wbec_uart_dir;
 
@@ -217,10 +217,12 @@ static void wbec_cmd_data_exchange(struct wbec_uart *wbec_uart, const u8 *tx_buf
 	if (rx.ready_for_tx) {
 		u8 bytes_sent = tx.bytes_to_send_count;
 
-		printk(KERN_INFO "bytes_sent: %d\n", bytes_sent);
+		printk(KERN_INFO "bytes_sent=%d; tail_was=%d\n", bytes_sent, xmit->tail);
 
 		port->icount.tx += bytes_sent;
 		xmit->tail = (xmit->tail + bytes_sent) & (UART_XMIT_SIZE - 1);
+
+		printk(KERN_INFO "new_tail=%d\n", xmit->tail);
 
 		// if (wbec_uart->tx_buf_size_stat_idx < ARRAY_SIZE(wbec_uart->tx_buf_size_stat)) {
 		// 	wbec_uart->tx_buf_size_stat[wbec_uart->tx_buf_size_stat_idx++] = bytes_sent;
@@ -247,7 +249,7 @@ static void wbec_spi_transfer_complete(void *context)
 	};
 	printk(KERN_INFO "%s called, cmd = %d\n", __func__, wbec_data_exchange->cmd);
 
-	// complete(&wbec_uart->spi_transfer_complete);
+	complete(&wbec_uart->spi_transfer_complete);
 	kfree(wbec_data_exchange);
 }
 
@@ -263,11 +265,11 @@ static int wbec_spi_transfer_start(struct wbec_uart *wbec_uart, enum wbec_spi_cm
 	u8 *tx_buf;
 	u8 *rx_buf;
 
+	reinit_completion(&wbec_uart->spi_transfer_complete);
+
 	printk(KERN_INFO "%s called, cmd = %d\n", __func__, cmd);
 
-	// reinit_completion(&wbec_uart->spi_transfer_complete);
-
-	wbec_data_exchange = devm_kzalloc(wbec_uart->dev, sizeof(struct wbec_data_exchange), GFP_KERNEL);
+	wbec_data_exchange = kmalloc(sizeof(*wbec_data_exchange), GFP_ATOMIC);
 	if (!wbec_data_exchange) {
 		return -ENOMEM;
 	}
@@ -311,15 +313,16 @@ static int wbec_data_exchange_start_async(struct wbec_uart *wbec_uart)
 
 	printk(KERN_INFO "%s called\n", __func__);
 
+
 	// get data for tx
 	if (uart_circ_empty(xmit) || uart_tx_stopped(port)) {
 		tx.bytes_to_send_count = 0;
 	} else {
 		int i;
 		unsigned int to_send = uart_circ_chars_pending(xmit);
+		printk(KERN_INFO "to_send linux: %d; head=%d, tail=%d\n", to_send, xmit->head, xmit->tail);
 		to_send = min(to_send, ARRAY_SIZE(tx.bytes_to_send));
-
-		printk(KERN_INFO "to_send: %d\n", to_send);
+		printk(KERN_INFO "to_send spi: %d\n", to_send);
 
 		tx.bytes_to_send_count = to_send;
 
@@ -328,6 +331,7 @@ static int wbec_data_exchange_start_async(struct wbec_uart *wbec_uart)
 			tx.bytes_to_send[i] = xmit->buf[(xmit->tail + i) & (UART_XMIT_SIZE - 1)];
 		}
 	}
+
 
 	return wbec_spi_transfer_start(wbec_uart, WBEC_SPI_CMD_EXCHANGE, 0x30, tx.buf, sizeof(tx) / 2);
 }
@@ -344,8 +348,6 @@ static unsigned int wbec_uart_tx_empty(struct uart_port *port)
 
 static void wbec_uart_start_tx(struct uart_port *port)
 {
-	unsigned int txlen, to_send, i, c;
-
 	struct wbec_uart *wbec_uart = container_of(port,
 					      struct wbec_uart,
 					      port);
@@ -354,8 +356,6 @@ static void wbec_uart_start_tx(struct uart_port *port)
 	printk(KERN_INFO "%s called\n", __func__);
 
 	uart_ctrl.want_to_tx = 1;
-	// wbec_tx_async_start(wbec_uart);
-	// wbec_start_write_regs_async(wbec_uart, 0xA0, uart_ctrl.buf, sizeof(uart_ctrl) / 2, NULL);
 	wbec_spi_transfer_start(wbec_uart, WBEC_SPI_CMD_CTRL, 0xA0, uart_ctrl.buf, sizeof(uart_ctrl) / 2);
 }
 
@@ -396,20 +396,18 @@ static int wbec_uart_startup(struct uart_port *port)
 	struct wbec_uart *wbec_uart = container_of(port,
 					      struct wbec_uart,
 					      port);
-	u16 rx_buf_size;
+	union uart_ctrl uart_ctrl = {};
+
 	printk(KERN_INFO "%s called\n", __func__);
 
 	wbec_uart->rx_buf_size_stat_idx = 0;
 	wbec_uart->tx_buf_size_stat_idx = 0;
 
-	// spi_
+	uart_ctrl.reset = 1;
 
-	// enable_irq(wbec_uart->port.irq);
-	// flush the RX buffer
-	// wbec_read_regs_sync(wbec_uart->spi, 0x60, &rx_buf_size, 1);
+	wbec_write_regs_sync(wbec_uart->spi, 0xA0, uart_ctrl.buf, sizeof(uart_ctrl) / 2);
 
-	// wbec_uart->tx_in_progress = false;
-
+	enable_irq(wbec_uart->port.irq);
 	return 0;
 }
 
@@ -420,22 +418,13 @@ static void wbec_uart_shutdown(struct uart_port *port)
 					      port);
 	printk(KERN_INFO "%s called\n", __func__);
 
-	// wait_for_completion(&wbec_uart->spi_msg.complete);
-	// disable_irq(wbec_uart->port.irq);
-	// hrtimer_cancel(&wbec_uart->tx_timer);
-
-	// wait for the last transfer to complete
-	// wait_for_completion_interruptible_timeout(
-	// 		&wbec_uart->spi_transfer_complete,
-	// 		msecs_to_jiffies(1000)
-	// 	);
+	disable_irq(wbec_uart->port.irq);
+	wait_for_completion(&wbec_uart->spi_transfer_complete);
 }
 
 static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *termios, struct ktermios *old)
 {
 	printk(KERN_INFO "%s called\n", __func__);
-
-
 
 	uart_update_timeout(port, termios->c_cflag, 115200);
 }
@@ -480,8 +469,7 @@ static irqreturn_t wbec_uart_irq(int irq, void *dev_id)
 	struct wbec_uart *wbec_uart = dev_id;
 
 	printk(KERN_INFO "%s called\n", __func__);
-	// schedule_delayed_work(&wbec_uart->rx_work, 0);
-	// wbec_start_read_regs_async(wbec_uart, 0x60, 33, wbec_read_regs_async_complete);
+
 	wbec_data_exchange_start_async(wbec_uart);
 
 	return IRQ_HANDLED;
@@ -572,7 +560,6 @@ static int wbec_uart_probe(struct spi_device *spi)
 	int ret;
 	u16 wbec_id;
 	struct wbec_uart *wbec_uart;
-	u16 buf[33];
 
 	printk(KERN_INFO "%s called\n", __func__);
 
@@ -599,13 +586,6 @@ static int wbec_uart_probe(struct spi_device *spi)
 		return ret;
 	}
 
-	// INIT_DELAYED_WORK(&wbec_uart->tx_poll, wbec_uart_tx_poll_wq);
-	// INIT_DELAYED_WORK(&wbec_uart->rx_work, wbec_uart_rx_work_wq);
-
-	// init hrtimer
-	// hrtimer_init(&wbec_uart->tx_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	// wbec_uart->tx_timer.function = wbec_hrtimer_tx_callback;
-
 	// Register the UART port
 	// Initialize the UART port
 	wbec_uart->port.ops = &wbec_uart_ops;
@@ -621,7 +601,7 @@ static int wbec_uart_probe(struct spi_device *spi)
 	wbec_uart->port.fifosize = 64;
 	wbec_uart->port.line = 0;
 
-	// init_completion(&wbec_uart->spi_transfer_complete);
+	init_completion(&wbec_uart->spi_transfer_complete);
 
 	ret = uart_add_one_port(&wbec_uart_driver, &wbec_uart->port);
 	if (ret) {
@@ -638,7 +618,7 @@ static int wbec_uart_probe(struct spi_device *spi)
 		dev_err(&spi->dev, "Failed to request IRQ: %d\n", ret);
 		return ret;
 	}
-	// disable_irq(spi->irq);
+	disable_irq(spi->irq);
 
 	// init file operations
 	wbec_uart->rx_buf_size_stat_idx = 0;
@@ -654,15 +634,9 @@ static int wbec_uart_probe(struct spi_device *spi)
 
 static int wbec_uart_remove(struct spi_device *spi)
 {
-	printk(KERN_INFO "%s called\n", __func__);
-
 	struct wbec_uart *wbec_uart = dev_get_drvdata(&spi->dev);
 
-	// cancel_delayed_work_sync(&wbec_uart->tx_poll);
-	// cancel_delayed_work_sync(&wbec_uart->rx_work);
-
-	// stop hrtimer
-	// hrtimer_cancel(&wbec_uart->tx_timer);
+	printk(KERN_INFO "%s called\n", __func__);
 
 	// Unregister the UART port
 	uart_remove_one_port(&wbec_uart_driver, &wbec_uart->port);
