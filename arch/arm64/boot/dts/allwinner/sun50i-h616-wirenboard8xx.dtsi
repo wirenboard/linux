@@ -1086,7 +1086,7 @@
 	usb0_id_det-gpios = <&pio PG 18 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
 	wirenboard,mux-on-id-pin;
 
-	dr_mode = "host";
+	dr_mode = "otg";
 
 	status = "okay";
 };
@@ -1100,7 +1100,7 @@
 };
 
 &usbotg {
-	dr_mode = "host";
+	dr_mode = "peripheral";
 	status = "okay";
 };
 
