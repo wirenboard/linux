@@ -117,6 +117,8 @@ struct wbec_uart {
 
 	struct dentry *wbec_uart_dir;
 
+	bool tx_in_progress;
+
 	u8 rx_buf_size_stat[400000];
 	int rx_buf_size_stat_idx;
 
@@ -129,6 +131,14 @@ union uart_tx {
 	struct {
 		u8 bytes_to_send_count;
 		u8 reserved;
+		u8 bytes_to_send[64];
+	};
+	u16 buf[33];
+};
+
+union uart_tx_start {
+	struct {
+		u16 bytes_to_send_count;
 		u8 bytes_to_send[64];
 	};
 	u16 buf[33];
@@ -153,7 +163,8 @@ union uart_ctrl {
 
 enum wbec_spi_cmd {
 	WBEC_SPI_CMD_CTRL,
-	WBEC_SPI_CMD_EXCHANGE
+	WBEC_SPI_CMD_EXCHANGE,
+	WBEC_SPI_CMD_TX_START,
 };
 
 #define WBEC_SPI_BUF_SIZE    			WBEC_REGMAP_PAD_WORDS_COUNT * 2 + sizeof(union uart_rx) + 2
@@ -176,6 +187,8 @@ static struct uart_driver wbec_uart_driver = {
 	.dev_name = "ttyWBE",
 	.nr = 1,
 };
+
+static int wbec_data_exchange_start_async(struct wbec_uart *wbec_uart);
 
 static void wbec_cmd_data_exchange(struct wbec_uart *wbec_uart, const u8 *tx_buf, const u8 *rx_buf, int len_bytes)
 {
@@ -219,8 +232,15 @@ static void wbec_cmd_data_exchange(struct wbec_uart *wbec_uart, const u8 *tx_buf
 
 		printk(KERN_INFO "bytes_sent=%d; tail_was=%d\n", bytes_sent, xmit->tail);
 
-		port->icount.tx += bytes_sent;
-		xmit->tail = (xmit->tail + bytes_sent) & (UART_XMIT_SIZE - 1);
+
+		if (bytes_sent > 0) {
+			port->icount.tx += bytes_sent;
+			xmit->tail = (xmit->tail + bytes_sent) & (UART_XMIT_SIZE - 1);
+		} else {
+			if (wbec_uart->tx_in_progress) {
+				wbec_uart->tx_in_progress = false;
+			}
+		}
 
 		printk(KERN_INFO "new_tail=%d\n", xmit->tail);
 
@@ -351,12 +371,32 @@ static void wbec_uart_start_tx(struct uart_port *port)
 	struct wbec_uart *wbec_uart = container_of(port,
 					      struct wbec_uart,
 					      port);
-	union uart_ctrl uart_ctrl = {};
 
 	printk(KERN_INFO "%s called\n", __func__);
 
-	uart_ctrl.want_to_tx = 1;
-	wbec_spi_transfer_start(wbec_uart, WBEC_SPI_CMD_CTRL, 0xA0, uart_ctrl.buf, sizeof(uart_ctrl) / 2);
+	if (!wbec_uart->tx_in_progress) {
+		union uart_tx_start tx_start;
+		struct uart_port *port = &wbec_uart->port;
+		struct circ_buf *xmit = &port->state->xmit;
+		int i;
+		unsigned int to_send = uart_circ_chars_pending(xmit);
+
+		wbec_uart->tx_in_progress = true;
+
+		printk(KERN_INFO "to_send linux: %d; head=%d, tail=%d\n", to_send, xmit->head, xmit->tail);
+		to_send = min(to_send, ARRAY_SIZE(tx_start.bytes_to_send));
+		printk(KERN_INFO "to_send spi: %d\n", to_send);
+
+		tx_start.bytes_to_send_count = to_send;
+
+		/* Convert to linear buffer */
+		for (i = 0; i < to_send; ++i) {
+			tx_start.bytes_to_send[i] = xmit->buf[xmit->tail];
+			xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
+		}
+
+		wbec_spi_transfer_start(wbec_uart, WBEC_SPI_CMD_TX_START, 0xB0, tx_start.buf, 1 + (to_send + 1) / 2);
+	}
 }
 
 static void wbec_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
@@ -404,6 +444,8 @@ static int wbec_uart_startup(struct uart_port *port)
 	wbec_uart->tx_buf_size_stat_idx = 0;
 
 	uart_ctrl.reset = 1;
+
+	wbec_uart->tx_in_progress = false;
 
 	wbec_write_regs_sync(wbec_uart->spi, 0xA0, uart_ctrl.buf, sizeof(uart_ctrl) / 2);
 
