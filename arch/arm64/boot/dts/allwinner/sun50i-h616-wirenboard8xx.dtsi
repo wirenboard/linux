@@ -270,7 +270,7 @@
 			label = "green";
 			color = <LED_COLOR_ID_GREEN>;
 			gpios = <&pio PD 27 GPIO_ACTIVE_LOW>;
-			default-state = "on";
+			default-state = "off";
 			active-low;
 			linux,default-trigger = "default-off";
 		};
@@ -279,7 +279,7 @@
 			label = "red";
 			color = <LED_COLOR_ID_RED>;
 			gpios = <&pio PA 12 GPIO_ACTIVE_HIGH>;
-			linux,default-trigger = "default-off";
+			linux,default-trigger = "timer";
 		};
 	};
 
