@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb5) stable; urgency=medium
+
+  * wbec: add 'uid' sysfs attribute
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Mon, 20 May 2024 16:52:38 +0500
+
 linux-wb (6.8.0-wb4) stable; urgency=medium
 
   * wb8 dts: fix leds blinking at boot time
