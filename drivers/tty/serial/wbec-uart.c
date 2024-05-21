@@ -12,7 +12,6 @@
 #include <linux/kthread.h>
 #include <linux/fs.h>
 #include <linux/uaccess.h>
-#include <linux/debugfs.h>
 #include <linux/hrtimer.h>
 
 
@@ -115,15 +114,7 @@ struct wbec_uart {
 	struct uart_port port;
 	struct completion spi_transfer_complete;
 
-	struct dentry *wbec_uart_dir;
-
 	bool tx_in_progress;
-
-	u8 rx_buf_size_stat[400000];
-	int rx_buf_size_stat_idx;
-
-	u8 tx_buf_size_stat[400000];
-	int tx_buf_size_stat_idx;
 };
 
 
@@ -212,10 +203,6 @@ static void wbec_cmd_data_exchange(struct wbec_uart *wbec_uart, const u8 *tx_buf
 			(tx_buf[(1 + WBEC_REGMAP_PAD_WORDS_COUNT) * 2 + i * 2] << 8);
 	}
 
-	// if (wbec_uart->rx_buf_size_stat_idx < ARRAY_SIZE(wbec_uart->rx_buf_size_stat)) {
-	// 	wbec_uart->rx_buf_size_stat[wbec_uart->rx_buf_size_stat_idx++] = rx.read_bytes_count;
-	// }
-
 	snprintf(str, ARRAY_SIZE(str), "received_bytes: %d: ", rx.read_bytes_count);
 	if (rx.read_bytes_count > 0) {
 		for (i = 0; i < rx.read_bytes_count; i++) {
@@ -244,9 +231,6 @@ static void wbec_cmd_data_exchange(struct wbec_uart *wbec_uart, const u8 *tx_buf
 
 		printk(KERN_INFO "new_tail=%d\n", xmit->tail);
 
-		// if (wbec_uart->tx_buf_size_stat_idx < ARRAY_SIZE(wbec_uart->tx_buf_size_stat)) {
-		// 	wbec_uart->tx_buf_size_stat[wbec_uart->tx_buf_size_stat_idx++] = bytes_sent;
-		// }
 		if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
 			uart_write_wakeup(port);
 	}
@@ -440,9 +424,6 @@ static int wbec_uart_startup(struct uart_port *port)
 
 	printk(KERN_INFO "%s called\n", __func__);
 
-	wbec_uart->rx_buf_size_stat_idx = 0;
-	wbec_uart->tx_buf_size_stat_idx = 0;
-
 	uart_ctrl.reset = 1;
 
 	wbec_uart->tx_in_progress = false;
@@ -543,58 +524,6 @@ static int wbec_uart_config_rs485(struct uart_port *port,
 	return 0;
 }
 
-
-static ssize_t wbec_uart_rx_stat_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
-{
-	struct wbec_uart *wbec_uart = file->private_data;
-	ssize_t ret;
-
-	if (*ppos >= wbec_uart->rx_buf_size_stat_idx)
-		return 0;
-
-	count = min(count, wbec_uart->rx_buf_size_stat_idx - *ppos);
-
-	ret = copy_to_user(buf, &wbec_uart->rx_buf_size_stat[*ppos], count);
-	if (ret)
-		return -EFAULT;
-
-	*ppos += count;
-
-	return count;
-}
-
-static const struct file_operations wbec_uart_rx_stat_fops = {
-	.owner = THIS_MODULE,
-	.read = wbec_uart_rx_stat_read,
-	.open = simple_open,
-};
-
-static ssize_t wbec_uart_tx_stat_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
-{
-	struct wbec_uart *wbec_uart = file->private_data;
-	ssize_t ret;
-
-	if (*ppos >= wbec_uart->tx_buf_size_stat_idx)
-		return 0;
-
-	count = min(count, wbec_uart->tx_buf_size_stat_idx - *ppos);
-
-	ret = copy_to_user(buf, &wbec_uart->tx_buf_size_stat[*ppos], count);
-	if (ret)
-		return -EFAULT;
-
-	*ppos += count;
-
-	return count;
-}
-
-static const struct file_operations wbec_uart_tx_stat_fops = {
-	.owner = THIS_MODULE,
-	.read = wbec_uart_tx_stat_read,
-	.open = simple_open,
-};
-
-
 static int wbec_uart_probe(struct spi_device *spi)
 {
 	int ret;
@@ -659,13 +588,6 @@ static int wbec_uart_probe(struct spi_device *spi)
 		return ret;
 	}
 
-	// init file operations
-	wbec_uart->rx_buf_size_stat_idx = 0;
-	wbec_uart->tx_buf_size_stat_idx = 0;
-	wbec_uart->wbec_uart_dir = debugfs_create_dir("wbec_uart", NULL);
-	debugfs_create_file("rx_buf_size_stat", 0444, wbec_uart->wbec_uart_dir, wbec_uart, &wbec_uart_rx_stat_fops);
-	debugfs_create_file("tx_buf_size_stat", 0444, wbec_uart->wbec_uart_dir, wbec_uart, &wbec_uart_tx_stat_fops);
-
 	printk(KERN_INFO "WBE UART driver loaded\n");
 
 	return 0;
@@ -682,8 +604,6 @@ static int wbec_uart_remove(struct spi_device *spi)
 
 	// Unregister the UART driver
 	uart_unregister_driver(&wbec_uart_driver);
-
-	debugfs_remove_recursive(wbec_uart->wbec_uart_dir);
 
 	return 0;
 }
