@@ -6,13 +6,7 @@
 #include <linux/tty_flip.h>
 #include <linux/serial_core.h>
 #include <linux/serial.h>
-#include <linux/serial.h>
-#include <linux/workqueue.h>
 #include <linux/delay.h>
-#include <linux/kthread.h>
-#include <linux/fs.h>
-#include <linux/uaccess.h>
-#include <linux/hrtimer.h>
 
 
 #define DRIVER_NAME "wbec-uart"
@@ -30,8 +24,6 @@ static void u16_word_to_spi_buf(u16 word, u8 *buf, int pos_in_words)
 	buf[pos_in_words * 2 + 1] = word & 0xFF;
 	buf[pos_in_words * 2] = (word >> 8) & 0xFF;
 }
-
-
 
 static int wbec_read_regs_sync(struct spi_device *spi, u16 addr, u16 *buf, int len_words)
 {
@@ -117,7 +109,6 @@ struct wbec_uart {
 	bool tx_in_progress;
 };
 
-
 union uart_tx {
 	struct {
 		u8 bytes_to_send_count;
@@ -158,7 +149,7 @@ enum wbec_spi_cmd {
 	WBEC_SPI_CMD_TX_START,
 };
 
-#define WBEC_SPI_BUF_SIZE    			WBEC_REGMAP_PAD_WORDS_COUNT * 2 + sizeof(union uart_rx) + 2
+#define WBEC_SPI_BUF_SIZE    			(WBEC_REGMAP_PAD_WORDS_COUNT * 2 + sizeof(union uart_rx) + 2)
 
 struct wbec_data_exchange {
 	enum wbec_spi_cmd cmd;
