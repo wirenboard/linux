@@ -353,7 +353,7 @@ static int wbec_data_exchange_start_async(struct wbec_uart *wbec_uart)
 	}
 
 
-	return wbec_spi_transfer_start(wbec_uart, WBEC_SPI_CMD_EXCHANGE, 0x30, tx.buf, sizeof(tx) / 2);
+	return wbec_spi_transfer_start(wbec_uart, WBEC_SPI_CMD_EXCHANGE, 0x100, tx.buf, sizeof(tx) / 2);
 }
 
 static unsigned int wbec_uart_tx_empty(struct uart_port *port)
@@ -395,7 +395,7 @@ static void wbec_uart_start_tx(struct uart_port *port)
 			xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		}
 
-		wbec_spi_transfer_start(wbec_uart, WBEC_SPI_CMD_TX_START, 0xB0, tx_start.buf, 1 + (to_send + 1) / 2);
+		wbec_spi_transfer_start(wbec_uart, WBEC_SPI_CMD_TX_START, 0x190, tx_start.buf, 1 + (to_send + 1) / 2);
 	}
 }
 
@@ -447,9 +447,8 @@ static int wbec_uart_startup(struct uart_port *port)
 
 	wbec_uart->tx_in_progress = false;
 
-	wbec_write_regs_sync(wbec_uart->spi, 0xA0, uart_ctrl.buf, sizeof(uart_ctrl) / 2);
-
-	enable_irq(wbec_uart->port.irq);
+	wbec_write_regs_sync(wbec_uart->spi, 0x1E0, uart_ctrl.buf, sizeof(uart_ctrl) / 2);
+	mdelay(1);
 	return 0;
 }
 
@@ -460,7 +459,6 @@ static void wbec_uart_shutdown(struct uart_port *port)
 					      port);
 	printk(KERN_INFO "%s called\n", __func__);
 
-	disable_irq(wbec_uart->port.irq);
 	wait_for_completion(&wbec_uart->spi_transfer_complete);
 }
 
@@ -660,7 +658,6 @@ static int wbec_uart_probe(struct spi_device *spi)
 		dev_err(&spi->dev, "Failed to request IRQ: %d\n", ret);
 		return ret;
 	}
-	disable_irq(spi->irq);
 
 	// init file operations
 	wbec_uart->rx_buf_size_stat_idx = 0;
