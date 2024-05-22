@@ -319,24 +319,22 @@ static int sun6i_spi_transfer_one(struct spi_master *master,
 	reg = sun6i_spi_read(sspi, SUN6I_TFR_CTL_REG);
 	sun6i_spi_write(sspi, SUN6I_TFR_CTL_REG, reg | SUN6I_TFR_CTL_XCH);
 
-	return 1;
-}
+	tx_time = max(tfr->len * 8 * 2 / (tfr->speed_hz / 1000), 100U);
+	start = jiffies;
+	timeout = wait_for_completion_timeout(&sspi->done,
+					      msecs_to_jiffies(tx_time));
+	end = jiffies;
+	if (!timeout) {
+		dev_warn(&master->dev,
+			 "%s: timeout transferring %u bytes@%iHz for %i(%i)ms",
+			 dev_name(&spi->dev), tfr->len, tfr->speed_hz,
+			 jiffies_to_msecs(end - start), tx_time);
+		ret = -ETIMEDOUT;
+	}
 
-static int sun6i_spi_transfer_one_message(struct spi_master *master,
-					  struct spi_message *msg)
-{
-	struct spi_device *spi = msg->spi;
-	struct sun6i_spi *sspi = spi_master_get_devdata(master);
-	struct spi_transfer *cur = NULL;
-	int ret;
+	sun6i_spi_write(sspi, SUN6I_INT_CTL_REG, 0);
 
-	cur = list_first_entry(&msg->transfers, struct spi_transfer, transfer_list);
-
-	sun6i_spi_set_cs(spi, false);
-	ret = sun6i_spi_transfer_one(master, spi, cur);
-	if (ret < 0)
-		return ret;
-	return 0;
+	return ret;
 }
 
 static irqreturn_t sun6i_spi_handler(int irq, void *dev_id)
@@ -348,24 +346,7 @@ static irqreturn_t sun6i_spi_handler(int irq, void *dev_id)
 	if (status & SUN6I_INT_CTL_TC) {
 		sun6i_spi_write(sspi, SUN6I_INT_STA_REG, SUN6I_INT_CTL_TC);
 		sun6i_spi_drain_fifo(sspi);
-		sun6i_spi_write(sspi, SUN6I_INT_CTL_REG, 0);
-
-		do {
-			struct spi_message *msg = sspi->master->cur_msg;
-			struct spi_transfer *cur = list_first_entry(&msg->transfers,
-				struct spi_transfer, transfer_list);
-
-			// check if there is another transfer in the message
-			if (!list_is_last(&cur->transfer_list, &msg->transfers)) {
-				cur = list_next_entry(cur, transfer_list);
-				sun6i_spi_transfer_one(sspi->master, msg->spi, cur);
-			} else {
-				msg->status = 0;
-				spi_finalize_current_message(sspi->master);
-				sun6i_spi_set_cs(msg->spi, true);
-			}
-		} while (0);
-
+		complete(&sspi->done);
 		return IRQ_HANDLED;
 	}
 
@@ -484,8 +465,7 @@ static int sun6i_spi_probe(struct platform_device *pdev)
 	master->min_speed_hz = 3 * 1000;
 	master->use_gpio_descriptors = true;
 	master->set_cs = sun6i_spi_set_cs;
-	// master->transfer_one = sun6i_spi_transfer_one;
-	master->transfer_one_message = sun6i_spi_transfer_one_message;
+	master->transfer_one = sun6i_spi_transfer_one;
 	master->num_chipselect = 4;
 	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_CS_HIGH | SPI_LSB_FIRST;
 	master->bits_per_word_mask = SPI_BPW_MASK(8);
