@@ -38,6 +38,7 @@ static const struct regmap_config wbec_regmap_config = {
 	.reg_bits = 16,
 	.read_flag_mask = BIT(7),
 	.val_bits = 16,
+	.pad_bits = 16 * WBEC_REGMAP_PAD_WORDS_COUNT,
 	.max_register = 0xFF,
 };
 
