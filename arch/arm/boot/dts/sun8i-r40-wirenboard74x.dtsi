@@ -444,9 +444,11 @@
 
 		compatible = "wirenboard,wbec";
 		reg = <0>;
-		status = "disabled";
+		status = "okay";
 		#address-cells = <1>;
 		#size-cells = <0>;
+		interrupt-parent = <&pio>;
+		interrupts = <8 15 IRQ_TYPE_EDGE_RISING>;
 
 		wbec-watchdog@0 {
 			compatible = "wirenboard,wbec-watchdog";
@@ -485,19 +487,13 @@
 			compatible = "wirenboard,wbec-power";
 			reg = <0>;
 		};
+
+		wbec_uart: wbec-uart@0 {
+			compatible = "wirenboard,wbec-uart";
+			reg = <0>;
+		};
 	};
 
-	wbec_uart: wbec-uart@0 {
-		spi-max-frequency = <1000000>;
-
-		compatible = "wirenboard,wbec-uart";
-		reg = <0>;
-		status = "okay";
-		interrupt-parent = <&pio>;
-		interrupts = <8 15 IRQ_TYPE_EDGE_RISING>;
-		#address-cells = <1>;
-		#size-cells = <0>;
-	};
 };
 
 &pio {
