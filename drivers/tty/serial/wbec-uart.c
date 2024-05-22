@@ -7,7 +7,9 @@
 #include <linux/serial_core.h>
 #include <linux/serial.h>
 #include <linux/delay.h>
-
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/mfd/wbec.h>
 
 #define DRIVER_NAME "wbec-uart"
 
@@ -103,6 +105,7 @@ out:
 struct wbec_uart {
 	struct device *dev;
 	struct spi_device *spi;
+	struct regmap *regmap;
 	struct uart_port port;
 	struct completion spi_transfer_complete;
 
@@ -515,29 +518,28 @@ static int wbec_uart_config_rs485(struct uart_port *port,
 	return 0;
 }
 
-static int wbec_uart_probe(struct spi_device *spi)
+static int wbec_uart_probe(struct platform_device *pdev)
 {
+	struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
+	struct wbec_uart *wbec_uart;
 	int ret;
 	u16 wbec_id;
-	struct wbec_uart *wbec_uart;
 
 	printk(KERN_INFO "%s called\n", __func__);
 
-	wbec_uart = devm_kzalloc(&spi->dev, sizeof(struct wbec_uart),
+	wbec_uart = devm_kzalloc(&pdev->dev, sizeof(struct wbec_uart),
 				GFP_KERNEL);
+	if (!wbec_uart)
+		return -ENOMEM;
 
-	wbec_uart->dev = &spi->dev;
+	wbec_uart->dev = &pdev->dev;
+	wbec_uart->spi = wbec->spi;
+	wbec_uart->regmap = wbec->regmap;
 
-	spi->mode = SPI_MODE_0;
-	spi->bits_per_word = 8;
-	spi_setup(spi);
+	platform_set_drvdata(pdev, wbec_uart);
 
-	spi_set_drvdata(spi, wbec_uart);
-
-	wbec_uart->spi = spi;
-
-	ret = wbec_read_regs_sync(spi, 0x00, &wbec_id, 1);
-	dev_info(&spi->dev, "wbec_id 0xB0: %.2X\n", wbec_id);
+	ret = wbec_read_regs_sync(wbec->spi, 0x00, &wbec_id, 1);
+	dev_info(&pdev->dev, "wbec_id 0xB0: %.2X\n", wbec_id);
 
 	// Register the UART driver
 	ret = uart_register_driver(&wbec_uart_driver);
@@ -549,9 +551,9 @@ static int wbec_uart_probe(struct spi_device *spi)
 	// Register the UART port
 	// Initialize the UART port
 	wbec_uart->port.ops = &wbec_uart_ops;
-	wbec_uart->port.dev = &spi->dev;
+	wbec_uart->port.dev = &pdev->dev;
 	wbec_uart->port.type = 123;
-	wbec_uart->port.irq = spi->irq;
+	wbec_uart->port.irq = wbec->irq;
 	wbec_uart->port.iotype = UPIO_PORT;
 	wbec_uart->port.flags	= UPF_FIXED_TYPE | UPF_LOW_LATENCY;
 	// wbec_uart->port.flags = UPF_BOOT_AUTOCONF;
@@ -569,13 +571,13 @@ static int wbec_uart_probe(struct spi_device *spi)
 		return ret;
 	}
 
-	dev_info(&spi->dev, "IRQ: %d\n", spi->irq);
+	dev_info(&pdev->dev, "IRQ: %d\n", wbec->irq);
 
-	ret = devm_request_irq(wbec_uart->dev, spi->irq, wbec_uart_irq,
+	ret = devm_request_irq(wbec_uart->dev, wbec->irq, wbec_uart_irq,
 					IRQF_TRIGGER_RISING,
 					dev_name(wbec_uart->dev), wbec_uart);
 	if (ret) {
-		dev_err(&spi->dev, "Failed to request IRQ: %d\n", ret);
+		dev_err(&pdev->dev, "Failed to request IRQ: %d\n", ret);
 		return ret;
 	}
 
@@ -584,9 +586,9 @@ static int wbec_uart_probe(struct spi_device *spi)
 	return 0;
 }
 
-static int wbec_uart_remove(struct spi_device *spi)
+static int wbec_uart_remove(struct platform_device *pdev)
 {
-	struct wbec_uart *wbec_uart = dev_get_drvdata(&spi->dev);
+	struct wbec_uart *wbec_uart = platform_get_drvdata(pdev);
 
 	printk(KERN_INFO "%s called\n", __func__);
 
@@ -605,7 +607,7 @@ static const struct of_device_id wbec_uart_of_match[] = {
 };
 MODULE_DEVICE_TABLE(of, wbec_uart_of_match);
 
-static struct spi_driver wbec_uart_spi_driver = {
+static struct platform_driver wbec_uart_platform_driver = {
 	.driver = {
 		.name = DRIVER_NAME,
 		.owner = THIS_MODULE,
@@ -615,7 +617,7 @@ static struct spi_driver wbec_uart_spi_driver = {
 	.remove = wbec_uart_remove,
 };
 
-module_spi_driver(wbec_uart_spi_driver);
+module_platform_driver(wbec_uart_platform_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Your Name");
