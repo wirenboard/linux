@@ -89,7 +89,7 @@ struct sun6i_spi {
 	struct clk		*mclk;
 	struct reset_control	*rstc;
 
-	struct completion	done;
+	struct spi_transfer	*current_transfer;
 
 	const u8		*tx_buf;
 	u8			*rx_buf;
@@ -199,7 +199,6 @@ static int sun6i_spi_transfer_one(struct spi_master *master,
 	if (tfr->len > SUN6I_MAX_XFER_SIZE)
 		return -EINVAL;
 
-	reinit_completion(&sspi->done);
 	sspi->tx_buf = tfr->tx_buf;
 	sspi->rx_buf = tfr->rx_buf;
 	sspi->len = tfr->len;
@@ -327,13 +326,12 @@ static int sun6i_spi_transfer_one_message(struct spi_master *master,
 {
 	struct spi_device *spi = msg->spi;
 	struct sun6i_spi *sspi = spi_master_get_devdata(master);
-	struct spi_transfer *cur = NULL;
 	int ret;
 
-	cur = list_first_entry(&msg->transfers, struct spi_transfer, transfer_list);
+	sspi->current_transfer = list_first_entry(&msg->transfers, struct spi_transfer, transfer_list);
 
 	sun6i_spi_set_cs(spi, false);
-	ret = sun6i_spi_transfer_one(master, spi, cur);
+	ret = sun6i_spi_transfer_one(master, spi, sspi->current_transfer);
 	if (ret < 0)
 		return ret;
 	return 0;
@@ -352,17 +350,15 @@ static irqreturn_t sun6i_spi_handler(int irq, void *dev_id)
 
 		do {
 			struct spi_message *msg = sspi->master->cur_msg;
-			struct spi_transfer *cur = list_first_entry(&msg->transfers,
-				struct spi_transfer, transfer_list);
 
 			// check if there is another transfer in the message
-			if (!list_is_last(&cur->transfer_list, &msg->transfers)) {
-				cur = list_next_entry(cur, transfer_list);
-				sun6i_spi_transfer_one(sspi->master, msg->spi, cur);
-			} else {
+			if (list_is_last(&sspi->current_transfer->transfer_list, &msg->transfers)) {
 				msg->status = 0;
-				spi_finalize_current_message(sspi->master);
 				sun6i_spi_set_cs(msg->spi, true);
+				spi_finalize_current_message(sspi->master);
+			} else {
+				sspi->current_transfer = list_next_entry(sspi->current_transfer, transfer_list);
+				sun6i_spi_transfer_one(sspi->master, msg->spi, sspi->current_transfer);
 			}
 		} while (0);
 
@@ -506,8 +502,6 @@ static int sun6i_spi_probe(struct platform_device *pdev)
 		ret = PTR_ERR(sspi->mclk);
 		goto err_free_master;
 	}
-
-	init_completion(&sspi->done);
 
 	sspi->rstc = devm_reset_control_get_exclusive(&pdev->dev, NULL);
 	if (IS_ERR(sspi->rstc)) {
