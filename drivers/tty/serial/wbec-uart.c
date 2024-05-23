@@ -173,8 +173,6 @@ static struct uart_driver wbec_uart_driver = {
 	.nr = 1,
 };
 
-static int wbec_data_exchange_start_async(struct wbec_uart *wbec_uart);
-
 static void wbec_cmd_data_exchange(struct wbec_uart *wbec_uart, const u8 *tx_buf, const u8 *rx_buf, int len_bytes)
 {
 	struct uart_port *port = &wbec_uart->port;
@@ -522,7 +520,7 @@ static int wbec_uart_probe(struct platform_device *pdev)
 {
 	struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
 	struct wbec_uart *wbec_uart;
-	int ret;
+	int ret, irq;
 	u16 wbec_id;
 
 	printk(KERN_INFO "%s called\n", __func__);
@@ -531,6 +529,12 @@ static int wbec_uart_probe(struct platform_device *pdev)
 				GFP_KERNEL);
 	if (!wbec_uart)
 		return -ENOMEM;
+
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
+		dev_err(&pdev->dev, "Failed to get IRQ: %d\n", irq);
+		return irq;
+	}
 
 	wbec_uart->dev = &pdev->dev;
 	wbec_uart->spi = wbec->spi;
@@ -553,7 +557,7 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	wbec_uart->port.ops = &wbec_uart_ops;
 	wbec_uart->port.dev = &pdev->dev;
 	wbec_uart->port.type = 123;
-	wbec_uart->port.irq = wbec->irq;
+	wbec_uart->port.irq = irq;
 	wbec_uart->port.iotype = UPIO_PORT;
 	wbec_uart->port.flags	= UPF_FIXED_TYPE | UPF_LOW_LATENCY;
 	// wbec_uart->port.flags = UPF_BOOT_AUTOCONF;
@@ -571,9 +575,9 @@ static int wbec_uart_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	dev_info(&pdev->dev, "IRQ: %d\n", wbec->irq);
+	dev_info(&pdev->dev, "IRQ: %d\n", irq);
 
-	ret = devm_request_irq(wbec_uart->dev, wbec->irq, wbec_uart_irq,
+	ret = devm_request_irq(wbec_uart->dev, irq, wbec_uart_irq,
 					IRQF_TRIGGER_RISING,
 					dev_name(wbec_uart->dev), wbec_uart);
 	if (ret) {

@@ -93,7 +93,6 @@ struct wbec {
 	struct spi_device *spi;
 	struct regmap *regmap;
 	struct dentry *wbec_dir;
-	int irq;
 };
 
 #endif
