@@ -309,6 +309,7 @@ static int edlc_battery_probe(struct platform_device *pdev)
 	struct edlc_battery *bat;
 	struct power_supply_config psy_cfg = {};
 	struct power_supply_desc *desc;
+	struct power_supply_battery_info *info;
 	int ret;
 
 	bat = devm_kzalloc(dev, sizeof(*bat), GFP_KERNEL);
@@ -334,7 +335,7 @@ static int edlc_battery_probe(struct platform_device *pdev)
 		return dev_err_probe(dev, PTR_ERR(bat->battery),
 				     "Unable to register battery\n");
 
-	ret = power_supply_get_battery_info(bat->battery, &bat->info);
+	ret = power_supply_get_battery_info(bat->battery, &info);
 	if (ret) {
 		dev_dbg(dev, "Unable to get battery info: %d\n", ret);
 	}
