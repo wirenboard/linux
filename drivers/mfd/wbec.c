@@ -329,11 +329,6 @@ static struct notifier_block wbec_restart_handler = {
 	.priority = 255,
 };
 
-static struct spi_delay wbec_spi_cs_inactive_delay = {
-	.unit = SPI_DELAY_UNIT_USECS,
-	.value = 100,
-};
-
 static int wbec_probe(struct spi_device *spi)
 {
 	struct wbec *wbec;
@@ -350,7 +345,6 @@ static int wbec_probe(struct spi_device *spi)
 	spi->mode = SPI_MODE_0;
 	spi->bits_per_word = 8;
 	spi_setup(spi);
-	spi_set_cs_timing(spi, NULL, NULL, &wbec_spi_cs_inactive_delay);
 
 	spi_set_drvdata(spi, wbec);
 
