@@ -572,8 +572,8 @@
 	"", "", "", "",  /* 24-27 */
 	"", "", "", "",  /* 28-31 */
 	/* PF */
-	"SOM EMMC D1", "SOM EMMC D0", "SOM EMMC CLK", "SOM EMMC CMD",  /* 0-3 */
-	"SOM EMMC D3", "SOM EMMC D2", "MICROSD CD", "",  /* 4-7 */
+	"MICROSD D1", "MICROSD D0", "MICROSD CLK", "MICROSD CMD",  /* 0-3 */
+	"MICROSD D3", "MICROSD D2", "MICROSD CD", "",  /* 4-7 */
 	"", "", "", "",  /* 8-11 */
 	"", "", "", "",  /* 12-15 */
 	"", "", "", "",  /* 16-19 */
