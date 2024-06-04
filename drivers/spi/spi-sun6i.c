@@ -186,14 +186,12 @@ static size_t sun6i_spi_max_transfer_size(struct spi_device *spi)
 
 static int sun6i_spi_transfer_one(struct spi_master *master,
 				  struct spi_device *spi,
-				  struct spi_transfer *tfr)
+				  struct spi_transfer *tfr,
+				  bool setup_clock)
 {
 	struct sun6i_spi *sspi = spi_master_get_devdata(master);
-	unsigned int mclk_rate, div, div_cdr1, div_cdr2, timeout;
-	unsigned int start, end, tx_time;
 	unsigned int trig_level;
 	unsigned int tx_len = 0, rx_len = 0;
-	int ret = 0;
 	u32 reg;
 
 	if (tfr->len > SUN6I_MAX_XFER_SIZE)
@@ -258,39 +256,43 @@ static int sun6i_spi_transfer_one(struct spi_master *master,
 
 	sun6i_spi_write(sspi, SUN6I_TFR_CTL_REG, reg);
 
-	/* Ensure that we have a parent clock fast enough */
-	mclk_rate = clk_get_rate(sspi->mclk);
-	if (mclk_rate < (2 * tfr->speed_hz)) {
-		clk_set_rate(sspi->mclk, 2 * tfr->speed_hz);
+	if (setup_clock) {
+		unsigned int mclk_rate, div, div_cdr1, div_cdr2;
+
+		/* Ensure that we have a parent clock fast enough */
 		mclk_rate = clk_get_rate(sspi->mclk);
-	}
+		if (mclk_rate < (2 * tfr->speed_hz)) {
+			clk_set_rate(sspi->mclk, 2 * tfr->speed_hz);
+			mclk_rate = clk_get_rate(sspi->mclk);
+		}
 
-	/*
-	 * Setup clock divider.
-	 *
-	 * We have two choices there. Either we can use the clock
-	 * divide rate 1, which is calculated thanks to this formula:
-	 * SPI_CLK = MOD_CLK / (2 ^ cdr)
-	 * Or we can use CDR2, which is calculated with the formula:
-	 * SPI_CLK = MOD_CLK / (2 * (cdr + 1))
-	 * Wether we use the former or the latter is set through the
-	 * DRS bit.
-	 *
-	 * First try CDR2, and if we can't reach the expected
-	 * frequency, fall back to CDR1.
-	 */
-	div_cdr1 = DIV_ROUND_UP(mclk_rate, tfr->speed_hz);
-	div_cdr2 = DIV_ROUND_UP(div_cdr1, 2);
-	if (div_cdr2 <= (SUN6I_CLK_CTL_CDR2_MASK + 1)) {
-		reg = SUN6I_CLK_CTL_CDR2(div_cdr2 - 1) | SUN6I_CLK_CTL_DRS;
-		tfr->effective_speed_hz = mclk_rate / (2 * div_cdr2);
-	} else {
-		div = min(SUN6I_CLK_CTL_CDR1_MASK, order_base_2(div_cdr1));
-		reg = SUN6I_CLK_CTL_CDR1(div);
-		tfr->effective_speed_hz = mclk_rate / (1 << div);
-	}
+		/*
+		* Setup clock divider.
+		*
+		* We have two choices there. Either we can use the clock
+		* divide rate 1, which is calculated thanks to this formula:
+		* SPI_CLK = MOD_CLK / (2 ^ cdr)
+		* Or we can use CDR2, which is calculated with the formula:
+		* SPI_CLK = MOD_CLK / (2 * (cdr + 1))
+		* Wether we use the former or the latter is set through the
+		* DRS bit.
+		*
+		* First try CDR2, and if we can't reach the expected
+		* frequency, fall back to CDR1.
+		*/
+		div_cdr1 = DIV_ROUND_UP(mclk_rate, tfr->speed_hz);
+		div_cdr2 = DIV_ROUND_UP(div_cdr1, 2);
+		if (div_cdr2 <= (SUN6I_CLK_CTL_CDR2_MASK + 1)) {
+			reg = SUN6I_CLK_CTL_CDR2(div_cdr2 - 1) | SUN6I_CLK_CTL_DRS;
+			tfr->effective_speed_hz = mclk_rate / (2 * div_cdr2);
+		} else {
+			div = min(SUN6I_CLK_CTL_CDR1_MASK, order_base_2(div_cdr1));
+			reg = SUN6I_CLK_CTL_CDR1(div);
+			tfr->effective_speed_hz = mclk_rate / (1 << div);
+		}
 
-	sun6i_spi_write(sspi, SUN6I_CLK_CTL_REG, reg);
+		sun6i_spi_write(sspi, SUN6I_CLK_CTL_REG, reg);
+	}
 
 	/* Setup the transfer now... */
 	if (sspi->tx_buf)
@@ -331,7 +333,7 @@ static int sun6i_spi_transfer_one_message(struct spi_master *master,
 	sspi->current_transfer = list_first_entry(&msg->transfers, struct spi_transfer, transfer_list);
 
 	sun6i_spi_set_cs(spi, false);
-	ret = sun6i_spi_transfer_one(master, spi, sspi->current_transfer);
+	ret = sun6i_spi_transfer_one(master, spi, sspi->current_transfer, true);
 	if (ret < 0)
 		return ret;
 	return 0;
@@ -358,7 +360,7 @@ static irqreturn_t sun6i_spi_handler(int irq, void *dev_id)
 				spi_finalize_current_message(sspi->master);
 			} else {
 				sspi->current_transfer = list_next_entry(sspi->current_transfer, transfer_list);
-				sun6i_spi_transfer_one(sspi->master, msg->spi, sspi->current_transfer);
+				sun6i_spi_transfer_one(sspi->master, msg->spi, sspi->current_transfer, false);
 			}
 		} while (0);
 
