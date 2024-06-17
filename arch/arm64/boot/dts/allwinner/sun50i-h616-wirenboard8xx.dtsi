@@ -572,8 +572,11 @@
 					cooling-device = <&cpu0 5 THERMAL_NO_LIMIT>,
 									 <&cpu1 5 THERMAL_NO_LIMIT>,
 									 <&cpu2 5 THERMAL_NO_LIMIT>,
-									 <&cpu3 5 THERMAL_NO_LIMIT>;
-				};
+									 <&cpu3 5 THERMAL_NO_LIMIT>,
+									 /* don't inject idle to CPU0 so it's available for kernel tasks */
+									 <&cpu1idle THERMAL_NO_LIMIT 90>,
+									 <&cpu2idle THERMAL_NO_LIMIT 90>,
+									 <&cpu3idle THERMAL_NO_LIMIT 90>;				};
 			};
 		};
 	};
