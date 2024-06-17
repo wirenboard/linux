@@ -729,6 +729,21 @@ static CLK_FIXED_FACTOR_HW(pll_video2_4x_clk, "pll-video2-4x",
 			   &pll_video2_clk.common.hw,
 			   1, 4, CLK_SET_RATE_PARENT);
 
+
+static struct ccu_pll_nb sun50i_h616_pll_cpu_nb = {
+	.common = &pll_cpux_clk.common,
+	.enable = BIT(29), /* gate/ungate LOCK_ENABLE, as per user manual */
+	.lock   = BIT(28), /* indicates that the PLL has been stable */
+};
+
+static struct ccu_mux_nb sun50i_h616_cpu_nb = {
+	.common         = &cpux_clk.common,
+	.cm             = &cpux_clk.mux,
+	.delay_us       = 1,
+	.bypass_index   = 4, /* index of pll periph0 */
+};
+
+
 static struct ccu_common *sun50i_h616_ccu_clks[] = {
 	&pll_cpux_clk.common,
 	&pll_ddr0_clk.common,
@@ -1093,6 +1108,7 @@ static const u32 usb2_clk_regs[] = {
 static int sun50i_h616_ccu_probe(struct platform_device *pdev)
 {
 	void __iomem *reg;
+	int ret;
 	u32 val;
 	int i;
 
@@ -1147,7 +1163,17 @@ static int sun50i_h616_ccu_probe(struct platform_device *pdev)
 	val |= BIT(24);
 	writel(val, reg + SUN50I_H616_HDMI_CEC_CLK_REG);
 
-	return devm_sunxi_ccu_probe(&pdev->dev, reg, &sun50i_h616_ccu_desc);
+	ret = devm_sunxi_ccu_probe(&pdev->dev, reg, &sun50i_h616_ccu_desc);
+	if (ret)
+		return ret;
+
+	/* Gate then ungate PLL CPU after any rate changes */
+	ccu_pll_notifier_register(&sun50i_h616_pll_cpu_nb);
+
+	/* Reparent CPU during PLL CPU rate changes */
+	ccu_mux_notifier_register(pll_cpux_clk.common.hw.clk,
+				  &sun50i_h616_cpu_nb);
+	return 0;
 }
 
 static const struct of_device_id sun50i_h616_ccu_ids[] = {
