@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb168) stable; urgency=medium
+
+  * add CAN SAE J1939 support built-in
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Mon, 17 Jun 2024 18:36:12 +0500
+
 linux-wb (5.10.35-wb167) stable; urgency=medium
 
   * wbec: add 'uid' sysfs attribute
