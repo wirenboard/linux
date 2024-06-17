@@ -875,7 +875,6 @@
 				regulator-max-microvolt = <1800000>;
 				regulator-step-delay-us = <25>;
 				regulator-final-delay-us = <50>;
-				regulator-always-on;
 			};
 
 			reg_bldo5: bldo5 {
@@ -892,7 +891,6 @@
 				regulator-max-microvolt = <3300000>;
 				regulator-step-delay-us = <25>;
 				regulator-final-delay-us = <50>;
-				regulator-always-on;
 			};
 
 			reg_cldo2: cldo2 {
@@ -901,7 +899,6 @@
 				regulator-max-microvolt = <1800000>;
 				regulator-step-delay-us = <25>;
 				regulator-final-delay-us = <50>;
-				regulator-always-on;
 			};
 
 			reg_cldo3: cldo3 {
