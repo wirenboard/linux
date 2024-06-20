@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb8) stable; urgency=medium
+
+  * wb8: fix WBMZ5-BATTERY by adding special AXP driver mode
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Thu, 20 Jun 2024 10:42:21 +0500
+
 linux-wb (6.8.0-wb7) UNRELEASED; urgency=medium
 
   * wb8: dts: detect lockups and reboot on hangs and lockups
