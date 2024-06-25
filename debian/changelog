@@ -7,11 +7,11 @@ linux-wb (6.8.0-wb8) stable; urgency=medium
 linux-wb (6.8.0-wb7) UNRELEASED; urgency=medium
 
   * wb8: dts: detect lockups and reboot on hangs and lockups
-this can be useful for mmc-, cpu- and other hardware-related hangs.
+    this can be useful for mmc-, cpu- and other hardware-related hangs.
 
   *  clk: sunxi-ng: h616: switch CPU to backup clock source when changing
-frequency.  In our test this fix significantly improved the stability,
-especially at low core voltages.
+     frequency.  In our test this fix significantly improved the stability,
+     especially at low core voltages.
 
  -- Evgeny Boger <boger@wirenboard.com>  Mon, 17 Jun 2024 21:18:31 +0300
 
