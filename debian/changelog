@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb9) stable; urgency=medium
+
+  * add missing PPP modules needed for modem connection
+
+ -- Evgeny Boger <boger@wirenboard.com>  Wed, 26 Jun 2024 02:19:11 +0300
+
 linux-wb (6.8.0-wb8) stable; urgency=medium
 
   * wb8: fix WBMZ5-BATTERY by adding special AXP driver mode
