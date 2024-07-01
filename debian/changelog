@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb10) stable; urgency=medium
+
+  * wb8 defconfig: add exfat & ntfs
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Mon, 01 Jul 2024 18:05:21 +0300
+
 linux-wb (6.8.0-wb9) stable; urgency=medium
 
   * add missing PPP modules needed for modem connection
