@@ -27,6 +27,14 @@
 			enable-method = "psci";
 			clocks = <&ccu CLK_CPUX>;
 			#cooling-cells = <2>;
+			cpu-idle-states = <&CPU_SLEEP>;
+			dynamic-power-coefficient = <100>;
+
+			cpu0idle: thermal-idle {
+				#cooling-cells = <2>;
+				duration-us = <10000>;
+				exit-latency-us = <500>;
+			};
 		};
 
 		cpu1: cpu@1 {
@@ -36,6 +44,13 @@
 			enable-method = "psci";
 			clocks = <&ccu CLK_CPUX>;
 			#cooling-cells = <2>;
+			cpu-idle-states = <&CPU_SLEEP>;
+
+			cpu1idle: thermal-idle {
+				#cooling-cells = <2>;
+				duration-us = <10000>;
+				exit-latency-us = <500>;
+			};
 		};
 
 		cpu2: cpu@2 {
@@ -45,6 +60,13 @@
 			enable-method = "psci";
 			clocks = <&ccu CLK_CPUX>;
 			#cooling-cells = <2>;
+			cpu-idle-states = <&CPU_SLEEP>;
+
+			cpu2idle: thermal-idle {
+				#cooling-cells = <2>;
+				duration-us = <10000>;
+				exit-latency-us = <500>;
+			};
 		};
 
 		cpu3: cpu@3 {
@@ -54,6 +76,25 @@
 			enable-method = "psci";
 			clocks = <&ccu CLK_CPUX>;
 			#cooling-cells = <2>;
+			cpu-idle-states = <&CPU_SLEEP>;
+
+			cpu3idle: thermal-idle {
+				#cooling-cells = <2>;
+				duration-us = <10000>;
+				exit-latency-us = <500>;
+			};
+		};
+		idle-states {
+			entry-method = "psci";
+
+			CPU_SLEEP: cpu-sleep {
+				compatible = "arm,idle-state";
+				local-timer-stop;
+				arm,psci-suspend-param = <0x0010000>;
+				entry-latency-us = <120>;
+				exit-latency-us = <250>;
+				min-residency-us = <900>;
+			};
 		};
 	};
 
