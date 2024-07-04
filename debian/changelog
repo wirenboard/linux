@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb12) stable; urgency=medium
+
+  * wb8: proper thermal limits and throttling
+
+ -- Evgeny Boger <boger@wirenboard.com>  Fri, 05 Jul 2024 02:38:13 +0300
+
 linux-wb (6.8.0-wb11) stable; urgency=medium
 
   * fix wbec rtc: notify userspace that 1s interrupts are not supported
