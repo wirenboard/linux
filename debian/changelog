@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb11) stable; urgency=medium
+
+  * fix wbec rtc: notify userspace that 1s interrupts are not supported
+
+ -- Evgeny Boger <boger@wirenboard.com>  Fri, 05 Jul 2024 00:42:31 +0300
+
 linux-wb (6.8.0-wb10) stable; urgency=medium
 
   * wb8 defconfig: add exfat & ntfs
