@@ -1,3 +1,10 @@
+linux-wb (6.8.0-wb13) stable; urgency=medium
+
+  * mfd-wbec: fix power-off handler (switch to the sys-off handler API)
+  * pwrkey-wbec: make function static (get rid of warning)
+
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Wed, 10 Jul 2024 20:56:34 +0300
+
 linux-wb (6.8.0-wb12) stable; urgency=medium
 
   * wb8: proper thermal limits and throttling
