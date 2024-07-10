@@ -28,7 +28,7 @@ struct wbec_pwrkey {
 	struct regmap *regmap;
 };
 
-void pwrkey_poll_wq(struct work_struct *work)
+static void pwrkey_poll_wq(struct work_struct *work)
 {
 	struct wbec_pwrkey *wbec_pwrkey =
 		container_of(work, struct wbec_pwrkey, wq.work);
