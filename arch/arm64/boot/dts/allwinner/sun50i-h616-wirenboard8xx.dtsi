@@ -772,6 +772,17 @@
 		function = "uart1";
 	};
 
+	/* W1-W2 */
+	pinctrl_w1_gpio: w1-gpio-pins {
+		pins = "PD24", "PG8";
+		function = "gpio_in";
+	};
+
+	pinctrl_w2_gpio: w2-gpio-pins {
+		pins = "PE11", "PE21";
+		function = "gpio_in";
+	};
+
 	/* MOD2 */
 	pinctrl_mod2_i2c_gpio: mod2-txrx-i2c-pins {
 		pins = "PI13", "PI14";
