@@ -86,6 +86,11 @@
 #define WBEC_REG_PWR_STATUS                                 0xC0
    #define WBEC_REG_PWR_STATUS_POWERED_FROM_WBMZ_MSK        BIT(0)
 
+/* Region BUZZER_CTRL: RW */
+#define WBEC_REG_BUZZER_FREQ                                0xD0
+#define WBEC_REG_BUZZER_DUTY                                0xD1
+#define WBEC_REG_BUZZER_CTRL                                0xD2
+   #define WBEC_REG_BUZZER_CTRL_ENABLED_MSK                 BIT(0)
 
 struct wbec {
 	struct device *dev;
