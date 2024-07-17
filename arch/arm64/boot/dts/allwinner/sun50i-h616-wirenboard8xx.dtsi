@@ -332,6 +332,17 @@
 			regulator-max-microvolt = <3300000>;
 			regulator-always-on;
 		};
+
+		/* MicroSD reference voltage regulator */
+		vcc_sd: regulator@6 {
+			compatible = "regulator-gpio";
+			regulator-name = "vcc-sd";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <3300000>;
+			gpio = <&pio PD 21 GPIO_ACTIVE_LOW>;
+			states = <3300000 0
+                                  1800000 1>;
+		};
 	};
 
 	/*
@@ -1093,10 +1104,32 @@
 };
 
 &mmc0 {
+	//bus-width = <4>;
+	//cd-gpios = <&pio PF 6 GPIO_ACTIVE_LOW>;
+
+	//cap-sd-highspeed;
+	//cap-mmc-highspeed;
+	//mmc-ddr-3_3v;
+	//cap-sdio-irq;
+	//no-1-8-v;
+	//sd-uhs-sdr104;
+
+	//max-frequency = <150000000>; /* 200 MHz doesn't work, probably due to signal integrity issues */
+	//status = "okay";
+	//vmmc-supply = <&reg_dcdc1>, <&vdd_sd_power>;
+	//vqmmc-supply = <&vcc_sd>;
+
+
 	bus-width = <4>;
-	cd-gpios = <&pio PF 6 GPIO_ACTIVE_LOW>;
+	broken-cd = <1>;
 	status = "okay";
+
+	vqmmc-supply = <&vcc_sd>;
 	vmmc-supply = <&reg_dcdc1>, <&vdd_sd_power>;
+	sd-uhs-sdr25;
+	sd-uhs-sdr50;
+	sd-uhs-sdr104;
+	max-frequency = <100000000>; /* 200 MHz doesn't work, probably due to signal integrity issues */
 };
 
 &mmc2 {
