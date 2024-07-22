@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb15) stable; urgency=medium
+
+  * wb8 defconfig: add nftables
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Mon, 22 Jul 2024 17:47:13 +0300
+
 linux-wb (6.8.0-wb14) stable; urgency=medium
 
   * wb8 dts: add 1-Wire pins
