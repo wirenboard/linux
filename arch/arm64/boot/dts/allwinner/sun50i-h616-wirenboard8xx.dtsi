@@ -1129,7 +1129,7 @@
 	sd-uhs-sdr25;
 	sd-uhs-sdr50;
 	sd-uhs-sdr104;
-	max-frequency = <100000000>; /* 200 MHz doesn't work, probably due to signal integrity issues */
+	max-frequency = <150000000>; /* 200 MHz doesn't work, probably due to signal integrity issues */
 };
 
 &mmc2 {
