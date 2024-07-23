@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb16) stable; urgency=medium
+
+  * w1-gpio: add strong pull-up support
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Tue, 23 Jul 2024 15:15:35 +0500
+
 linux-wb (6.8.0-wb15) stable; urgency=medium
 
   * wb8 defconfig: add nftables
