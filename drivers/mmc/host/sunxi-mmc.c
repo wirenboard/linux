@@ -984,11 +984,14 @@ static int sunxi_mmc_volt_switch(struct mmc_host *mmc, struct mmc_ios *ios)
     {
         struct sunxi_mmc_host *host = mmc_priv(mmc);
         if (host->reg_base == (void __iomem *)SUNXI_MMC0_BASE) {
+            printk_ratelimited("sunxi-mmc: switching voltage via GPIO on mmc0\n");
             if (mmc->ios.signal_voltage == MMC_SIGNAL_VOLTAGE_180) {
+                printk_ratelimited("sunxi-mmc: switching to 1.8V\n");
                 writel(0, (void __iomem *)SUNXI_PIO_PV_SET_CTL);
                 return 0;
             }
             if (mmc->ios.signal_voltage == MMC_SIGNAL_VOLTAGE_330) {
+                printk_ratelimited("sunxi-mmc: switching to 3.3V\n");
                 writel(1, (void __iomem *)SUNXI_PIO_PV_SET_CTL);
                 return 0;
             }
