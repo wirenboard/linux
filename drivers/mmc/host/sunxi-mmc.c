@@ -967,6 +967,9 @@ static void sunxi_mmc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 	sunxi_mmc_set_clk(host, ios);
 }
 
+#define SUNXI_MMC0_BASE        0x04020000
+#define SUNXI_PIO_PV_SET_CTL   0x0300B350
+
 static int sunxi_mmc_volt_switch(struct mmc_host *mmc, struct mmc_ios *ios)
 {
 	int ret;
@@ -976,6 +979,22 @@ static int sunxi_mmc_volt_switch(struct mmc_host *mmc, struct mmc_ios *ios)
 		ret = mmc_regulator_set_vqmmc(mmc, ios);
 		return ret < 0 ? ret : 0;
 	}
+
+    /* if it is MMC0 and signal voltages are 1.8V or 3.3V, we can switch via GPIO? */
+    {
+        struct sunxi_mmc_host *host = mmc_priv(mmc);
+        if (host->reg_base == (void __iomem *)SUNXI_MMC0_BASE) {
+            if (mmc->ios.signal_voltage == MMC_SIGNAL_VOLTAGE_180) {
+                writel(0, (void __iomem *)SUNXI_PIO_PV_SET_CTL);
+                return 0;
+            }
+            if (mmc->ios.signal_voltage == MMC_SIGNAL_VOLTAGE_330) {
+                writel(1, (void __iomem *)SUNXI_PIO_PV_SET_CTL);
+                return 0;
+            }
+            return -EINVAL;
+        }
+    }
 
 	/* no vqmmc regulator, assume fixed regulator at 3/3.3V */
 	if (mmc->ios.signal_voltage == MMC_SIGNAL_VOLTAGE_330)
