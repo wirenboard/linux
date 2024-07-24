@@ -984,8 +984,10 @@ static int sunxi_mmc_volt_switch(struct mmc_host *mmc, struct mmc_ios *ios)
 
     /* if it is MMC0 and signal voltages are 1.8V or 3.3V, we can switch via GPIO? */
     {
-        printk("sunxi-mmc: switching voltage via GPIO\n");
         struct sunxi_mmc_host *host = mmc_priv(mmc);
+
+        printk("sunxi-mmc: switching voltage via GPIO\n");
+        printk("reg_base: %p\n", host->reg_base);
         if (host->reg_base == (void __iomem *)SUNXI_MMC0_BASE) {
             printk("sunxi-mmc: switching voltage via GPIO on mmc0\n");
             if (mmc->ios.signal_voltage == MMC_SIGNAL_VOLTAGE_180) {
