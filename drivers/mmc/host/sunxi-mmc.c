@@ -1002,7 +1002,7 @@ static int sunxi_mmc_volt_switch(struct mmc_host *mmc, struct mmc_ios *ios)
                 tmp = readl((void __iomem *)SUNXI_PIO_POW_MODE_SEL);
                 tmp &= ~(1 << 5);
                 writel(tmp, (void __iomem *)SUNXI_PIO_POW_MODE_SEL);
-                writel(1, (void __iomem *)SUNXI_PIO_PV_SET_CTL)
+                writel(1, (void __iomem *)SUNXI_PIO_PV_SET_CTL);
                 udelay(100);
                 return 0;
             }
