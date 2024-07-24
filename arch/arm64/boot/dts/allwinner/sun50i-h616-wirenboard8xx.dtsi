@@ -1108,6 +1108,9 @@
 	cd-gpios = <&pio PF 6 GPIO_ACTIVE_LOW>;
 	status = "okay";
 	vmmc-supply = <&reg_dcdc1>, <&vdd_sd_power>;
+	sd-uhs-sdr25;
+	sd-uhs-sdr50;
+	sd-uhs-sdr104;
 };
 
 &mmc2 {
