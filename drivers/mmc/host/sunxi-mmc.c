@@ -9,6 +9,8 @@
  * (C) Copyright 2017 Sootech SA
  */
 
+#define DEBUG
+
 #include <linux/clk.h>
 #include <linux/clk/sunxi-ng.h>
 #include <linux/delay.h>
