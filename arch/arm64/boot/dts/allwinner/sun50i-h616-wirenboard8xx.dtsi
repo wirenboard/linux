@@ -218,6 +218,16 @@
 		};
 	};
 
+	iio-hwmon-axp-wbmz5-temp {
+		compatible = "iio-hwmon";
+		io-channels = <&axp_wbmz5_adc 0>;
+	};
+
+	iio-hwmon-axp-wbmz5 {
+		compatible = "iio-hwmon";
+		io-channels = <&axp_wbmz5_adc 0>, <&axp_wbmz5_adc 1>, <&axp_wbmz5_adc 2>;
+	};
+
 	iio-hwmon-pcb-temp {
 		compatible = "iio-hwmon";
 		io-channels = <&wbec_adc 5>;
@@ -373,7 +383,7 @@
 
 			status = "okay";
 
-			axp_adc: adc {
+			axp_wbmz5_adc: adc {
 				compatible = "x-powers,axp221-adc";
 				#io-channel-cells = <1>;
 			};
