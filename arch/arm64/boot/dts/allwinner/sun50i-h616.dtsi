@@ -510,8 +510,8 @@
 			reg = <0x05020000 0x10000>;
 			interrupts = <GIC_SPI 14 IRQ_TYPE_LEVEL_HIGH>;
 			interrupt-names = "macirq";
-			clocks = <&ccu CLK_BUS_EMAC0>, <&ccu CLK_EMAC_25M>;
-			clock-names = "stmmaceth", "pclk";
+			clocks = <&ccu CLK_BUS_EMAC0>;
+			clock-names = "stmmaceth";
 			resets = <&ccu RST_BUS_EMAC0>;
 			reset-names = "stmmaceth";
 			syscon = <&syscon>;
@@ -529,8 +529,8 @@
 			reg = <0x05030000 0x10000>;
 			interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
 			interrupt-names = "macirq";
-			clocks = <&ccu CLK_BUS_EMAC1>, <&ccu CLK_EMAC_25M>;
-			clock-names = "stmmaceth", "pclk";
+			clocks = <&ccu CLK_BUS_EMAC1>;
+			clock-names = "stmmaceth";
 			resets = <&ccu RST_BUS_EMAC1>;
 			reset-names = "stmmaceth";
 			syscon = <&syscon>;

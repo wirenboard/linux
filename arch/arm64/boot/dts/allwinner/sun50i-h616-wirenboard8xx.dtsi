@@ -1214,6 +1214,9 @@
 };
 
 &emac0 {
+	// grab external PHY clock
+	clocks = <&ccu CLK_BUS_EMAC0>, <&ccu CLK_EMAC_25M>;
+	clock-names = "stmmaceth", "pclk";
 	pinctrl-names = "default";
 	pinctrl-0 = <&ext_emac0_rmii_pins>;
 	phy-mode = "rmii";
@@ -1225,6 +1228,9 @@
 };
 
 &emac1 {
+	// grab external PHY clock
+	clocks = <&ccu CLK_BUS_EMAC1>, <&ccu CLK_EMAC_25M>;
+	clock-names = "stmmaceth", "pclk";
 	pinctrl-names = "default";
 	pinctrl-0 = <&ext_emac1_rmii_pins>;
 	phy-mode = "rmii";
