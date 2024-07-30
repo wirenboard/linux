@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb18) UNRELEASED; urgency=medium
+
+  * check idle modes 
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Tue, 30 Jul 2024 19:49:56 +0500
+
 linux-wb (6.8.0-wb17) stable; urgency=medium
 
   * wb8: fix wmbz5-battery temperature sensor
@@ -28,18 +34,6 @@ linux-wb (6.8.0-wb13) stable; urgency=medium
   * pwrkey-wbec: make function static (get rid of warning)
 
  -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Wed, 10 Jul 2024 20:56:34 +0300
-
-linux-wb (6.8.0-wb12) stable; urgency=medium
-
-  * wb8: proper thermal limits and throttling
-
- -- Evgeny Boger <boger@wirenboard.com>  Fri, 05 Jul 2024 02:38:13 +0300
-
-linux-wb (6.8.0-wb11) stable; urgency=medium
-
-  * fix wbec rtc: notify userspace that 1s interrupts are not supported
-
- -- Evgeny Boger <boger@wirenboard.com>  Fri, 05 Jul 2024 00:42:31 +0300
 
 linux-wb (6.8.0-wb10) stable; urgency=medium
 
