@@ -1,0 +1,201 @@
+/dts-v1/;
+#include "sun50i-h616-wirenboard8xx.dtsi"
+
+/delete-node/ &pinctrl_mod2_i2c_gpio;
+/delete-node/ &pinctrl_mod2_txrx_gpio;
+/delete-node/ &pinctrl_mod2_txrx_uart;
+/delete-node/ &pinctrl_mod2_de_gpio;
+/delete-node/ &pinctrl_mod3_i2c_gpio;
+/delete-node/ &pinctrl_mod3_txrx_gpio;
+/delete-node/ &pinctrl_mod3_txrx_uart;
+/delete-node/ &pinctrl_mod3_de_gpio;
+
+&pio {
+	gpio-line-names =
+	/* PA */
+	"", "", "", "",  /* 0-3 */
+	"", "", "", "",  /* 4-7 */
+	"", "", "WBIO SCL", "WBIO SDA",  /* 8-11 */
+	"RED LED", "", "", "",  /* 12-15 */
+	"", "", "", "",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PB */
+	"", "", "", "",  /* 0-3 */
+	"", "", "", "",  /* 4-7 */
+	"", "", "", "",  /* 8-11 */
+	"", "", "", "",  /* 12-15 */
+	"", "", "", "",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PC */
+	"", "", "", "",  /* 0-3 */
+	"", "", "", "",  /* 4-7 */
+	"", "", "", "",  /* 8-11 */
+	"BAT SCK", "", "", "",  /* 12-15 */
+	"", "", "", "",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PD */
+	"", "", "", "",  /* 0-3 */
+	"", "", "", "",  /* 4-7 */
+	"", "", "MOD4 RTS", "",  /* 8-11 */
+	"W1", "BAT SDA", "", "RS-485-2 RTS",  /* 12-15 */
+	"RS-485-1 RTS", "RS-485-1 FAILSAFE", "RS-485-2 FAILSAFE", "RS-485-1 TERMINATION",  /* 16-19 */
+	"A4 IN", "RS-485-2 TERMINATION", "", "A2 OUT",  /* 20-23 */
+	"W2", "A3 IN", "", "GREEN LED",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PE */
+	"RTC SCL", "", "SIM_SELECT", "",  /* 0-3 */
+	"GSM ON", "A1 OUT", "", "EC INT",  /* 4-7 */
+	"", "USB0 ON", "", "",  /* 8-11 */
+	"GSM STATUS", "GSM ON", "CAN RX", "WI-FI ON",  /* 12-15 */
+	"MICROSD POWER", "", "EC RESET", "RTC SDA",  /* 16-19 */
+	"WBIO INT", "W2 UP", "EC SWCLK/BOOT0", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PF */
+	"MICROSD D1", "MICROSD D0", "MICROSD CLK", "MICROSD CMD",  /* 0-3 */
+	"MICROSD D3", "MICROSD D2", "MICROSD CD", "",  /* 4-7 */
+	"", "", "", "",  /* 8-11 */
+	"", "", "", "",  /* 12-15 */
+	"", "", "", "",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PG */
+	"", "SOM SPI MISO", "", "",  /* 0-3 */
+	"", "", "RS-485-2 TX", "RS-485-2 RX",  /* 4-7 */
+	"W1 UP", "A3 OUT", "X32FKOUT", "A4 OUT",  /* 8-11 */
+	"ON PERIPH", "5V_OUT ON", "GSM PWRKEY", "RS-485-1 TX",  /* 12-15 */
+	"RS-485-1 RX", "", "", "",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PH */
+	"DEBUG UART TX", "DEBUG UART RX", "MOD4 TX", "MOD4 RX",  /* 0-3 */
+	"A2 IN", "EC CS", "EC CLK", "EC MOSI",  /* 4-7 */
+	"EC MISO", "A1 IN", "PUSHBUTTON", "",  /* 8-11 */
+	"", "", "", "",  /* 12-15 */
+	"", "", "", "",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "",  /* 28-31 */
+	/* PI */
+	"", "", "", "",  /* 0-3 */
+	"", "", "", "CAN TX",  /* 4-7 */
+	"", "", "", "",  /* 8-11 */
+	"", "MOD3 TX", "MOD3 RX", "MOD3 RTS",  /* 12-15 */
+	"", "", "", "",  /* 16-19 */
+	"", "", "", "",  /* 20-23 */
+	"", "", "", "",  /* 24-27 */
+	"", "", "", "";  /* 28-31 */
+
+	/* MOD3 */
+	pinctrl_mod3_i2c_gpio: mod3-txrx-i2c-pins {
+		pins = "PI13", "PI14";
+		function = "gpio_in";
+		bias-pull-up;
+	};
+
+	pinctrl_mod3_txrx_gpio: mod3-txrx-gpio-pins {
+		pins = "PI13", "PI14";
+		function = "gpio_in";
+	};
+
+	pinctrl_mod3_txrx_uart: mod3-txrx-uart-pins {
+		pins = "PI13", "PI14";
+		function = "uart4";
+	};
+
+	pinctrl_mod3_de_gpio: mod3-de-gpio-pins {
+		pins = "PI15";
+		function = "gpio_in";
+	};
+
+	/* MOD4 */
+	pinctrl_mod4_i2c_gpio: mod4-txrx-i2c-pins {
+		pins = "PH2", "PH3";
+		function = "gpio_in";
+		bias-pull-up;
+	};
+
+	pinctrl_mod4_txrx_gpio: mod4-txrx-gpio-pins {
+		pins = "PH2", "PH3";
+		function = "gpio_in";
+	};
+
+	pinctrl_mod4_txrx_uart: mod4-txrx-uart-pins {
+		pins = "PH2", "PH3";
+		function = "uart5";
+	};
+
+	pinctrl_mod4_de_gpio: mod4-de-gpio-pins {
+		pins = "PD10";
+		function = "gpio_in";
+	};
+};
+
+&onewire_w1 {
+	compatible = "w1-gpio";
+	gpios = <&pio PD 12 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+	pu-gpios = <&pio PG 8 GPIO_ACTIVE_HIGH>;
+	status = "okay";
+};
+
+&onewire_w2 {
+	compatible = "w1-gpio";
+	gpios = <&pio PD 24 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+	pu-gpios = <&pio PE 21 GPIO_ACTIVE_HIGH>;
+	status = "okay";
+};
+
+&reg_periph_on {
+	gpio = <&pio PG 12 GPIO_ACTIVE_HIGH>;
+};
+
+&gpio_5v_out {
+	io-gpios = <&pio PG 13 GPIO_ACTIVE_HIGH>;
+};
+
+&reg_usb_vbus {
+	gpio = <&pio PE 9 GPIO_ACTIVE_HIGH>;
+};
+
+&wbc_modem {
+	power-gpios = <&pio PE 4 GPIO_ACTIVE_HIGH>;
+};
+
+&usbphy {
+	/delete-property/ usb0_id_det-gpios;
+	/delete-property/ usb0_vbus-supply;
+	usb3_vbus-supply = <&reg_usb_vbus>;
+};
+
+&reg_wifi_on {
+	gpio = <&pio PE 15 GPIO_ACTIVE_HIGH>;
+	enable-active-high;
+};
+
+&ohci3 {
+	status = "okay";
+};
+
+&ehci3 {
+	status = "okay";
+};
+
+/* MOD1 is provided by WB EC */
+
+/* MOD2 is provided by WB EC */
+
+&uart4 { /* MOD3 */
+	pinctrl-0 = <&pinctrl_mod3_txrx_uart>;
+};
+
+&uart5 { /* MOD4 */
+	pinctrl-0 = <&pinctrl_mod4_txrx_uart>;
+};
