@@ -4,9 +4,13 @@ INITRAMFS_DIR="/usr/src/wb-initramfs/$KERNEL_FLAVOUR"
 
 setup_kernel_vars() {
 	case "$KERNEL_FLAVOUR" in
-		# TODO: add supported targets here
+		wb8)
+			DEBARCH=arm64
+			KERNEL_DEFCONFIG="defconfig wb8.config"
+			KDEB_WBDESC="Wiren Board 8"
+			;;
 		*)
-			echo "Unsupported KERNEL_FLAVOUR, please specify one of: <TODO>"
+			echo "Unsupported KERNEL_FLAVOUR, please specify one of: wb8"
 			return 1
 	esac
 
