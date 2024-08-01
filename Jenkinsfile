@@ -1,1 +1,1 @@
-buildWbKernel defaultTargets: ''  // TODO: add default targets
+buildWbKernel defaultTargets: 'wb8'
