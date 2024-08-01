@@ -45,3 +45,9 @@ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h616-x96-mate.dtb
 dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h618-orangepi-zero2w.dtb
 dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h618-orangepi-zero3.dtb
 dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h618-transpeed-8k618-t.dtb
+dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h616-wirenboard8xx.dtb
+dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h616-wirenboard843.dtb
+
+# Enables support for device-tree overlays
+DTC_FLAGS_sun50i-h616-wirenboard8xx := -@
+DTC_FLAGS_sun50i-h616-wirenboard843 := -@
