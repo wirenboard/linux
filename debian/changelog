@@ -1,0 +1,113 @@
+linux-wb (6.8.0-wb100) stable; urgency=medium
+
+  * wb8: rebase branch, prepare kernel for release. no intended changes
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Fri, 09 Aug 2024 17:24:55 +0500
+
+linux-wb (6.8.0-wb17) stable; urgency=medium
+
+  * wb8: fix wmbz5-battery temperature sensor
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Thu, 25 Jul 2024 13:07:33 +0500
+
+linux-wb (6.8.0-wb16) stable; urgency=medium
+
+  * w1-gpio: add strong pull-up support
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Tue, 23 Jul 2024 15:15:35 +0500
+
+linux-wb (6.8.0-wb15) stable; urgency=medium
+
+  * wb8 defconfig: add nftables
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Mon, 22 Jul 2024 17:47:13 +0300
+
+linux-wb (6.8.0-wb14) stable; urgency=medium
+
+  * wb8 dts: add 1-Wire pins
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Fri, 12 Jul 2024 19:05:00 +0400
+
+linux-wb (6.8.0-wb13) stable; urgency=medium
+
+  * mfd-wbec: fix power-off handler (switch to the sys-off handler API)
+  * pwrkey-wbec: make function static (get rid of warning)
+
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Wed, 10 Jul 2024 20:56:34 +0300
+
+linux-wb (6.8.0-wb12) stable; urgency=medium
+
+  * wb8: proper thermal limits and throttling
+
+ -- Evgeny Boger <boger@wirenboard.com>  Fri, 05 Jul 2024 02:38:13 +0300
+
+linux-wb (6.8.0-wb11) stable; urgency=medium
+
+  * fix wbec rtc: notify userspace that 1s interrupts are not supported
+
+ -- Evgeny Boger <boger@wirenboard.com>  Fri, 05 Jul 2024 00:42:31 +0300
+
+linux-wb (6.8.0-wb10) stable; urgency=medium
+
+  * wb8 defconfig: add exfat & ntfs
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Mon, 01 Jul 2024 18:05:21 +0300
+
+linux-wb (6.8.0-wb9) stable; urgency=medium
+
+  * add missing PPP modules needed for modem connection
+
+ -- Evgeny Boger <boger@wirenboard.com>  Wed, 26 Jun 2024 02:19:11 +0300
+
+linux-wb (6.8.0-wb8) stable; urgency=medium
+
+  * wb8: fix WBMZ5-BATTERY by adding special AXP driver mode
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Thu, 20 Jun 2024 10:42:21 +0500
+
+linux-wb (6.8.0-wb7) UNRELEASED; urgency=medium
+
+  * wb8: dts: detect lockups and reboot on hangs and lockups
+    this can be useful for mmc-, cpu- and other hardware-related hangs.
+
+  *  clk: sunxi-ng: h616: switch CPU to backup clock source when changing
+     frequency.  In our test this fix significantly improved the stability,
+     especially at low core voltages.
+
+ -- Evgeny Boger <boger@wirenboard.com>  Mon, 17 Jun 2024 21:18:31 +0300
+
+linux-wb (6.8.0-wb6) stable; urgency=medium
+
+  * wb8 dts: rename gpios
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Wed, 29 May 2024 17:05:21 +0300
+
+linux-wb (6.8.0-wb5) stable; urgency=medium
+
+  * wbec: add 'uid' sysfs attribute
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Mon, 20 May 2024 16:52:38 +0500
+
+linux-wb (6.8.0-wb4) stable; urgency=medium
+
+  * wb8 dts: fix leds blinking at boot time
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Fri, 17 May 2024 21:11:42 +0300
+
+linux-wb (6.8.0-wb3) stable; urgency=medium
+
+  * fix RX glitches on RS-485 ports
+
+ -- Evgeny Boger <boger@wirenboard.com>  Fri, 17 May 2024 01:37:17 +0300
+
+linux-wb (6.8.0-wb2) stable; urgency=medium
+
+  * fix USB Network on WB8
+
+ -- Evgeny Boger <boger@wirenboard.com>  Wed, 15 May 2024 20:21:37 +0300
+
+linux-wb (6.8.0-wb1) stable; urgency=medium
+
+  * initial release for wb8
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Mon, 04 Mar 2024 14:59:57 +0500
