@@ -81,7 +81,7 @@ static const struct serial8250_config uart_config[] = {
 		.tx_loadsz	= 16,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
 		.rxtrig_bytes	= {1, 4, 8, 14},
-		.flags		= UART_CAP_FIFO | UART_CAP_NOTEMT,
+		.flags		= UART_CAP_FIFO,
 	},
 	[PORT_CIRRUS] = {
 		.name		= "Cirrus",
