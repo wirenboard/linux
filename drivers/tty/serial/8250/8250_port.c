@@ -1486,6 +1486,8 @@ static inline void __stop_tx(struct uart_8250_port *p)
 		u16 lsr = serial_lsr_in(p);
 		u64 stop_delay = 0;
 
+        printk("NOTEMT: %d\n", p->capabilities & UART_CAP_NOTEMT);
+
 		if (!(lsr & UART_LSR_THRE))
 			return;
 		/*

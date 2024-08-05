@@ -473,6 +473,8 @@ static void dw8250_quirks(struct uart_port *p, struct dw8250_data *data)
 			p->serial_out = dw8250_serial_out32be;
 		}
 
+        printk("QUIRK_SUN50I_H616: %d\n", quirks & DW_UART_QUIRK_SUN50I_H616);
+
 		if (quirks & DW_UART_QUIRK_ARMADA_38X)
 			p->serial_out = dw8250_serial_out38x;
 		if (quirks & DW_UART_QUIRK_SUN50I_H616)
