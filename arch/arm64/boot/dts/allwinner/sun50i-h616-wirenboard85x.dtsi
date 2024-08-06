@@ -52,7 +52,7 @@
 	"RTC SCL", "", "SIM_SELECT", "",  /* 0-3 */
 	"GSM ON", "A1 OUT", "", "EC INT",  /* 4-7 */
 	"", "USB0 ON", "", "",  /* 8-11 */
-	"GSM STATUS", "GSM ON", "CAN RX", "WI-FI ON",  /* 12-15 */
+	"GSM STATUS", "", "CAN RX", "WI-FI ON",  /* 12-15 */
 	"MICROSD POWER", "", "EC RESET", "RTC SDA",  /* 16-19 */
 	"WBIO INT", "W2 UP", "EC SWCLK/BOOT0", "",  /* 20-23 */
 	"", "", "", "",  /* 24-27 */
