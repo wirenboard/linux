@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb169) stable; urgency=medium
+
+  * i2c-wbio: cherry-pick i2c bus recovery logic (mv64xxx driver)
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Wed, 07 Aug 2024 16:21:22 +0300
+
 linux-wb (5.10.35-wb168) stable; urgency=medium
 
   * add CAN SAE J1939 support built-in
