@@ -1,12 +1,12 @@
 /dts-v1/;
 #include "sun50i-h616-wirenboard8xx.dtsi"
 
-// This file is used only for updating via FIT
-// Should be compatible to both WB8 and WB85 not to break WBEC flashing logic
+// This file is used for compatibility with already produced test boards
+// and should be removed when production starts.
 
 / {
-	model = "Wiren Board rev. 8 (T507) bootlet";
-	compatible = "wirenboard,wirenboard-85x", "wirenboard,wirenboard-8xx", "allwinner,sun50i-h616";
+	model = "Wiren Board rev. 8.4.3 (T507)";
+	compatible = "wirenboard,wirenboard-843", "wirenboard,wirenboard-8xx", "allwinner,sun50i-h616";
 
 	a1_volt: a1-volt {
 		compatible = "voltage-divider";
@@ -44,36 +44,4 @@
 		output-ohms = <10000>;
 		full-ohms = <110000>;
 	};
-};
-
-&regulators {
-	reg_usb_a_vbus_wb8: regulator@21 {
-		compatible = "regulator-fixed";
-		gpio = <&pio PE 4 GPIO_ACTIVE_HIGH>;  // WB85: GSM POWER
-		regulator-name = "usb-vbus";
-		regulator-min-microvolt = <5000000>;
-		regulator-max-microvolt = <5000000>;
-		enable-active-high;
-	};
-	reg_usb_a_vbus_wb85: regulator@22 {
-		compatible = "regulator-fixed";
-		gpio = <&pio PE 9 GPIO_ACTIVE_HIGH>;  // WB8: 5V ON
-		regulator-name = "usb-vbus";
-		regulator-min-microvolt = <5000000>;
-		regulator-max-microvolt = <5000000>;
-		enable-active-high;
-	};
-};
-
-&ohci3 {
-	status = "okay";
-};
-
-&ehci3 {
-	status = "okay";
-};
-
-&usbphy {
-	usb0_vbus-supply = <&reg_usb_a_vbus_wb8>;
-	usb3_vbus-supply = <&reg_usb_a_vbus_wb85>;
 };
