@@ -102,6 +102,11 @@
 #define WBEC_REG_PWR_WBMZ_CAPACITY_PERCENT                  0xC8
 #define WBEC_REG_PWR_WBMZ_TEMPERATURE                       0xC9
 
+/* Region BUZZER_CTRL: RW */
+#define WBEC_REG_BUZZER_FREQ                                0xD0
+#define WBEC_REG_BUZZER_DUTY                                0xD1
+#define WBEC_REG_BUZZER_CTRL                                0xD2
+   #define WBEC_REG_BUZZER_CTRL_ENABLED_MSK                 BIT(0)
 
 struct wbec {
 	struct device *dev;
