@@ -10,6 +10,13 @@
 /delete-node/ &pinctrl_mod3_txrx_uart;
 /delete-node/ &pinctrl_mod3_de_gpio;
 /delete-node/ &i2c_wbmz;
+/delete-node/ &pwm;
+
+/ {
+	wirenboard {
+		pwm-buzzer = <0>;
+	};
+};
 
 &pio {
 	gpio-line-names =
@@ -206,4 +213,9 @@
 		compatible = "wirenboard,wbec-battery";
 		reg = <0>;
 	};
+	wbec_pwm: pwm@0 {
+			compatible = "wirenboard,wbec-pwm";
+			reg = <0>;
+			#pwm-cells = <3>;
+		};
 };
