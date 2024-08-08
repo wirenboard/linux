@@ -9,6 +9,7 @@
 /delete-node/ &pinctrl_mod3_txrx_gpio;
 /delete-node/ &pinctrl_mod3_txrx_uart;
 /delete-node/ &pinctrl_mod3_de_gpio;
+/delete-node/ &i2c_wbmz;
 
 &pio {
 	gpio-line-names =
@@ -198,4 +199,11 @@
 
 &uart5 { /* MOD4 */
 	pinctrl-0 = <&pinctrl_mod4_txrx_uart>;
+};
+
+&wbec {
+	wbec_battery: wbec-battery@0 {
+		compatible = "wirenboard,wbec-battery";
+		reg = <0>;
+	};
 };
