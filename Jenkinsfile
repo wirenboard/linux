@@ -1,1 +1,1 @@
-buildWbKernel defaultTargets: 'wb8'
+buildWbKernel defaultTargets: 'wb8 wb8x-bootlet'
