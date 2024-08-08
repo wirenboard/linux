@@ -9,8 +9,17 @@ setup_kernel_vars() {
 			KERNEL_DEFCONFIG="defconfig wb8.config"
 			KDEB_WBDESC="Wiren Board 8"
 			;;
+		wb8x-bootlet)
+			INITRAMFS_DIR="/usr/src/wb-initramfs/wb8x-bootlet"
+			DEBARCH=arm64
+			KERNEL_DEFCONFIG="defconfig wb8-bootlet.config"
+			BOOTLET_DTB=allwinner/sun50i-h616-wirenboard8xx.dtb
+			PROVIDES_BOOTLET_FOR_FITS=y
+			BOOTLET_DEPS=linux-image-wb8
+			KDEB_WBDESC="Wiren Board 8 (bootlet)"
+			;;
 		*)
-			echo "Unsupported KERNEL_FLAVOUR, please specify one of: wb8"
+			echo "Unsupported KERNEL_FLAVOUR, please specify one of: wb8, wb8x-bootlet"
 			return 1
 	esac
 
