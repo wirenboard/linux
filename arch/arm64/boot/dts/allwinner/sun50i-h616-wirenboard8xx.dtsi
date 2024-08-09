@@ -188,7 +188,7 @@
 				sort-order = <7>;
 			};
 
-			gpio_5v_out: 5V_OUT {
+			5V_OUT {
 				io-gpios = <&pio PE 9 GPIO_ACTIVE_HIGH>;
 				gpio-xlate-type = "bank_pin";
 				gpio-pins-per-bank = <32>;

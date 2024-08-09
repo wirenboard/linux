@@ -188,7 +188,7 @@
 				sort-order = <7>;
 			};
 
-			gpio_5v_out: 5V_OUT {
+			5V_OUT {
 				io-gpios = <&pio PG 13 GPIO_ACTIVE_HIGH>;
 				gpio-xlate-type = "bank_pin";
 				gpio-pins-per-bank = <32>;
@@ -302,7 +302,7 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	regulators: regulators {
+	regulators {
 		compatible = "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -909,7 +909,7 @@
 		overtemp_shutdown = <1>;
 		overtemp_value = <145>;
 
-		regulator0: regulators{
+		regulators{
 			reg_dcdc1: dcdc1 {
 				regulator-name = "dcdc1";
 				regulator-min-microvolt = <1500000>;
