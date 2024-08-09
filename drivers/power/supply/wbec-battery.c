@@ -37,7 +37,7 @@ union wbec_pwr_status_reg {
 		/* 0xC0 */  uint16_t wbmz_is_dead : 1;
 		/* 0xC0 */  uint16_t wbmz_is_inserted : 1;
 
-		/* Params: constant values dependion on battery/supercap */
+		/* Params: constant values depending on battery/supercap */
 		/* 0xC1 */  uint16_t wbmz_full_design_capacity;
 		/* 0xC2 */  uint16_t wbmz_voltage_min_design;
 		/* 0xC3 */  uint16_t wbmz_voltage_max_design;
@@ -224,8 +224,6 @@ static int wbec_battery_probe(struct platform_device *pdev)
 	wbec_battery = devm_kzalloc(dev, sizeof(*wbec_battery), GFP_KERNEL);
 	if (!wbec_battery)
 		return -ENOMEM;
-
-	// axp20x_batt->dev = &pdev->dev;
 
 	wbec_battery->regmap = dev_get_regmap(pdev->dev.parent, NULL);
 	platform_set_drvdata(pdev, wbec_battery);
