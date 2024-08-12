@@ -1235,6 +1235,7 @@ dtb-$(CONFIG_MACH_SUN8I) += \
 	sun8i-r40-wirenboard741.dtb \
 	sun8i-r40-wirenboard742.dtb \
 	sun8i-r40-wirenboard742-38071cb.dtb \
+	sun8i-r40-wirenboard74x-release-bench.dtb \
 	sun8i-s3-lichee-zero-plus.dtb \
 	sun8i-s3-pinecube.dtb \
 	sun8i-t3-cqa3t-bv3.dtb \

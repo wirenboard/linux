@@ -1,0 +1,52 @@
+/dts-v1/;
+#include "sun8i-r40-wirenboard74x.dtsi"
+
+/ {
+	model = "Wiren Board rev. 7.4.2 (A40i) release bench supervisor";
+	compatible = "wirenboard,wirenboard-742", "wirenboard,wirenboard-741", "wirenboard,wirenboard-74x", "wirenboard,wirenboard-73x", "wirenboard,wirenboard-72x", "wirenboard,wirenboard-720", "wirenboard,wirenboard-700", "wirenboard,wirenboard-7xx", "allwinner,sun8i-r40";
+
+	a1_volt: a1-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_adc 6>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <10000>;
+		full-ohms = <110000>;
+		status = "okay";
+	};
+
+	a2_volt: a2-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_adc 7>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <10000>;
+		full-ohms = <110000>;
+	};
+
+	a3_volt: a3-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_adc 8>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <10000>;
+		full-ohms = <110000>;
+	};
+
+	a4_volt: a4-volt {
+		compatible = "voltage-divider";
+		io-channels = <&wbec_adc 9>;
+		#io-channel-cells = <1>;
+
+		output-ohms = <10000>;
+		full-ohms = <110000>;
+	};
+};
+
+/*
+	Since wb7.2+, this port set for lower usb speed (for more stable debug-network).
+	While performing init-magic, we need max possible usb speed.
+*/
+&usb_otg {
+	/delete-property/ maximum-speed;
+};
