@@ -262,6 +262,6 @@ static struct platform_driver wbec_battery_driver = {
 module_platform_driver(wbec_battery_driver);
 
 MODULE_AUTHOR("Pavel Gasheev <pavel.gasheev@wirenboard.com>");
-MODULE_DESCRIPTION("Wiren Board 8 Embedded Controller Battery driver");
+MODULE_DESCRIPTION("Wiren Board Embedded Controller Battery driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:wbec-battery");
