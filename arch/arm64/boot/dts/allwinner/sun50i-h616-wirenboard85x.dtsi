@@ -395,19 +395,6 @@
 			resets = <&ccu RST_BUS_DMA>;
 			#dma-cells = <1>;
 		};
-
-		pwm: pwm@300A000 {
-			pinctrl-0 = <&pwm_ch1_pg_pins>;
-			pinctrl-names = "default";
-
-			compatible = "allwinner,sun50i-t507-pwm";
-			reg = <0x300A000 0x400>;
-			clocks = <&ccu CLK_BUS_PWM>, <&ccu CLK_APB1>, <&osc24M>;
-			clock-names = "bus", "apb0", "hosc";
-			resets = <&ccu RST_BUS_PWM>;
-			#pwm-cells = <0x3>;
-			status = "okay";
-		};
 	};
 
 	thermal-zones {
