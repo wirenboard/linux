@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 // vim: autoindent noexpandtab tabstop=4 shiftwidth=4
 /*
- * Copyright (C) 2023 Wiren Board
+ * Copyright (C) 2024 Wiren Board
  */
 
 /dts-v1/;
@@ -189,7 +189,7 @@
 			};
 
 			5V_OUT {
-				io-gpios = <&pio PE 9 GPIO_ACTIVE_HIGH>;
+				io-gpios = <&pio PG 13 GPIO_ACTIVE_HIGH>;
 				gpio-xlate-type = "bank_pin";
 				gpio-pins-per-bank = <32>;
 				output-high;
@@ -302,14 +302,14 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	regulators: regulators {
+	regulators {
 		compatible = "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <0>;
 
 		reg_usb_vbus: regulator@1 {
 			compatible = "regulator-fixed";
-			gpio = <&pio PE 4 GPIO_ACTIVE_HIGH>;
+			gpio = <&pio PE 9 GPIO_ACTIVE_HIGH>;
 			regulator-name = "usb-vbus";
 			regulator-min-microvolt = <5000000>;
 			regulator-max-microvolt = <5000000>;
@@ -318,7 +318,8 @@
 
 		reg_wifi_on: regulator@2 {
 			compatible = "regulator-fixed";
-			gpio = <&pio PE 15 GPIO_ACTIVE_LOW>;
+			gpio = <&pio PE 15 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
 			regulator-name = "wifi-on";
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
@@ -326,7 +327,7 @@
 
 		reg_periph_on: regulator@4 {
 			compatible = "regulator-fixed";
-			gpio = <&pio PG 13 GPIO_ACTIVE_HIGH>;
+			gpio = <&pio PG 12 GPIO_ACTIVE_HIGH>;
 			regulator-name = "periph-on";
 			regulator-min-microvolt = <5000000>;
 			regulator-max-microvolt = <5000000>;
@@ -433,14 +434,14 @@
 
 	onewire_w1: onewire_w1 {
 		compatible = "w1-gpio";
-		gpios = <&pio PD 24 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		gpios = <&pio PD 12 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
 		pu-gpios = <&pio PG 8 GPIO_ACTIVE_HIGH>;
 		status = "okay";
 	};
 
 	onewire_w2: onewire_w2 {
 		compatible = "w1-gpio";
-		gpios = <&pio PE 11 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		gpios = <&pio PD 24 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
 		pu-gpios = <&pio PE 21 GPIO_ACTIVE_HIGH>;
 		status = "okay";
 	};
@@ -451,6 +452,18 @@
 	};
 
 	soc {
+		dma: dma-controller@3002000 {
+			compatible = "allwinner,sun50i-h6-dma";
+			reg = <0x3002000 0x1000>;
+			interrupts = <GIC_SPI 42 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_DMA>, <&ccu CLK_MBUS_DMA>;
+			clock-names = "ahb", "mbus";
+			dma-channels = <16>;
+			dma-requests = <32>;
+			resets = <&ccu RST_BUS_DMA>;
+			#dma-cells = <1>;
+		};
+
 		pwm: pwm@300A000 {
 			pinctrl-0 = <&pwm_ch1_pg_pins>;
 			pinctrl-names = "default";
@@ -533,7 +546,7 @@
 			cooling-maps {
 				/*
 					The OPP voltages depends on revision and speed grade.
-				    Anyway:
+					Anyway:
 					2: 1200 MHz, 1.02V - 1.10V, 1.05V on ours
 					3: 1104 MHz, 1.00V (use it to go lower than 1.05V)
 					4: 1008 MHz, 0.94V - 1.02V, 0.95V on ours
@@ -541,9 +554,9 @@
 					6:  720 MHz, 0.90V
 				*/
 
-				/*
+				/* 
 					The first two maps are to limit the voltage.
-				    That's why we don't allow lower frequencies on the cooling device.
+					That's why we don't allow lower frequencies on the cooling device.
 				*/
 				map0 {
 					trip = <&cpu_max_for_1100mv>;
@@ -662,6 +675,7 @@
 	status = "okay";
 };
 
+
 &pio {
 	gpio-line-names =
 	/* PA */
@@ -694,17 +708,17 @@
 	/* PD */
 	"", "", "", "",  /* 0-3 */
 	"", "", "", "",  /* 4-7 */
-	"", "", "MOD3 RTS", "MOD1 RX",  /* 8-11 */
-	"CAN TXRX ON", "BAT SDA", "MOD4 RX", "RS-485-2 RTS",  /* 12-15 */
+	"", "", "MOD4 RTS", "",  /* 8-11 */
+	"W1", "BAT SDA", "", "RS-485-2 RTS",  /* 12-15 */
 	"RS-485-1 RTS", "RS-485-1 FAILSAFE", "RS-485-2 FAILSAFE", "RS-485-1 TERMINATION",  /* 16-19 */
-	"A4 IN", "", "", "A2 OUT",  /* 20-23 */
-	"W1", "A3 IN", "MOD4 TX", "GREEN LED",  /* 24-27 */
+	"A4 IN", "RS-485-2 TERMINATION", "", "A2 OUT",  /* 20-23 */
+	"W2", "A3 IN", "", "GREEN LED",  /* 24-27 */
 	"", "", "", "",  /* 28-31 */
 	/* PE */
 	"RTC SCL", "", "SIM_SELECT", "",  /* 0-3 */
-	"USB0 ON", "A1 OUT", "MOD4 RTS", "EC INT",  /* 4-7 */
-	"", "5V_OUT ON", "MOD1 TX", "W2",  /* 8-11 */
-	"GSM STATUS", "GSM ON", "CAN RX", "WI-FI ON",  /* 12-15 */
+	"GSM ON", "A1 OUT", "", "EC INT",  /* 4-7 */
+	"", "USB0 ON", "", "",  /* 8-11 */
+	"GSM STATUS", "", "CAN RX", "WI-FI ON",  /* 12-15 */
 	"MICROSD POWER", "", "EC RESET", "RTC SDA",  /* 16-19 */
 	"WBIO INT", "W2 UP", "EC SWCLK/BOOT0", "",  /* 20-23 */
 	"", "", "", "",  /* 24-27 */
@@ -721,14 +735,14 @@
 	/* PG */
 	"", "SOM SPI MISO", "", "",  /* 0-3 */
 	"", "", "RS-485-2 TX", "RS-485-2 RX",  /* 4-7 */
-	"W1 UP", "A3 OUT", "", "A4 OUT",  /* 8-11 */
-	"RS-485-2 TERMINATION", "ON PERIPH", "GSM PWRKEY", "RS-485-1 TX",  /* 12-15 */
-	"RS-485-1 RX", "MOD1 RTS", "USB0 ID", "BUZZER",  /* 16-19 */
+	"W1 UP", "A3 OUT", "X32FKOUT", "A4 OUT",  /* 8-11 */
+	"ON PERIPH", "5V_OUT ON", "GSM PWRKEY", "RS-485-1 TX",  /* 12-15 */
+	"RS-485-1 RX", "", "", "",  /* 16-19 */
 	"", "", "", "",  /* 20-23 */
 	"", "", "", "",  /* 24-27 */
 	"", "", "", "",  /* 28-31 */
 	/* PH */
-	"DEBUG UART TX", "DEBUG UART RX", "MOD3 TX", "MOD3 RX",  /* 0-3 */
+	"DEBUG UART TX", "DEBUG UART RX", "MOD4 TX", "MOD4 RX",  /* 0-3 */
 	"A2 IN", "EC CS", "EC CLK", "EC MOSI",  /* 4-7 */
 	"EC MISO", "A1 IN", "PUSHBUTTON", "",  /* 8-11 */
 	"", "", "", "",  /* 12-15 */
@@ -740,7 +754,7 @@
 	"", "", "", "",  /* 0-3 */
 	"", "", "", "CAN TX",  /* 4-7 */
 	"", "", "", "",  /* 8-11 */
-	"", "MOD2 TX", "MOD2 RX", "MOD2 RTS",  /* 12-15 */
+	"", "MOD3 TX", "MOD3 RX", "MOD3 RTS",  /* 12-15 */
 	"", "", "", "",  /* 16-19 */
 	"", "", "", "",  /* 20-23 */
 	"", "", "", "",  /* 24-27 */
@@ -781,46 +795,50 @@
 		function = "gpio_in";
 	};
 
-	/* MOD2 */
-	pinctrl_mod2_i2c_gpio: mod2-txrx-i2c-pins {
-		pins = "PI13", "PI14";
-		function = "gpio_in";
-		bias-pull-up;
-	};
+	/* MOD1 is provided by WB EC */
 
-	pinctrl_mod2_txrx_gpio: mod2-txrx-gpio-pins {
-		pins = "PI13", "PI14";
-		function = "gpio_in";
-	};
-
-	pinctrl_mod2_txrx_uart: mod2-txrx-uart-pins {
-		pins = "PI13", "PI14";
-		function = "uart4";
-	};
-
-	pinctrl_mod2_de_gpio: mod2-de-gpio-pins {
-		pins = "PI15";
-		function = "gpio_in";
-	};
+	/* MOD2 is provided by WB EC */
 
 	/* MOD3 */
 	pinctrl_mod3_i2c_gpio: mod3-txrx-i2c-pins {
-		pins = "PH2", "PH3";
+		pins = "PI13", "PI14";
 		function = "gpio_in";
 		bias-pull-up;
 	};
 
 	pinctrl_mod3_txrx_gpio: mod3-txrx-gpio-pins {
-		pins = "PH2", "PH3";
+		pins = "PI13", "PI14";
 		function = "gpio_in";
 	};
 
 	pinctrl_mod3_txrx_uart: mod3-txrx-uart-pins {
+		pins = "PI13", "PI14";
+		function = "uart4";
+	};
+
+	pinctrl_mod3_de_gpio: mod3-de-gpio-pins {
+		pins = "PI15";
+		function = "gpio_in";
+	};
+
+	/* MOD4 */
+	pinctrl_mod4_i2c_gpio: mod4-txrx-i2c-pins {
+		pins = "PH2", "PH3";
+		function = "gpio_in";
+		bias-pull-up;
+	};
+
+	pinctrl_mod4_txrx_gpio: mod4-txrx-gpio-pins {
+		pins = "PH2", "PH3";
+		function = "gpio_in";
+	};
+
+	pinctrl_mod4_txrx_uart: mod4-txrx-uart-pins {
 		pins = "PH2", "PH3";
 		function = "uart5";
 	};
 
-	pinctrl_mod3_de_gpio: mod3-de-gpio-pins {
+	pinctrl_mod4_de_gpio: mod4-de-gpio-pins {
 		pins = "PD10";
 		function = "gpio_in";
 	};
@@ -862,17 +880,7 @@
 
 /* UART3 pins are used for Ethernet */
 
-/* MOD1 is a software UART on PE10 (TX), PD11 (RX) */
-
-&uart4 { /* MOD2 */
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_mod2_txrx_uart>;
-
-	cts-override;
-	status = "disabled";
-};
-
-&uart5 { /* MOD3 */
+&uart4 { /* MOD3 */
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_mod3_txrx_uart>;
 
@@ -880,7 +888,13 @@
 	status = "disabled";
 };
 
-/* MOD4 is on PD26 (TX), PD14 (RX), but no actual UART is there */
+&uart5 { /* MOD4 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_mod4_txrx_uart>;
+
+	cts-override;
+	status = "disabled";
+};
 
 &r_i2c {
 	status = "okay";
@@ -895,7 +909,7 @@
 		overtemp_shutdown = <1>;
 		overtemp_value = <145>;
 
-		regulator0: regulators{
+		regulators{
 			reg_dcdc1: dcdc1 {
 				regulator-name = "dcdc1";
 				regulator-min-microvolt = <1500000>;
@@ -1226,14 +1240,9 @@
 // USB
 
 &usbphy {
-	usb0_vbus-supply = <&reg_usb_vbus>;
 	usb1_vbus-supply = <&reg_wifi_on>;
-
-	usb0_id_det-gpios = <&pio PG 18 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
-	wirenboard,mux-on-id-pin;
-
+	usb3_vbus-supply = <&reg_usb_vbus>;
 	dr_mode = "otg";
-
 	status = "okay";
 };
 
@@ -1278,9 +1287,17 @@
 		/* keeps compatibility in wb of-parsing tools */
 		gpio-xlate-type = "bank_pin";
 		gpio-pins-per-bank = <32>;
-		power-gpios = <&pio PE 13 GPIO_ACTIVE_HIGH>;
+		power-gpios = <&pio PE 4 GPIO_ACTIVE_HIGH>;
 		pwrkey-gpios = <&pio PG 14 GPIO_ACTIVE_HIGH>;
 		status-gpios = <&pio PE 12 GPIO_ACTIVE_LOW>;
 		simselect-gpios = <&pio PE 2 GPIO_ACTIVE_HIGH>;
 	};
+};
+
+&ohci3 {
+	status = "okay";
+};
+
+&ehci3 {
+	status = "okay";
 };
