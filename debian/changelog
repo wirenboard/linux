@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb101) stable; urgency=medium
+
+  * wb8: add wb85x.dtsi; wb851.dts; wirenboard8-bootlet.dts (common with wb8x & 85x)
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Fri, 16 Aug 2024 12:25:31 +0300
+
 linux-wb (6.8.0-wb100) stable; urgency=medium
 
   * wb8: rebase branch, prepare kernel for release. no intended changes
