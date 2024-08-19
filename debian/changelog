@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb101) stable; urgency=medium
+
+  * wb8: fix ethernet clocking in dtb
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Mon, 19 Aug 2024 11:23:04 +0500
+
 linux-wb (6.8.0-wb100) stable; urgency=medium
 
   * wb8: rebase branch, prepare kernel for release. no intended changes
