@@ -1,3 +1,11 @@
+linux-wb (6.8.0-wb103) stable; urgency=medium
+
+  * wb85x.dtsi: remove wbmz5 nodes
+  * add wbec-battery driver
+  * add wbec-pwm driver
+
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Thu, 22 Aug 2024 10:48:01 +0300
+
 linux-wb (6.8.0-wb102) stable; urgency=medium
 
   * wb8: add wb85x.dtsi; wb851.dts; wirenboard8-bootlet.dts (common with wb8x & 85x)
