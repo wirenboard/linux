@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb103) stable; urgency=medium
+
+  * wb8: add wireguard modules
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Mon, 26 Aug 2024 10:21:59 +0300
+
 linux-wb (6.8.0-wb102) stable; urgency=medium
 
   * wb8: add wb85x.dtsi; wb851.dts; wirenboard8-bootlet.dts (common with wb8x & 85x)
