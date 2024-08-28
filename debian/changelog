@@ -1,10 +1,10 @@
-linux-wb (6.8.0-wb103) stable; urgency=medium
+linux-wb (6.8.0-wb105) stable; urgency=medium
 
   * wb85x.dtsi: remove wbmz5 nodes
   * add wbec-battery driver
   * add wbec-pwm driver
 
- -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Thu, 22 Aug 2024 10:48:01 +0300
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Wed, 28 Aug 2024 16:12:50 +0300
 
 linux-wb (6.8.0-wb104) stable; urgency=medium
 
