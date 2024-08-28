@@ -31,9 +31,10 @@
 #include <linux/iio/consumer.h>
 #include <linux/mfd/axp20x.h>
 
-#define AXP20X_PWR_STATUS_BAT_CHARGING	BIT(2)
+#define AXP20X_PWR_STATUS_BAT_CURR_DIRECTION	BIT(2)
 
 #define AXP20X_PWR_OP_BATT_PRESENT	BIT(5)
+#define AXP20X_PWR_OP_CHARGING		BIT(6)
 #define AXP20X_PWR_OP_BATT_ACTIVATED	BIT(3)
 
 #define AXP209_FG_PERCENT		GENMASK(6, 0)
@@ -180,6 +181,28 @@ static int axp20x_get_constant_charge_current(struct axp20x_batt_ps *axp,
 	return 0;
 }
 
+static int axp20x_get_batt_current_ua(struct axp20x_batt_ps *axp, int *val)
+{
+	int ret = 0, reg, val1;
+
+	ret = regmap_read(axp->regmap, AXP20X_PWR_INPUT_STATUS,
+				&reg);
+	if (ret)
+		return ret;
+
+	if (reg & AXP20X_PWR_STATUS_BAT_CURR_DIRECTION) {
+		ret = iio_read_channel_processed(axp->batt_chrg_i, val);
+	} else {
+		ret = iio_read_channel_processed(axp->batt_dischrg_i, &val1);
+		*val = -val1;
+	}
+
+	/* IIO framework gives mA but Power Supply framework gives uA */
+	*val *= 1000;
+
+	return ret;
+}
+
 static int axp20x_battery_get_prop(struct power_supply *psy,
 				   enum power_supply_property psp,
 				   union power_supply_propval *val)
@@ -196,25 +219,37 @@ static int axp20x_battery_get_prop(struct power_supply *psy,
 			return ret;
 
 		val->intval = !!(reg & AXP20X_PWR_OP_BATT_PRESENT);
+
+		// Some PMICs fail to detect disconnected battery. Check volatge to be sure.
+		if (val->intval) {
+			ret = iio_read_channel_processed(axp20x_batt->batt_v,
+							&val1);
+
+			// 500 mV is hopefuly higher than noise and lower than any Li battery
+			if (!ret && val1 < 500)
+				val->intval = 0;
+		}
 		break;
 
 	case POWER_SUPPLY_PROP_STATUS:
-		ret = regmap_read(axp20x_batt->regmap, AXP20X_PWR_INPUT_STATUS,
+
+		ret = regmap_read(axp20x_batt->regmap, AXP20X_PWR_OP_MODE,
 				  &reg);
 		if (ret)
 			return ret;
 
-		if (reg & AXP20X_PWR_STATUS_BAT_CHARGING) {
+		if (reg & AXP20X_PWR_OP_CHARGING) {
 			val->intval = POWER_SUPPLY_STATUS_CHARGING;
 			return 0;
 		}
 
-		ret = iio_read_channel_processed(axp20x_batt->batt_dischrg_i,
-						 &val1);
+		ret = axp20x_get_batt_current_ua(axp20x_batt, &val1);
+
 		if (ret)
 			return ret;
 
-		if (val1) {
+		// 3 mA threshold to ignore noise on current shunt
+		if (val1 < -3000) {
 			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
 			return 0;
 		}
@@ -259,22 +294,11 @@ static int axp20x_battery_get_prop(struct power_supply *psy,
 		break;
 
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
-		ret = regmap_read(axp20x_batt->regmap, AXP20X_PWR_INPUT_STATUS,
-				  &reg);
+		ret = axp20x_get_batt_current_ua(axp20x_batt, &val->intval);
+
 		if (ret)
 			return ret;
 
-		if (reg & AXP20X_PWR_STATUS_BAT_CHARGING) {
-			ret = iio_read_channel_processed(axp20x_batt->batt_chrg_i, &val->intval);
-		} else {
-			ret = iio_read_channel_processed(axp20x_batt->batt_dischrg_i, &val1);
-			val->intval = -val1;
-		}
-		if (ret)
-			return ret;
-
-		/* IIO framework gives mA but Power Supply framework gives uA */
-		val->intval *= 1000;
 		break;
 
 	case POWER_SUPPLY_PROP_CAPACITY:
@@ -448,6 +472,29 @@ static int axp20x_set_voltage_min_design(struct axp20x_batt_ps *axp_batt,
 				  AXP20X_V_OFF_MASK, val1);
 }
 
+static int axp20x_set_charge_high_temp_thresh(struct axp20x_batt_ps *axp_batt,
+					unsigned ts_uv)
+{
+	unsigned val1 = ts_uv / 12800; // 12.8mV per LSB
+
+	if (val1 > 0xFF)
+		return -EINVAL;
+
+	return regmap_write(axp_batt->regmap, AXP20X_V_HTF_CHRG, val1);
+}
+
+static int axp20x_set_charge_low_temp_thresh(struct axp20x_batt_ps *axp_batt,
+					unsigned ts_uv)
+{
+	unsigned val1 = ts_uv / 12800; // 12.8mV per LSB
+
+	if (val1 > 0xFF)
+		return -EINVAL;
+
+	return regmap_write(axp_batt->regmap, AXP20X_V_LTF_CHRG, val1);
+}
+
+
 static int axp20x_battery_set_prop(struct power_supply *psy,
 				   enum power_supply_property psp,
 				   const union power_supply_propval *val)
@@ -561,6 +608,7 @@ static int axp20x_power_probe(struct platform_device *pdev)
 	struct power_supply_config psy_cfg = {};
 	struct power_supply_battery_info *info;
 	struct device *dev = &pdev->dev;
+	u32 tmp;
 
 	if (!of_device_is_available(pdev->dev.of_node))
 		return -ENODEV;
@@ -615,6 +663,12 @@ static int axp20x_power_probe(struct platform_device *pdev)
 	if (!power_supply_get_battery_info(axp20x_batt->batt, &info)) {
 		int vmin = info->voltage_min_design_uv;
 		int ccc = info->constant_charge_current_max_ua;
+		int vcv = info->constant_charge_voltage_max_uv;
+
+		if (vcv > 0 && axp20x_batt->data->set_max_voltage(axp20x_batt,
+								  vcv))
+			dev_err(&pdev->dev,
+				"couldn't set charge constant voltage from DT");
 
 		if (vmin > 0 && axp20x_set_voltage_min_design(axp20x_batt,
 							      vmin))
@@ -640,6 +694,13 @@ static int axp20x_power_probe(struct platform_device *pdev)
 	 */
 	axp20x_get_constant_charge_current(axp20x_batt,
 					   &axp20x_batt->max_ccc);
+
+	if (!of_property_read_u32(pdev->dev.of_node, "x-powers,charge-high-temp-microvolt", &tmp)) {
+		axp20x_set_charge_high_temp_thresh(axp20x_batt, tmp);
+	}
+	if (!of_property_read_u32(pdev->dev.of_node, "x-powers,charge-low-temp-microvolt", &tmp)) {
+		axp20x_set_charge_low_temp_thresh(axp20x_batt, tmp);
+	}
 
 	return 0;
 }
