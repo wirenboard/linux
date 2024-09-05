@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb170) stable; urgency=medium
+
+  * axp20x: fix charging status logic again, hopefully for the last time
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Thu, 05 Sep 2024 10:42:01 +0500
+
 linux-wb (5.10.35-wb169) stable; urgency=medium
 
   * i2c-wbio: cherry-pick i2c bus recovery logic (mv64xxx driver)
