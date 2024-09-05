@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb106) stable; urgency=medium
+
+  * axp20x: port battery charging status fix from 5.10
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.com>  Wed, 18 Sep 2024 16:35:43 +0500
+
 linux-wb (6.8.0-wb105) stable; urgency=medium
 
   * wb85x.dtsi: remove wbmz5 nodes
