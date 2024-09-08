@@ -86,6 +86,8 @@
 #define WBEC_REG_PWR_STATUS                                 0xC0
    #define WBEC_REG_PWR_STATUS_POWERED_FROM_WBMZ_MSK        BIT(0)
 
+#define WBEC_REG_LED_CTRL                                   0xD0
+   #define WBEC_REG_LED_CTRL_STATE_MSK                      BIT(0)
 
 struct wbec {
 	struct device *dev;

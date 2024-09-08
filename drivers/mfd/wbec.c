@@ -63,6 +63,11 @@ static const struct mfd_cell wbec_cells[] = {
 		.of_compatible = "wirenboard,wbec-rtc"
 	},
 	{
+		.name = "wbec-led",
+		.id = PLATFORM_DEVID_NONE,
+		.of_compatible = "wirenboard,wbec-led"
+	},
+	{
 		.name = "wbec-pwrkey",
 		.id = PLATFORM_DEVID_NONE,
 		.of_compatible = "wirenboard,wbec-pwrkey"
