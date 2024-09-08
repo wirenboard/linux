@@ -12,7 +12,8 @@ maintainers:
 description: |
   Wiren Board Embedded Controller (WB EC, wbec) is an MCU with special firmware
   installed on Wiren Board Automation Controller since HW revision 7.4.
-  WB EC is MFD device and provides such function as RTC, WDT, GPIO, ADC, PWRKEY.
+  WB EC is MFD device and provides such function as RTC, WDT, GPIO, ADC, LED,
+  PWRKEY.
 
 properties:
   compatible:
@@ -77,6 +78,11 @@ examples:
           compatible = "wirenboard,wbec-adc";
           reg = <0>;
           #io-channel-cells = <1>;
+        };
+
+        wbec_led: wbec-led@0 {
+          compatible = "wirenboard,wbec-led";
+          reg = <0>;
         };
 
         vin: wbec-power@0 {
