@@ -13,6 +13,7 @@
 #include <linux/regmap.h>
 
 #define WBEC_ID                                             0x3CD2
+#define WBEC_REGMAP_PAD_WORDS_COUNT			    5
 
 /* Region INFO: RO */
 #define WBEC_REG_INFO_WBEC_ID                               0x00
@@ -107,6 +108,7 @@
 
 struct wbec {
 	struct device *dev;
+	struct spi_device *spi;
 	struct regmap *regmap;
 	struct dentry *wbec_dir;
 };
