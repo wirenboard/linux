@@ -38,7 +38,8 @@ static const struct regmap_config wbec_regmap_config = {
 	.reg_bits = 16,
 	.read_flag_mask = BIT(7),
 	.val_bits = 16,
-	.max_register = 0xFF,
+	.pad_bits = 16 * WBEC_REGMAP_PAD_WORDS_COUNT,
+	.max_register = 0x130,
 };
 
 static const struct mfd_cell wbec_cells[] = {
@@ -81,6 +82,11 @@ static const struct mfd_cell wbec_cells[] = {
 		.name = "wbec-battery",
 		.id = PLATFORM_DEVID_NONE,
 		.of_compatible = "wirenboard,wbec-battery"
+	},
+	{
+		.name = "wbec-uart",
+		.id = PLATFORM_DEVID_NONE,
+		.of_compatible = "wirenboard,wbec-uart"
 	},
 };
 
@@ -333,6 +339,7 @@ static int wbec_probe(struct spi_device *spi)
 		return -ENOMEM;
 
 	wbec->dev = &spi->dev;
+	wbec->spi = spi;
 
 	spi->mode = SPI_MODE_0;
 	spi->bits_per_word = 8;
