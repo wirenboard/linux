@@ -557,6 +557,7 @@
 
 	wbec: wbec@0 {
 		spi-max-frequency = <1000000>;
+		spi-cs-inactive-delay-ns = <100000>;
 
 		compatible = "wirenboard,wbec";
 		reg = <0>;
@@ -587,8 +588,12 @@
 
 			gpio-controller;
 			#gpio-cells = <2>;
-			ngpios = <5>;
-			gpio-line-names = "EC A1", "EC A2", "EC A3", "EC A4", "V_OUT ON";
+			ngpios = <11>;
+			gpio-line-names =
+				"EC A1", "EC A2", "EC A3", "EC A4",
+				"V_OUT ON",
+				"MOD1 TX", "MOD1 RX", "MOD1 RTS",
+				"MOD2 TX", "MOD2 RX", "MOD2 RTS";
 		};
 
 		wbec_adc: wbec-adc@0 {
@@ -611,6 +616,15 @@
 			compatible = "wirenboard,wbec-pwm";
 			reg = <0>;
 			#pwm-cells = <3>;
+		};
+
+		wbec_uart: wbec-uart@0 {
+			compatible = "wirenboard,wbec-uart";
+			reg = <0>;
+			interrupt-parent = <&pio>;
+			interrupts = <PE 7 IRQ_TYPE_EDGE_RISING>;
+
+			linux,rs485-enabled-at-boot-time;
 		};
 	};
 };
