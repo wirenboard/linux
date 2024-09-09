@@ -41,7 +41,9 @@ static int wbec_gpio_probe(struct platform_device *pdev)
 	config.ngpio = ngpios;
 	config.regmap = wbec->regmap;
 	config.parent = dev;
-	config.reg_set_base = WBEC_REG_GPIO;
+	config.reg_set_base = WBEC_REG_GPIO_CTRL;
+	config.reg_dat_base = WBEC_REG_GPIO_STATE;
+	config.reg_dir_out_base = WBEC_REG_GPIO_DIR;
 	config.ngpio_per_reg = WBEC_GPIO_PER_REG;
 	config.reg_stride = 1;
 
