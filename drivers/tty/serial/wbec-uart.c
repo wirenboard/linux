@@ -13,16 +13,9 @@
 #include <linux/kthread.h>
 #include <linux/mutex.h>
 
-#define DRIVER_NAME "wbec-uart"
-
-#define printk(...)
-#define dev_info(...)
-#define snprintf(...)
-
+#define DRIVER_NAME 				"wbec-uart"
 #define WBEC_UART_PORT_COUNT			2
-
 #define WBEC_REGMAP_READ_BIT			BIT(15)
-
 #define WBEC_UART_REGMAP_BUFFER_SIZE		64
 
 struct wbec_uart_regmap_address {
@@ -149,7 +142,6 @@ static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
 	struct spi_message msg;
 	struct spi_transfer transfer = {};
 	int ret, port_i;
-	char str[256];
 	u8 bytes_sent_in_xfer[2] = {0, 0};
 
 	// prepare tx data
@@ -158,17 +150,17 @@ static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
 		struct uart_port *port = &wbec_one_port->port;
 		struct circ_buf *xmit = &port->state->xmit;
 
-		printk(KERN_INFO "process port_i=%d\n", port_i);
+		// printk(KERN_INFO "process port_i=%d\n", port_i);
 
 		if (uart_circ_empty(xmit) || uart_tx_stopped(port)) {
-			printk(KERN_INFO "empty or stopped\n");
+			// printk(KERN_INFO "empty or stopped\n");
 			tx.tx[port_i].bytes_to_send_count = 0;
 		} else {
 			int i;
 			unsigned int to_send = uart_circ_chars_pending(xmit);
-			printk(KERN_INFO "to_send linux: %d; head=%d, tail=%d\n", to_send, xmit->head, xmit->tail);
+			// printk(KERN_INFO "to_send linux: %d; head=%d, tail=%d\n", to_send, xmit->head, xmit->tail);
 			to_send = min(to_send, WBEC_UART_REGMAP_BUFFER_SIZE);
-			printk(KERN_INFO "to_send spi: %d\n", to_send);
+			// printk(KERN_INFO "to_send spi: %d\n", to_send);
 
 			tx.tx[port_i].bytes_to_send_count = to_send;
 			bytes_sent_in_xfer[port_i] = to_send;
@@ -203,14 +195,13 @@ static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
 
 	swap_bytes(rx.buf, transfer.len / 2);
 
-
 	for (port_i = 0; port_i < WBEC_UART_PORT_COUNT; port_i++) {
 		struct wbec_uart_one_port *wbec_one_port = &wbec_uart->ports[port_i];
 		struct uart_port *port = &wbec_one_port->port;
 		struct circ_buf *xmit = &port->state->xmit;
 		u8 bytes_sent = bytes_sent_in_xfer[port_i];
 
-		snprintf(str, ARRAY_SIZE(str), "received_bytes: %d: ", rx.rx[port_i].read_bytes_count);
+		// snprintf(str, ARRAY_SIZE(str), "received_bytes: %d: ", rx.rx[port_i].read_bytes_count);
 		if (rx.rx[port_i].read_bytes_count > WBEC_UART_REGMAP_BUFFER_SIZE) {
 			dev_err(wbec_uart->dev, "received_bytes_count > WBEC_UART_REGMAP_BUFFER_SIZE\n");
 			rx.rx[port_i].read_bytes_count = WBEC_UART_REGMAP_BUFFER_SIZE;
@@ -228,13 +219,13 @@ static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
 
 		if (rx.rx[port_i].ready_for_tx) {
 
-			printk(KERN_INFO "bytes_sent=%d; tail_was=%d\n", bytes_sent, xmit->tail);
+			// printk(KERN_INFO "bytes_sent=%d; tail_was=%d\n", bytes_sent, xmit->tail);
 
 			if (bytes_sent > 0) {
 				uart_xmit_advance(port, bytes_sent);
 			}
 
-			printk(KERN_INFO "new_tail=%d\n", xmit->tail);
+			// printk(KERN_INFO "new_tail=%d\n", xmit->tail);
 
 			if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
 				uart_write_wakeup(port);
@@ -252,7 +243,7 @@ static unsigned int wbec_uart_tx_empty(struct uart_port *port)
 	// struct wbec_uart *wbec_uart = container_of(port,
 	// 				      struct wbec_uart,
 	// 				      port);
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 
 	return TIOCSER_TEMT;
 }
@@ -263,7 +254,7 @@ static void wbec_uart_start_tx(struct uart_port *port)
 					      struct wbec_uart_one_port,
 					      port);
 
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 
 	reinit_completion(&wbec_one_port->tx_complete);
 
@@ -274,12 +265,12 @@ static void wbec_uart_start_tx(struct uart_port *port)
 
 static void wbec_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
 {
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 }
 
 static unsigned int wbec_uart_get_mctrl(struct uart_port *port)
 {
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 	return 0;
 }
 
@@ -288,7 +279,7 @@ static void wbec_uart_stop_tx(struct uart_port *port)
 	// struct wbec_uart *wbec_uart = container_of(port,
 	// 				      struct wbec_uart,
 	// 				      port);
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 }
 
 static void wbec_uart_stop_rx(struct uart_port *port)
@@ -296,12 +287,12 @@ static void wbec_uart_stop_rx(struct uart_port *port)
 	// struct wbec_uart *wbec_uart = container_of(port,
 	// 				      struct wbec_uart,
 	// 				      port);
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 }
 
 static void wbec_uart_break_ctl(struct uart_port *port, int break_state)
 {
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 }
 
 static int wbec_uart_startup(struct uart_port *port)
@@ -314,7 +305,7 @@ static int wbec_uart_startup(struct uart_port *port)
 	int ret, val;
 	u16 ctrl_reg = wbec_uart_regmap_address[port->line].ctrl;
 
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 
 	/* set enable=1; applyed=0 */
 	regmap_write(regmap, ctrl_reg, 0x1);
@@ -346,8 +337,7 @@ static void wbec_uart_shutdown(struct uart_port *port)
 	int ret, val;
 	u16 ctrl_reg = wbec_uart_regmap_address[port->line].ctrl;
 
-	printk(KERN_INFO "%s called\n", __func__);
-
+	// printk(KERN_INFO "%s called\n", __func__);
 
 	wait_for_completion_timeout(&wbec_one_port->tx_complete, msecs_to_jiffies(10000));
 
@@ -371,7 +361,7 @@ static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
 	u16 ctrl_reg = wbec_uart_regmap_address[port->line].ctrl;
 	union uart_ctrl_regs ctrl_regs;
 
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 
 	regmap_bulk_read(regmap, ctrl_reg, ctrl_regs.buf, ARRAY_SIZE(ctrl_regs.buf));
 
@@ -395,7 +385,6 @@ static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
 
 	/* Baud rate */
 	baud = uart_get_baud_rate(port, new, old, 1200, 115200);
-	printk(KERN_INFO "baud=%d\n", baud);
 	ctrl_regs.ctrl.baud_x100 = baud / 100;
 
 	regmap_bulk_write(regmap, ctrl_reg, ctrl_regs.buf, ARRAY_SIZE(ctrl_regs.buf));
@@ -410,36 +399,36 @@ static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
 
 static void wbec_uart_config_port(struct uart_port *port, int flags)
 {
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 	if (flags & UART_CONFIG_TYPE)
 		port->type = 123;
 }
 
 static int wbec_uart_verify_port(struct uart_port *port, struct serial_struct *ser)
 {
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 	return 0;
 }
 
 static void wbec_uart_pm(struct uart_port *port, unsigned int state, unsigned int oldstate)
 {
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 }
 
 static int wbec_uart_request_port(struct uart_port *port)
 {
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 	return 0;
 }
 
 static void wbec_uart_null_void(struct uart_port *port)
 {
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 }
 
 static const char * wbec_uart_type(struct uart_port *port)
 {
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 	return 0;
 }
 
@@ -447,7 +436,7 @@ static irqreturn_t wbec_uart_irq(int irq, void *dev_id)
 {
 	struct wbec_uart *wbec_uart = dev_id;
 
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 
 	wbec_spi_exchange_sync(wbec_uart);
 
@@ -473,11 +462,11 @@ static const struct uart_ops wbec_uart_ops = {
 	.pm		= wbec_uart_pm,
 };
 
-static int wbec_uart_config_rs485(struct uart_port *,
+static int wbec_uart_config_rs485(struct uart_port *port,
 				  struct ktermios *termios,
 				  struct serial_rs485 *rs485)
 {
-	printk(KERN_INFO "%s called\n", __func__);
+	// printk(KERN_INFO "%s called\n", __func__);
 	// port->rs485 = *rs485;
 
 	return 0;
