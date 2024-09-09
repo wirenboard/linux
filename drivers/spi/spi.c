@@ -1080,14 +1080,15 @@ static void spi_set_cs(struct spi_device *spi, bool enable, bool force)
 		    spi->controller->set_cs)
 			spi->controller->set_cs(spi, !enable);
 
-		if (!spi->controller->set_cs_timing) {
-			if (activate)
-				spi_delay_exec(&spi->cs_setup, NULL);
-			else
-				spi_delay_exec(&spi->cs_inactive, NULL);
-		}
 	} else if (spi->controller->set_cs) {
 		spi->controller->set_cs(spi, !enable);
+	}
+
+	if (!spi->controller->set_cs_timing) {
+		if (activate)
+			spi_delay_exec(&spi->cs_setup, NULL);
+		else
+			spi_delay_exec(&spi->cs_inactive, NULL);
 	}
 }
 
