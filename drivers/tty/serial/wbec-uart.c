@@ -40,6 +40,7 @@ static const struct wbec_uart_regmap_address wbec_uart_regmap_address[WBEC_UART_
 struct wbec_uart_one_port {
 	struct uart_port port;
 	struct wbec_uart *wbec_uart;
+	struct work_struct start_tx_work;
 	struct completion tx_complete;
 };
 
@@ -143,6 +144,7 @@ static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
 	struct spi_transfer transfer = {};
 	int ret, port_i;
 	u8 bytes_sent_in_xfer[2] = {0, 0};
+	unsigned long flags;
 
 	// prepare tx data
 	for (port_i = 0; port_i < WBEC_UART_PORT_COUNT; port_i++) {
@@ -227,14 +229,29 @@ static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
 
 			// printk(KERN_INFO "new_tail=%d\n", xmit->tail);
 
+			uart_port_lock_irqsave(port, &flags);
 			if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
 				uart_write_wakeup(port);
+			uart_port_unlock_irqrestore(port, flags);
 		}
 
 		if (rx.rx[port_i].tx_completed && (bytes_sent == 0)) {
 			complete(&wbec_one_port->tx_complete);
 		}
 	}
+}
+
+static void wbec_start_tx_work_handler(struct work_struct *work)
+{
+	struct wbec_uart_one_port *wbec_one_port = container_of(work,
+						struct wbec_uart_one_port,
+						start_tx_work);
+
+	struct uart_port *port = &wbec_one_port->port;
+
+	regmap_write_async(wbec_one_port->wbec_uart->regmap,
+		     wbec_uart_regmap_address[port->line].tx_start,
+		     0x1);
 }
 
 
@@ -257,10 +274,7 @@ static void wbec_uart_start_tx(struct uart_port *port)
 	// printk(KERN_INFO "%s called\n", __func__);
 
 	reinit_completion(&wbec_one_port->tx_complete);
-
-	regmap_write_async(wbec_one_port->wbec_uart->regmap,
-			   wbec_uart_regmap_address[port->line].tx_start,
-			   0x1);
+	schedule_work(&wbec_one_port->start_tx_work);
 }
 
 static void wbec_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
@@ -360,6 +374,7 @@ static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
 	int ret, val, baud;
 	u16 ctrl_reg = wbec_uart_regmap_address[port->line].ctrl;
 	union uart_ctrl_regs ctrl_regs;
+	unsigned long flags;
 
 	// printk(KERN_INFO "%s called\n", __func__);
 
@@ -394,7 +409,9 @@ static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
 				       (val & 0x0002),
 				       100, 1000000);
 
+	uart_port_lock_irqsave(port, &flags);
 	uart_update_timeout(port, new->c_cflag, baud);
+	uart_port_unlock_irqrestore(port, flags);
 }
 
 static void wbec_uart_config_port(struct uart_port *port, int flags)
@@ -536,6 +553,7 @@ static int wbec_uart_probe(struct platform_device *pdev)
 			pr_err("Failed to register UART port\n");
 			return ret;
 		}
+		INIT_WORK(&wbec_uart->ports[i].start_tx_work, wbec_start_tx_work_handler);
 	}
 
 	dev_info(&pdev->dev, "IRQ: %d\n", irq);
