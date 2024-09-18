@@ -249,6 +249,20 @@ static inline void wbec_clean_debugfs(struct wbec *wbec)
 }
 #endif
 
+static irqreturn_t wbec_irq_handler(int irq, void *dev_id)
+{
+	struct wbec *wbec = dev_id;
+
+	if (wbec->irq_handler)
+		wbec->irq_handler(wbec);
+	else {
+		dev_warn_ratelimited(wbec->dev, "Unhandled IRQ\n");
+		// dummy uart exchange
+	}
+
+	return IRQ_HANDLED;
+}
+
 static int wbec_power_off(struct sys_off_data *data)
 {
 	int ret;
@@ -316,6 +330,16 @@ static int wbec_probe(struct spi_device *spi)
 		dev_err(&spi->dev, "wrong wbec ID at 0x%X. Get 0x%X istead of 0x%X\n",
 			WBEC_REG_INFO_WBEC_ID, wbec_id, WBEC_ID);
 		return -ENOTSUPP;
+	}
+
+	if (spi->irq) {
+		ret = devm_request_threaded_irq(wbec->dev, spi->irq, NULL, wbec_irq_handler,
+						IRQF_TRIGGER_RISING | IRQF_ONESHOT,
+						dev_name(wbec->dev), wbec);
+		if (ret)
+			dev_err_probe(wbec->dev, ret, "failed to request IRQ\n");
+	} else {
+		dev_warn(wbec->dev, "no IRQ defined, wbec-uart not supported\n");
 	}
 
 	ret = sysfs_create_group(&wbec->dev->kobj, &wbec_attr_group);

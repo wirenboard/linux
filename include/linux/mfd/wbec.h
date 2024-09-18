@@ -111,6 +111,7 @@ struct wbec {
 	struct spi_device *spi;
 	struct regmap *regmap;
 	struct dentry *wbec_dir;
+	void (*irq_handler)(struct wbec *wbec);
 };
 
 #endif
