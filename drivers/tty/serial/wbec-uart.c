@@ -42,15 +42,10 @@ struct wbec_uart_one_port {
 	struct wbec_uart *wbec_uart;
 	struct work_struct start_tx_work;
 	struct completion tx_complete;
-};
-
-struct wbec_uart {
-	struct device *dev;
-	struct spi_device *spi;
 	struct regmap *regmap;
-
-	struct wbec_uart_one_port ports[WBEC_UART_PORT_COUNT];
 };
+
+static struct wbec_uart_one_port *wbec_uart_ports[WBEC_UART_PORT_COUNT];
 
 struct wbec_regmap_header {
 	u16 address : 15;
@@ -121,13 +116,6 @@ union uart_exchange_regs_rx {
 	u16 buf[(sizeof(struct uart_rx) * WBEC_UART_PORT_COUNT + sizeof(struct wbec_regmap_header)) / 2];
 };
 
-static struct uart_driver wbec_uart_driver = {
-	.owner = THIS_MODULE,
-	.driver_name = DRIVER_NAME,
-	.dev_name = "ttyWBE",
-	.nr = WBEC_UART_PORT_COUNT,
-};
-
 static void swap_bytes(u16 *buf, int len)
 {
 	int i;
@@ -136,23 +124,33 @@ static void swap_bytes(u16 *buf, int len)
 	}
 }
 
-static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
+static void wbec_spi_exchange_sync(struct wbec *wbec)
 {
+	struct spi_device *spi = wbec->spi;
 	union uart_exchange_regs_rx rx;
 	union uart_exchange_regs_tx tx = {};
 	struct spi_message msg;
 	struct spi_transfer transfer = {};
 	int ret, port_i;
-	u8 bytes_sent_in_xfer[2] = {0, 0};
+	u8 bytes_sent_in_xfer[WBEC_UART_PORT_COUNT] = {};
 	unsigned long flags;
+
 
 	// prepare tx data
 	for (port_i = 0; port_i < WBEC_UART_PORT_COUNT; port_i++) {
-		struct wbec_uart_one_port *wbec_one_port = &wbec_uart->ports[port_i];
-		struct uart_port *port = &wbec_one_port->port;
-		struct circ_buf *xmit = &port->state->xmit;
+		struct wbec_uart_one_port *wbec_one_port = wbec_uart_ports[port_i];
+		struct uart_port *port;
+		struct circ_buf *xmit;
+
+		if (!wbec_one_port) {
+			continue;
+		}
+
+		port = &wbec_one_port->port;
+		xmit = &port->state->xmit;
 
 		// printk(KERN_INFO "process port_i=%d\n", port_i);
+		uart_port_lock_irqsave(port, &flags);
 
 		if (uart_circ_empty(xmit) || uart_tx_stopped(port)) {
 			// printk(KERN_INFO "empty or stopped\n");
@@ -167,7 +165,7 @@ static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
 			tx.tx[port_i].bytes_to_send_count = to_send;
 			bytes_sent_in_xfer[port_i] = to_send;
 
-			/* Convert to linear buffer */
+			// Convert to linear buffer
 			for (i = 0; i < to_send; ++i) {
 				u8 c = xmit->buf[(xmit->tail + i) & (UART_XMIT_SIZE - 1)];
 				tx.tx[port_i].bytes_to_send[i] = c;
@@ -176,6 +174,8 @@ static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
 			if (to_send)
 				reinit_completion(&wbec_one_port->tx_complete);
 		}
+
+		uart_port_unlock_irqrestore(port, flags);
 	}
 
 	tx.header.address = wbec_uart_regmap_address[0].exchange;
@@ -189,23 +189,32 @@ static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
 	swap_bytes(tx.buf, transfer.len / 2);
 
 	// transfer
-	ret = spi_sync(wbec_uart->spi, &msg);
+	ret = spi_sync(spi, &msg);
 	if (ret) {
-		dev_err(wbec_uart->dev, "spi_sync failed: %d\n", ret);
+		dev_err(&spi->dev, "spi_sync failed: %d\n", ret);
 		return;
 	}
 
 	swap_bytes(rx.buf, transfer.len / 2);
 
 	for (port_i = 0; port_i < WBEC_UART_PORT_COUNT; port_i++) {
-		struct wbec_uart_one_port *wbec_one_port = &wbec_uart->ports[port_i];
-		struct uart_port *port = &wbec_one_port->port;
-		struct circ_buf *xmit = &port->state->xmit;
+		struct wbec_uart_one_port *wbec_one_port = wbec_uart_ports[port_i];
+		struct uart_port *port;
+		struct circ_buf *xmit;
 		u8 bytes_sent = bytes_sent_in_xfer[port_i];
+
+		if (!wbec_one_port) {
+			continue;
+		}
+
+		port = &wbec_one_port->port;
+		xmit = &port->state->xmit;
+
+		uart_port_lock_irqsave(port, &flags);
 
 		// snprintf(str, ARRAY_SIZE(str), "received_bytes: %d: ", rx.rx[port_i].read_bytes_count);
 		if (rx.rx[port_i].read_bytes_count > WBEC_UART_REGMAP_BUFFER_SIZE) {
-			dev_err(wbec_uart->dev, "received_bytes_count > WBEC_UART_REGMAP_BUFFER_SIZE\n");
+			dev_err(port->dev, "received_bytes_count > WBEC_UART_REGMAP_BUFFER_SIZE\n");
 			rx.rx[port_i].read_bytes_count = WBEC_UART_REGMAP_BUFFER_SIZE;
 		}
 		if (rx.rx[port_i].read_bytes_count > 0) {
@@ -229,27 +238,30 @@ static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
 
 			// printk(KERN_INFO "new_tail=%d\n", xmit->tail);
 
-			uart_port_lock_irqsave(port, &flags);
+			// uart_port_lock_irqsave(port, &flags);
 			if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
 				uart_write_wakeup(port);
-			uart_port_unlock_irqrestore(port, flags);
+			// uart_port_unlock_irqrestore(port, flags);
 		}
 
 		if (rx.rx[port_i].tx_completed && (bytes_sent == 0)) {
 			complete(&wbec_one_port->tx_complete);
 		}
+
+		uart_port_unlock_irqrestore(port, flags);
 	}
 }
 
 static void wbec_start_tx_work_handler(struct work_struct *work)
 {
-	struct wbec_uart_one_port *wbec_one_port = container_of(work,
+	struct wbec_uart_one_port *p = container_of(work,
 						struct wbec_uart_one_port,
 						start_tx_work);
 
-	struct uart_port *port = &wbec_one_port->port;
+	struct uart_port *port = &p->port;
+	struct regmap *regmap = p->regmap;
 
-	regmap_write_async(wbec_one_port->wbec_uart->regmap,
+	regmap_write_async(regmap,
 		     wbec_uart_regmap_address[port->line].tx_start,
 		     0x1);
 }
@@ -311,11 +323,11 @@ static void wbec_uart_break_ctl(struct uart_port *port, int break_state)
 
 static int wbec_uart_startup(struct uart_port *port)
 {
-	struct wbec_uart_one_port *wbec_one_port = container_of(port,
+	struct wbec_uart_one_port *p = container_of(port,
 					      struct wbec_uart_one_port,
 					      port);
 
-	struct regmap *regmap = wbec_one_port->wbec_uart->regmap;
+	struct regmap *regmap = p->regmap;
 	int ret, val;
 	u16 ctrl_reg = wbec_uart_regmap_address[port->line].ctrl;
 
@@ -335,25 +347,25 @@ static int wbec_uart_startup(struct uart_port *port)
 		printk(KERN_INFO "UART port %d is not ready\n", port->line);
 	}
 
-	complete(&wbec_one_port->tx_complete);
+	complete(&p->tx_complete);
 
 	return ret;
 }
 
 static void wbec_uart_shutdown(struct uart_port *port)
 {
-	struct wbec_uart_one_port *wbec_one_port = container_of(port,
+	struct wbec_uart_one_port *p = container_of(port,
 					      struct wbec_uart_one_port,
 					      port);
 
-	struct regmap *regmap = wbec_one_port->wbec_uart->regmap;
+	struct regmap *regmap = p->regmap;
 
 	int ret, val;
 	u16 ctrl_reg = wbec_uart_regmap_address[port->line].ctrl;
 
 	// printk(KERN_INFO "%s called\n", __func__);
 
-	wait_for_completion_timeout(&wbec_one_port->tx_complete, msecs_to_jiffies(10000));
+	wait_for_completion_timeout(&p->tx_complete, msecs_to_jiffies(10000));
 
 	/* set enable=0; applyed=0 */
 	regmap_write(regmap, ctrl_reg, 0x0);
@@ -367,10 +379,10 @@ static void wbec_uart_shutdown(struct uart_port *port)
 static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
 				       const struct ktermios *old)
 {
-	struct wbec_uart_one_port *wbec_one_port = container_of(port,
+	struct wbec_uart_one_port *p = container_of(port,
 					      struct wbec_uart_one_port,
 					      port);
-	struct regmap *regmap = wbec_one_port->wbec_uart->regmap;
+	struct regmap *regmap = p->regmap;
 	int ret, val, baud;
 	u16 ctrl_reg = wbec_uart_regmap_address[port->line].ctrl;
 	union uart_ctrl_regs ctrl_regs;
@@ -416,9 +428,9 @@ static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
 
 static void wbec_uart_config_port(struct uart_port *port, int flags)
 {
-	// printk(KERN_INFO "%s called\n", __func__);
+	printk(KERN_INFO "%s called\n", __func__);
 	if (flags & UART_CONFIG_TYPE)
-		port->type = 123;
+		port->type = PORT_WBEC;
 }
 
 static int wbec_uart_verify_port(struct uart_port *port, struct serial_struct *ser)
@@ -445,19 +457,9 @@ static void wbec_uart_null_void(struct uart_port *port)
 
 static const char * wbec_uart_type(struct uart_port *port)
 {
-	// printk(KERN_INFO "%s called\n", __func__);
+	printk(KERN_INFO "%s called\n", __func__);
+
 	return 0;
-}
-
-static irqreturn_t wbec_uart_irq(int irq, void *dev_id)
-{
-	struct wbec_uart *wbec_uart = dev_id;
-
-	// printk(KERN_INFO "%s called\n", __func__);
-
-	wbec_spi_exchange_sync(wbec_uart);
-
-	return IRQ_HANDLED;
 }
 
 static const struct uart_ops wbec_uart_ops = {
@@ -483,111 +485,110 @@ static int wbec_uart_config_rs485(struct uart_port *port,
 				  struct ktermios *termios,
 				  struct serial_rs485 *rs485)
 {
-	// printk(KERN_INFO "%s called\n", __func__);
+	printk(KERN_INFO "%s called\n", __func__);
 	// port->rs485 = *rs485;
 
 	return 0;
 }
 
+static const struct serial_rs485 wbec_uart_rs485_supported = {
+	.flags = SER_RS485_ENABLED | SER_RS485_RX_DURING_TX,
+};
+
+static struct uart_driver wbec_uart_driver = {
+	.owner = THIS_MODULE,
+	.driver_name = DRIVER_NAME,
+	.dev_name = "ttyWBE",
+	.nr = WBEC_UART_PORT_COUNT,
+};
+
 static int wbec_uart_probe(struct platform_device *pdev)
 {
-	struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
-	struct wbec_uart *wbec_uart;
+	struct device *dev = &pdev->dev;
+	struct wbec *wbec = dev_get_drvdata(dev->parent);
+	struct wbec_uart_one_port *p;
+	// struct device_node *np = pdev->dev.of_node;
 	int ret, irq, i;
 	int wbec_id;
+	u32 reg;
 
 	dev_info(&pdev->dev, "%s called\n", __func__);
 
-	wbec_uart = devm_kzalloc(&pdev->dev, sizeof(struct wbec_uart),
+	if (!wbec->spi->irq)
+		dev_err_probe(dev, -EINVAL, "No IRQ defined\n");
+
+	if (device_property_read_u32(dev, "reg", &reg))
+		return dev_err_probe(dev, -EINVAL, "Failed to read 'reg' property\n");
+
+	dev_info(dev, "reg=%u; id=%u\n", reg, pdev->id);
+
+	if (reg >= WBEC_UART_PORT_COUNT)
+		dev_err_probe(dev, -EINVAL, "Invalid reg value: %u\n", reg);
+
+	p = devm_kzalloc(&pdev->dev, sizeof(struct wbec_uart_one_port),
 				GFP_KERNEL);
-	if (!wbec_uart)
+	if (!p)
 		return -ENOMEM;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
-		dev_err(&pdev->dev, "Failed to get IRQ: %d\n", irq);
-		return irq;
-	}
+	p->regmap = dev_get_regmap(pdev->dev.parent, NULL);
 
-	wbec_uart->dev = &pdev->dev;
-	wbec_uart->spi = wbec->spi;
-	wbec_uart->regmap = wbec->regmap;
+	// set pin mode
 
-	platform_set_drvdata(pdev, wbec_uart);
 
-	ret = regmap_read(wbec_uart->regmap, 0x00, &wbec_id);
-	if (ret) {
-		dev_err(&pdev->dev, "Failed to read WBE ID: %d\n", ret);
-		return ret;
-	}
-	dev_info(&pdev->dev, "wbec_id 0xB0: %.2X\n", wbec_id);
+	init_completion(&p->tx_complete);
 
-	// Register the UART driver
-	ret = uart_register_driver(&wbec_uart_driver);
-	if (ret) {
-		pr_err("Failed to register UART driver\n");
-		return ret;
-	}
+	// Register the UART port
+	// Initialize the UART port
+	p->port.ops = &wbec_uart_ops;
+	p->port.dev = &pdev->dev;
+	p->port.type = PORT_WBEC; //PORT_GENERIC;
+	p->port.irq = irq;
+	/*
+	* Use all ones as membase to make sure uart_configure_port() in
+	* serial_core.c does not abort for SPI/I2C devices where the
+	* membase address is not applicable.
+	*/
+	p->port.membase	= (void __iomem *)~0;
+	p->port.iobase = reg;
+	p->port.iotype = UPIO_PORT;
+	p->port.flags = UPF_FIXED_TYPE | UPF_LOW_LATENCY;
+	p->port.rs485_config = wbec_uart_config_rs485;
+	p->port.rs485_supported = wbec_uart_rs485_supported;
+	p->port.uartclk = 115200;
+	p->port.fifosize = 64;
+	p->port.line = reg;
 
-	for (i = 0; i < wbec_uart_driver.nr; i++) {
-		wbec_uart->ports[i].wbec_uart = wbec_uart;
+	ret = uart_get_rs485_mode(&p->port);
+	if (ret)
+		dev_err_probe(dev, ret, "Failed to get RS485 mode\n");
 
-		init_completion(&wbec_uart->ports[i].tx_complete);
+	dev_info(dev, "RS485 mode: %X\n", p->port.rs485.flags);
 
-		// Register the UART port
-		// Initialize the UART port
-		wbec_uart->ports[i].port.ops = &wbec_uart_ops;
-		wbec_uart->ports[i].port.dev = &pdev->dev;
-		wbec_uart->ports[i].port.type = PORT_GENERIC;
-		wbec_uart->ports[i].port.irq = irq;
-		wbec_uart->ports[i].port.iotype = UPIO_PORT;
-		wbec_uart->ports[i].port.flags	= UPF_FIXED_TYPE | UPF_LOW_LATENCY;
-		// wbec_uart->port.flags = UPF_BOOT_AUTOCONF;
-		wbec_uart->ports[i].port.rs485_config = wbec_uart_config_rs485;
-		wbec_uart->ports[i].port.uartclk = 115200;
-		wbec_uart->ports[i].port.fifosize = 64;
-		wbec_uart->ports[i].port.line = i;
+	ret = uart_add_one_port(&wbec_uart_driver, &p->port);
+	if (ret)
+		dev_err_probe(dev, ret, "Failed to register UART port\n");
 
-		ret = uart_add_one_port(&wbec_uart_driver, &wbec_uart->ports[i].port);
-		if (ret) {
-			pr_err("Failed to register UART port\n");
-			return ret;
-		}
-		INIT_WORK(&wbec_uart->ports[i].start_tx_work, wbec_start_tx_work_handler);
-	}
+	INIT_WORK(&p->start_tx_work, wbec_start_tx_work_handler);
 
-	dev_info(&pdev->dev, "IRQ: %d\n", irq);
+	platform_set_drvdata(pdev, p);
+	wbec_uart_ports[reg] = p;
 
-	ret = devm_request_threaded_irq(wbec_uart->dev, irq, NULL, wbec_uart_irq,
-					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
-					dev_name(wbec_uart->dev), wbec_uart);
-	if (ret) {
-		dev_err(&pdev->dev, "Failed to request IRQ: %d\n", ret);
-		return ret;
-	}
+	if (!wbec->irq_handler)
+		wbec->irq_handler = wbec_spi_exchange_sync;
 
-	dev_info(&pdev->dev, "WBE UART driver loaded\n");
+	dev_info(&pdev->dev, "port %s registered\n", p->port.name);
 
 	return 0;
 }
 
-static int wbec_uart_remove(struct platform_device *pdev)
+static void wbec_uart_remove(struct platform_device *pdev)
 {
-	struct wbec_uart *wbec_uart = platform_get_drvdata(pdev);
-	int i;
+	struct wbec_uart_one_port *p = platform_get_drvdata(pdev);
 
 	printk(KERN_INFO "%s called\n", __func__);
 
-	// Unregister the UART port
-	for (i = 0; i < wbec_uart_driver.nr; i++) {
-		struct wbec_uart_one_port *wbec_one_port = &wbec_uart->ports[i];
-		uart_remove_one_port(&wbec_uart_driver, &wbec_one_port->port);
-	}
-
-	// Unregister the UART driver
-	uart_unregister_driver(&wbec_uart_driver);
-
-	return 0;
+	wbec_uart_ports[p->port.line] = NULL;
+	uart_remove_one_port(&wbec_uart_driver, &p->port);
 }
 
 static const struct of_device_id wbec_uart_of_match[] = {
@@ -602,10 +603,43 @@ static struct platform_driver wbec_uart_platform_driver = {
 		.of_match_table = wbec_uart_of_match,
 	},
 	.probe = wbec_uart_probe,
-	.remove = wbec_uart_remove,
+	.remove_new = wbec_uart_remove,
 };
 
-module_platform_driver(wbec_uart_platform_driver);
+static int __init wbec_uart_init(void)
+{
+	int ret, i;
+
+	printk(KERN_INFO "%s called\n", __func__);
+
+	ret = uart_register_driver(&wbec_uart_driver);
+	if (ret)
+		return ret;
+
+	for (i = 0; i < WBEC_UART_PORT_COUNT; i++)
+		wbec_uart_ports[i] = NULL;
+
+	ret = platform_driver_register(&wbec_uart_platform_driver);
+	if (ret)
+		uart_unregister_driver(&wbec_uart_driver);
+
+	return ret;
+}
+
+static void __exit wbec_uart_exit(void)
+{
+	printk(KERN_INFO "%s called\n", __func__);
+
+	platform_driver_unregister(&wbec_uart_platform_driver);
+	// uart_unregister_driver(&atmel_uart);
+}
+
+
+
+// device_initcall(wbec_uart_init);
+module_init(wbec_uart_init);
+module_exit(wbec_uart_exit);
+
 
 MODULE_ALIAS("platform:wbec-uart");
 MODULE_LICENSE("GPL");
