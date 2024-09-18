@@ -565,6 +565,9 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
+		interrupt-parent = <&pio>;
+		interrupts = <PE 7 IRQ_TYPE_EDGE_RISING>;
+
 		wbec_watchdog: wbec-watchdog@0 {
 			compatible = "wirenboard,wbec-watchdog";
 			reg = <0>;
@@ -618,13 +621,22 @@
 			#pwm-cells = <3>;
 		};
 
-		wbec_uart: wbec-uart@0 {
+		wbec_uart_mod1: serial@0 {
 			compatible = "wirenboard,wbec-uart";
 			reg = <0>;
-			interrupt-parent = <&pio>;
-			interrupts = <PE 7 IRQ_TYPE_EDGE_RISING>;
 
 			linux,rs485-enabled-at-boot-time;
+
+			status = "okay";
+		};
+
+		wbec_uart_mod2: serial@1 {
+			compatible = "wirenboard,wbec-uart";
+			reg = <1>;
+
+			linux,rs485-enabled-at-boot-time;
+
+			status = "okay";
 		};
 	};
 };
