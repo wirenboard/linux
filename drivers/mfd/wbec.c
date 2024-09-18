@@ -20,6 +20,7 @@
 #include <linux/mod_devicetable.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
+#include <linux/of_platform.h>
 
 /* For power off WBEC activates PWON pin on PMIC for 6s */
 #define WBEC_POWER_RESET_DELAY_MS			10000
@@ -40,54 +41,6 @@ static const struct regmap_config wbec_regmap_config = {
 	.val_bits = 16,
 	.pad_bits = 16 * WBEC_REGMAP_PAD_WORDS_COUNT,
 	.max_register = 0x130,
-};
-
-static const struct mfd_cell wbec_cells[] = {
-	{
-		.name = "wbec-adc",
-		.id = PLATFORM_DEVID_NONE,
-		.of_compatible = "wirenboard,wbec-adc"
-	},
-	{
-		.name = "wbec-gpio",
-		.id = PLATFORM_DEVID_NONE,
-		.of_compatible = "wirenboard,wbec-gpio"
-	},
-	{
-		.name = "wbec-watchdog",
-		.id = PLATFORM_DEVID_NONE,
-		.of_compatible = "wirenboard,wbec-watchdog"
-	},
-	{
-		.name = "wbec-rtc",
-		.id = PLATFORM_DEVID_NONE,
-		.of_compatible = "wirenboard,wbec-rtc"
-	},
-	{
-		.name = "wbec-pwrkey",
-		.id = PLATFORM_DEVID_NONE,
-		.of_compatible = "wirenboard,wbec-pwrkey"
-	},
-	{
-		.name = "wbec-power",
-		.id = PLATFORM_DEVID_NONE,
-		.of_compatible = "wirenboard,wbec-power"
-	},
-	{
-		.name = "wbec-pwm",
-		.id = PLATFORM_DEVID_NONE,
-		.of_compatible = "wirenboard,wbec-pwm"
-	},
-	{
-		.name = "wbec-battery",
-		.id = PLATFORM_DEVID_NONE,
-		.of_compatible = "wirenboard,wbec-battery"
-	},
-	{
-		.name = "wbec-uart",
-		.id = PLATFORM_DEVID_NONE,
-		.of_compatible = "wirenboard,wbec-uart"
-	},
 };
 
 /* ----------------------------------------------------------------------- */
@@ -371,8 +324,7 @@ static int wbec_probe(struct spi_device *spi)
 		return ret;
 	}
 
-	ret = devm_mfd_add_devices(&spi->dev, PLATFORM_DEVID_NONE,
-			      wbec_cells, ARRAY_SIZE(wbec_cells), NULL, 0, NULL);
+	ret = devm_of_platform_populate(&spi->dev);
 	if (ret) {
 		dev_err(&spi->dev, "failed to add MFD devices %d\n", ret);
 		return ret;
