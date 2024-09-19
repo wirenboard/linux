@@ -41,6 +41,7 @@ static const struct regmap_config wbec_regmap_config = {
 	.val_bits = 16,
 	.pad_bits = 16 * WBEC_REGMAP_PAD_WORDS_COUNT,
 	.max_register = 0x130,
+	.can_sleep = true,
 };
 
 /* ----------------------------------------------------------------------- */
