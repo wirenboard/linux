@@ -54,29 +54,31 @@ struct wbec_regmap_header {
 } __packed;
 
 struct uart_rx {
-    u8 read_bytes_count;
-    u8 ready_for_tx : 1;
-    u8 tx_completed : 1;
-    u8 read_bytes[WBEC_UART_REGMAP_BUFFER_SIZE];
+	u8 read_bytes_count;
+	u8 ready_for_tx : 1;
+	u8 tx_completed : 1;
+	u8 read_bytes[WBEC_UART_REGMAP_BUFFER_SIZE];
 } __packed;
 
 struct uart_tx {
-    u8 bytes_to_send_count;
-    u8 reserved;
-    u8 bytes_to_send[WBEC_UART_REGMAP_BUFFER_SIZE];
+	u8 bytes_to_send_count;
+	u8 reserved;
+	u8 bytes_to_send[WBEC_UART_REGMAP_BUFFER_SIZE];
 } __packed;
 
 struct uart_ctrl {
-    /* offset 0x00 */
-    uint16_t enable : 1;
-    uint16_t ctrl_applyed : 1;
-    uint16_t res1 : 14;
-    /* offset 0x01 */
-    uint16_t baud_x100;
-    /* offset 0x02 */
-    uint16_t parity : 2;
-    uint16_t stop_bits : 2;
-	uint16_t res2 : 12;
+	/* offset 0x00 */
+	uint16_t enable : 1;
+	uint16_t ctrl_applyed : 1;
+	uint16_t res1 : 14;
+	/* offset 0x01 */
+	uint16_t baud_x100;
+	/* offset 0x02 */
+	uint16_t parity : 2;
+	uint16_t stop_bits : 2;
+	uint16_t rs485_enabled : 1;
+	uint16_t rs485_rx_during_tx : 1;
+	uint16_t res2 : 10;
 } __packed;
 
 union uart_ctrl_regs {
@@ -261,9 +263,7 @@ static void wbec_start_tx_work_handler(struct work_struct *work)
 	struct uart_port *port = &p->port;
 	struct regmap *regmap = p->regmap;
 
-	regmap_write_async(regmap,
-		     wbec_uart_regmap_address[port->line].tx_start,
-		     0x1);
+	regmap_write(regmap, wbec_uart_regmap_address[port->line].tx_start, 0x1);
 }
 
 
@@ -339,7 +339,7 @@ static int wbec_uart_startup(struct uart_port *port)
 	/* wait for applyed==1 */
 	ret = regmap_read_poll_timeout(regmap, ctrl_reg, val,
 				       (val & 0x0002),
-				       100, 1000000);
+				       1000, 1000000);
 
 	if (ret == 0) {
 		printk(KERN_INFO "UART port %d is ready\n", port->line);
@@ -373,7 +373,7 @@ static void wbec_uart_shutdown(struct uart_port *port)
 	/* wait for applyed==1 */
 	ret = regmap_read_poll_timeout(regmap, ctrl_reg, val,
 				       (val & 0x0002),
-				       100, 1000000);
+				       1000, 1000000);
 }
 
 static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
@@ -485,8 +485,40 @@ static int wbec_uart_config_rs485(struct uart_port *port,
 				  struct ktermios *termios,
 				  struct serial_rs485 *rs485)
 {
+	struct wbec_uart_one_port *p = container_of(port,
+					      struct wbec_uart_one_port,
+					      port);
+
 	printk(KERN_INFO "%s called\n", __func__);
-	// port->rs485 = *rs485;
+
+	if (rs485->flags & SER_RS485_ENABLED) {
+		u16 gpio_af_mode = 0b010000 << (port->line * 6);
+		u16 gpio_af_mask = 0b110000 << (port->line * 6);
+		union uart_ctrl_regs ctrl_regs;
+		u16 ctrl_reg = wbec_uart_regmap_address[port->line].ctrl;
+		int val;
+
+		// gpio mode
+		regmap_update_bits(p->regmap, WBEC_REG_GPIO_AF, gpio_af_mask, gpio_af_mode);
+
+		regmap_bulk_read(p->regmap, ctrl_reg, ctrl_regs.buf, ARRAY_SIZE(ctrl_regs.buf));
+
+		ctrl_regs.ctrl.ctrl_applyed = 0;
+		ctrl_regs.ctrl.rs485_enabled = 1;
+
+		if (rs485->flags & SER_RS485_RX_DURING_TX) {
+			ctrl_regs.ctrl.rs485_rx_during_tx = 1;
+		} else {
+			ctrl_regs.ctrl.rs485_rx_during_tx = 0;
+		}
+
+		regmap_bulk_write(p->regmap, ctrl_reg, ctrl_regs.buf, ARRAY_SIZE(ctrl_regs.buf));
+
+		/* wait for applyed==1 */
+		regmap_read_poll_timeout(p->regmap, ctrl_reg, val,
+				       (val & 0x0002),
+				       1000, 1000000);
+	}
 
 	return 0;
 }
@@ -507,10 +539,12 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct wbec *wbec = dev_get_drvdata(dev->parent);
 	struct wbec_uart_one_port *p;
-	// struct device_node *np = pdev->dev.of_node;
-	int ret, irq, i;
-	int wbec_id;
+	int ret, irq, val;
 	u32 reg;
+	u16 gpio_af_mode = 0;
+	u16 gpio_af_mask = 0;
+	union uart_ctrl_regs ctrl_regs;
+	u16 ctrl_reg;
 
 	dev_info(&pdev->dev, "%s called\n", __func__);
 
@@ -533,6 +567,24 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	p->regmap = dev_get_regmap(pdev->dev.parent, NULL);
 
 	// set pin mode
+	gpio_af_mode |= 1 << (reg * 6 + 0);	// TX
+	gpio_af_mode |= 1 << (reg * 6 + 2);	// RX
+	// will be enabled in the future in wbec_uart_config_rs485
+	gpio_af_mode |= 0 << (reg * 6 + 4);	// RTS
+	gpio_af_mask = 0b111111 << (reg * 6);
+
+	regmap_update_bits(p->regmap, WBEC_REG_GPIO_AF, gpio_af_mask, gpio_af_mode);
+
+	ctrl_reg = wbec_uart_regmap_address[reg].ctrl;
+	regmap_bulk_read(p->regmap, ctrl_reg, ctrl_regs.buf, ARRAY_SIZE(ctrl_regs.buf));
+	ctrl_regs.ctrl.ctrl_applyed = 0;
+	ctrl_regs.ctrl.enable = 0;
+	ctrl_regs.ctrl.rs485_enabled = 0;
+	regmap_bulk_write(p->regmap, ctrl_reg, ctrl_regs.buf, ARRAY_SIZE(ctrl_regs.buf));
+	/* wait for applyed==1 */
+	regmap_read_poll_timeout(p->regmap, ctrl_reg, val,
+			       (val & 0x0002),
+			       1000, 1000000);
 
 
 	init_completion(&p->tx_complete);
@@ -551,7 +603,7 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	p->port.membase	= (void __iomem *)~0;
 	p->port.iobase = reg;
 	p->port.iotype = UPIO_PORT;
-	p->port.flags = UPF_FIXED_TYPE | UPF_LOW_LATENCY;
+	p->port.flags = UPF_FIXED_TYPE /*| UPF_LOW_LATENCY*/;
 	p->port.rs485_config = wbec_uart_config_rs485;
 	p->port.rs485_supported = wbec_uart_rs485_supported;
 	p->port.uartclk = 115200;
@@ -564,6 +616,7 @@ static int wbec_uart_probe(struct platform_device *pdev)
 
 	dev_info(dev, "RS485 mode: %X\n", p->port.rs485.flags);
 
+
 	ret = uart_add_one_port(&wbec_uart_driver, &p->port);
 	if (ret)
 		dev_err_probe(dev, ret, "Failed to register UART port\n");
@@ -573,8 +626,7 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, p);
 	wbec_uart_ports[reg] = p;
 
-	if (!wbec->irq_handler)
-		wbec->irq_handler = wbec_spi_exchange_sync;
+	wbec->irq_handler = wbec_spi_exchange_sync;
 
 	dev_info(&pdev->dev, "port %s registered\n", p->port.name);
 
@@ -584,11 +636,19 @@ static int wbec_uart_probe(struct platform_device *pdev)
 static void wbec_uart_remove(struct platform_device *pdev)
 {
 	struct wbec_uart_one_port *p = platform_get_drvdata(pdev);
+	u16 gpio_af_mode = 0;
+	u16 gpio_af_mask = 0;
+	int line = p->port.line;
 
 	printk(KERN_INFO "%s called\n", __func__);
 
-	wbec_uart_ports[p->port.line] = NULL;
+	gpio_af_mask = 0b111111 << (line * 6);
+	regmap_update_bits(p->regmap, WBEC_REG_GPIO_AF, gpio_af_mask, gpio_af_mode);
+
+	wbec_uart_ports[line] = NULL;
 	uart_remove_one_port(&wbec_uart_driver, &p->port);
+
+	regmap_update_bits(p->regmap, WBEC_REG_GPIO_AF, gpio_af_mask, gpio_af_mode);
 }
 
 static const struct of_device_id wbec_uart_of_match[] = {
@@ -631,7 +691,7 @@ static void __exit wbec_uart_exit(void)
 	printk(KERN_INFO "%s called\n", __func__);
 
 	platform_driver_unregister(&wbec_uart_platform_driver);
-	// uart_unregister_driver(&atmel_uart);
+	uart_unregister_driver(&wbec_uart_driver);
 }
 
 
