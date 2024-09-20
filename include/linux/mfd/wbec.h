@@ -11,6 +11,7 @@
 
 #include <linux/regulator/machine.h>
 #include <linux/regmap.h>
+#include <linux/mutex.h>
 
 #define WBEC_ID                                             0x3CD2
 #define WBEC_REGMAP_PAD_WORDS_COUNT			    5
@@ -112,6 +113,7 @@ struct wbec {
 	struct spi_device *spi;
 	struct regmap *regmap;
 	struct dentry *wbec_dir;
+	struct mutex spi_lock;
 	void (*irq_handler)(struct wbec *wbec);
 };
 
