@@ -308,11 +308,14 @@ static void wbec_uart_start_tx(struct uart_port *port)
 	struct wbec_uart_one_port *wbec_one_port = container_of(port,
 					      struct wbec_uart_one_port,
 					      port);
+	struct circ_buf *xmit = &port->state->xmit;
 
 	// printk(KERN_INFO "%s called\n", __func__);
 
-	reinit_completion(&wbec_one_port->tx_complete);
-	schedule_work(&wbec_one_port->start_tx_work);
+	if (!uart_circ_empty(xmit) && !uart_tx_stopped(port)) {
+		reinit_completion(&wbec_one_port->tx_complete);
+		schedule_work(&wbec_one_port->start_tx_work);
+	}
 }
 
 static void wbec_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
