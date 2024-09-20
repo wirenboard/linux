@@ -17,6 +17,12 @@
 #define WBEC_UART_PORT_COUNT			2
 #define WBEC_REGMAP_READ_BIT			BIT(15)
 #define WBEC_UART_REGMAP_BUFFER_SIZE		64
+#define WBEC_UART_REGMAP_BUFFER_SIZE_W_ERRORS	(WBEC_UART_REGMAP_BUFFER_SIZE / 2)
+
+#define WBEC_UART_RX_BYTE_ERROR_PE		BIT(0)
+#define WBEC_UART_RX_BYTE_ERROR_FE		BIT(1)
+#define WBEC_UART_RX_BYTE_ERROR_NE		BIT(2)
+#define WBEC_UART_RX_BYTE_ERROR_ORE		BIT(3)
 
 struct wbec_uart_regmap_address {
 	u16 ctrl;
@@ -57,7 +63,15 @@ struct uart_rx {
 	u8 read_bytes_count;
 	u8 ready_for_tx : 1;
 	u8 tx_completed : 1;
-	u8 read_bytes[WBEC_UART_REGMAP_BUFFER_SIZE];
+	u8 data_format : 1;
+	u8 reserved : 5;
+	union {
+		struct {
+			uint8_t err_flags;
+			uint8_t byte;
+		} bytes_with_errors[WBEC_UART_REGMAP_BUFFER_SIZE_W_ERRORS];
+		uint8_t read_bytes[WBEC_UART_REGMAP_BUFFER_SIZE];
+	};
 } __packed;
 
 struct uart_tx {
@@ -84,22 +98,6 @@ struct uart_ctrl {
 union uart_ctrl_regs {
 	struct uart_ctrl ctrl;
 	u16 buf[3];
-};
-
-union uart_tx_regs {
-	struct {
-		struct wbec_regmap_header header;
-		struct uart_tx tx;
-	};
-	u16 buf[33 + 6];
-};
-
-union uart_rx_regs {
-	struct {
-		struct wbec_regmap_header header;
-		struct uart_rx rx;
-	};
-	u16 buf[33 + 6];
 };
 
 union uart_exchange_regs_tx {
@@ -191,7 +189,9 @@ static void wbec_spi_exchange_sync(struct wbec *wbec)
 	swap_bytes(tx.buf, transfer.len / 2);
 
 	// transfer
+	mutex_lock(&wbec->spi_lock);
 	ret = spi_sync(spi, &msg);
+	mutex_unlock(&wbec->spi_lock);
 	if (ret) {
 		dev_err(&spi->dev, "spi_sync failed: %d\n", ret);
 		return;
@@ -204,6 +204,7 @@ static void wbec_spi_exchange_sync(struct wbec *wbec)
 		struct uart_port *port;
 		struct circ_buf *xmit;
 		u8 bytes_sent = bytes_sent_in_xfer[port_i];
+		u8 max_read_bytes = WBEC_UART_REGMAP_BUFFER_SIZE;
 
 		if (!wbec_one_port) {
 			continue;
@@ -212,20 +213,45 @@ static void wbec_spi_exchange_sync(struct wbec *wbec)
 		port = &wbec_one_port->port;
 		xmit = &port->state->xmit;
 
-		uart_port_lock_irqsave(port, &flags);
 
 		// snprintf(str, ARRAY_SIZE(str), "received_bytes: %d: ", rx.rx[port_i].read_bytes_count);
-		if (rx.rx[port_i].read_bytes_count > WBEC_UART_REGMAP_BUFFER_SIZE) {
-			dev_err(port->dev, "received_bytes_count > WBEC_UART_REGMAP_BUFFER_SIZE\n");
-			rx.rx[port_i].read_bytes_count = WBEC_UART_REGMAP_BUFFER_SIZE;
+
+		if (rx.rx[port_i].data_format == 1) {
+			max_read_bytes = WBEC_UART_REGMAP_BUFFER_SIZE_W_ERRORS;
 		}
+		if (rx.rx[port_i].read_bytes_count > max_read_bytes) {
+			dev_err(port->dev, "received_bytes_count bigger than buffer size\n");
+			rx.rx[port_i].read_bytes_count = max_read_bytes;
+		}
+
+		uart_port_lock_irqsave(port, &flags);
+
 		if (rx.rx[port_i].read_bytes_count > 0) {
 			int i;
 			for (i = 0; i < rx.rx[port_i].read_bytes_count; i++) {
-				u8 c = rx.rx[port_i].read_bytes[i];
+				u8 c;
+				u8 flag = TTY_NORMAL;
+				if (rx.rx[port_i].data_format == 1) {
+					c = rx.rx[port_i].bytes_with_errors[i].byte;
+					if (rx.rx[port_i].bytes_with_errors[i].err_flags & WBEC_UART_RX_BYTE_ERROR_PE) {
+						flag |= TTY_PARITY;
+						port->icount.parity++;
+					}
+					if (rx.rx[port_i].bytes_with_errors[i].err_flags & WBEC_UART_RX_BYTE_ERROR_FE) {
+						flag |= TTY_FRAME;
+						port->icount.frame++;
+					}
+					if (rx.rx[port_i].bytes_with_errors[i].err_flags & WBEC_UART_RX_BYTE_ERROR_ORE) {
+						flag |= TTY_OVERRUN;
+						port->icount.overrun++;
+					}
+				} else {
+					c = rx.rx[port_i].read_bytes[i];
+				}
+
 				// snprintf(str, ARRAY_SIZE(str), "%s[%.2X]", str, c);
 				port->icount.rx++;
-				uart_insert_char(port, 0, 0, c, TTY_NORMAL);
+				uart_insert_char(port, 0, 0, c, flag);
 			}
 			tty_flip_buffer_push(&port->state->port);
 		}
