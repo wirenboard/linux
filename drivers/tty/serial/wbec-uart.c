@@ -12,6 +12,9 @@
 #include <linux/mfd/wbec.h>
 #include <linux/kthread.h>
 #include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/device/bus.h>
 
 #define DRIVER_NAME 				"wbec-uart"
 #define WBEC_UART_PORT_COUNT			2
@@ -566,8 +569,10 @@ static struct uart_driver wbec_uart_driver = {
 static int wbec_uart_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
-	struct wbec *wbec = dev_get_drvdata(dev->parent);
+	struct wbec *wbec;
 	struct wbec_uart_one_port *p;
+	struct device_node *parent_node;
+	struct device *parent_dev;
 	int ret, irq, val;
 	u32 reg;
 	u16 gpio_af_mode = 0;
@@ -576,6 +581,21 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	u16 ctrl_reg;
 
 	dev_info(&pdev->dev, "%s called\n", __func__);
+
+	if (!of_device_is_available(pdev->dev.of_node))
+		return dev_err_probe(dev, -ENODEV, "Device is not available\n");
+
+	parent_node = of_get_parent(pdev->dev.of_node);
+	if (!parent_node)
+		return dev_err_probe(dev, -EINVAL, "Failed to get parent node\n");
+
+	parent_dev = bus_find_device_by_of_node(&spi_bus_type, parent_node);
+	if (!parent_dev)
+		return dev_err_probe(dev, -EINVAL, "Failed to get parent SPI device\n");
+
+	wbec = dev_get_drvdata(parent_dev);
+	if (!wbec)
+		return dev_err_probe(dev, -EINVAL, "Failed to get parent device data\n");
 
 	if (!wbec->spi->irq)
 		dev_err_probe(dev, -EINVAL, "No IRQ defined\n");
@@ -593,7 +613,9 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	if (!p)
 		return -ENOMEM;
 
-	p->regmap = dev_get_regmap(pdev->dev.parent, NULL);
+	p->regmap = dev_get_regmap(parent_dev, NULL);
+	if (!p->regmap)
+		return dev_err_probe(dev, -ENODEV, "Failed to get regmap\n");
 
 	// set pin mode
 	gpio_af_mode |= 1 << (reg * 6 + 0);	// TX
