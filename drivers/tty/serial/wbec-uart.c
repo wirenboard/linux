@@ -64,6 +64,7 @@ struct wbec_uart_one_port {
 };
 
 static struct wbec_uart_one_port *wbec_uart_ports[WBEC_UART_PORT_COUNT];
+static struct mutex wbec_uart_mutex;
 
 struct wbec_regmap_header {
 	u16 address : 15;
@@ -246,6 +247,8 @@ static void wbec_spi_exchange_sync(struct wbec *wbec)
 	int ret, port_i;
 	u8 bytes_sent_in_xfer[WBEC_UART_PORT_COUNT] = {};
 
+	mutex_lock(&wbec_uart_mutex);
+
 	/* prepare tx data */
 	for (port_i = 0; port_i < WBEC_UART_PORT_COUNT; port_i++) {
 		struct wbec_uart_one_port *wbec_one_port = wbec_uart_ports[port_i];
@@ -287,6 +290,8 @@ static void wbec_spi_exchange_sync(struct wbec *wbec)
 
 		wbec_process_received_exchange(wbec_one_port, one_port_rx, bytes_sent_in_xfer[port_i]);
 	}
+
+	mutex_unlock(&wbec_uart_mutex);
 }
 
 static void wbec_start_tx_work_handler(struct work_struct *work)
@@ -337,6 +342,8 @@ static int wbec_uart_startup(struct uart_port *port)
 	int ret, val;
 	u16 ctrl_reg = wbec_uart_regmap_address[port->line].ctrl;
 
+	mutex_lock(&wbec_uart_mutex);
+
 	/* set enable=1; applyed=0 */
 	regmap_write(regmap, ctrl_reg, 0x1);
 
@@ -351,6 +358,8 @@ static int wbec_uart_startup(struct uart_port *port)
 		dev_err(port->dev, "wbec-uart port %d is not ready\n", port->line);
 
 	complete(&p->tx_complete);
+
+	mutex_unlock(&wbec_uart_mutex);
 
 	return ret;
 }
@@ -368,6 +377,8 @@ static void wbec_uart_shutdown(struct uart_port *port)
 
 	wait_for_completion_timeout(&p->tx_complete, msecs_to_jiffies(10000));
 
+	mutex_lock(&wbec_uart_mutex);
+
 	/* set enable=0; applyed=0 */
 	regmap_write(regmap, ctrl_reg, 0x0);
 
@@ -375,6 +386,8 @@ static void wbec_uart_shutdown(struct uart_port *port)
 	ret = regmap_read_poll_timeout(regmap, ctrl_reg, val,
 				       (val & 0x0002),
 				       1000, 1000000);
+
+	mutex_unlock(&wbec_uart_mutex);
 }
 
 static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
@@ -388,6 +401,8 @@ static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
 	u16 ctrl_reg = wbec_uart_regmap_address[port->line].ctrl;
 	union uart_ctrl_regs ctrl_regs;
 	unsigned long flags;
+
+	mutex_lock(&wbec_uart_mutex);
 
 	regmap_bulk_read(regmap, ctrl_reg, ctrl_regs.buf, ARRAY_SIZE(ctrl_regs.buf));
 
@@ -423,6 +438,8 @@ static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
 	uart_port_lock_irqsave(port, &flags);
 	uart_update_timeout(port, new->c_cflag, baud);
 	uart_port_unlock_irqrestore(port, flags);
+
+	mutex_unlock(&wbec_uart_mutex);
 }
 
 static void wbec_uart_config_port(struct uart_port *port, int flags)
@@ -590,6 +607,8 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	if (!p->regmap)
 		return dev_err_probe(dev, -ENODEV, "Failed to get regmap\n");
 
+	mutex_lock(&wbec_uart_mutex);
+
 	// set pin mode
 	gpio_af_mode |= 1 << (reg * 6 + 0);	// TX
 	gpio_af_mode |= 1 << (reg * 6 + 2);	// RX
@@ -635,15 +654,16 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	p->port.line = reg;
 
 	ret = uart_get_rs485_mode(&p->port);
-	if (ret)
-		dev_err_probe(dev, ret, "Failed to get RS485 mode\n");
-
-	dev_info(dev, "RS485 mode: %X\n", p->port.rs485.flags);
-
+	if (ret) {
+		dev_err(dev, "Failed to get RS485 mode\n");
+		goto mutex_release;
+	}
 
 	ret = uart_add_one_port(&wbec_uart_driver, &p->port);
-	if (ret)
-		dev_err_probe(dev, ret, "Failed to register UART port\n");
+	if (ret) {
+		dev_err(dev, "Failed to register UART port\n");
+		goto mutex_release;
+	}
 
 	INIT_WORK(&p->start_tx_work, wbec_start_tx_work_handler);
 
@@ -652,9 +672,12 @@ static int wbec_uart_probe(struct platform_device *pdev)
 
 	wbec->irq_handler = wbec_spi_exchange_sync;
 
-	dev_info(&pdev->dev, "port %s registered\n", p->port.name);
+	dev_dbg(&pdev->dev, "port %s registered\n", p->port.name);
 
-	return 0;
+mutex_release:
+	mutex_unlock(&wbec_uart_mutex);
+
+	return ret;
 }
 
 static void wbec_uart_remove(struct platform_device *pdev)
@@ -666,6 +689,8 @@ static void wbec_uart_remove(struct platform_device *pdev)
 
 	dev_dbg(&pdev->dev, "port %s unregistered\n", p->port.name);
 
+	mutex_lock(&wbec_uart_mutex);
+
 	gpio_af_mask = 0b111111 << (line * 6);
 	regmap_update_bits(p->regmap, WBEC_REG_GPIO_AF, gpio_af_mask, gpio_af_mode);
 
@@ -674,6 +699,7 @@ static void wbec_uart_remove(struct platform_device *pdev)
 
 	regmap_update_bits(p->regmap, WBEC_REG_GPIO_AF, gpio_af_mask, gpio_af_mode);
 
+	mutex_unlock(&wbec_uart_mutex);
 }
 
 static const struct of_device_id wbec_uart_of_match[] = {
@@ -694,6 +720,8 @@ static struct platform_driver wbec_uart_platform_driver = {
 static int __init wbec_uart_init(void)
 {
 	int ret, i;
+
+	mutex_init(&wbec_uart_mutex);
 
 	ret = uart_register_driver(&wbec_uart_driver);
 	if (ret)
