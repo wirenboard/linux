@@ -270,9 +270,7 @@ static void wbec_spi_exchange_sync(struct wbec *wbec)
 	swap_bytes(tx.buf, transfer.len / 2);
 
 	/* transfer */
-	mutex_lock(&wbec->spi_lock);
 	ret = spi_sync(spi, &msg);
-	mutex_unlock(&wbec->spi_lock);
 	if (ret) {
 		dev_err(&spi->dev, "spi_sync failed: %d\n", ret);
 		return;
