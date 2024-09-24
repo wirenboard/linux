@@ -298,12 +298,14 @@ static void wbec_start_tx_work_handler(struct work_struct *work)
 
 static unsigned int wbec_uart_tx_empty(struct uart_port *port)
 {
-	// struct wbec_uart *wbec_uart = container_of(port,
-	// 				      struct wbec_uart,
-	// 				      port);
-	// printk(KERN_INFO "%s called\n", __func__);
+	struct wbec_uart_one_port *wbec_one_port = container_of(port,
+					      struct wbec_uart_one_port,
+					      port);
 
-	return TIOCSER_TEMT;
+ 	if (completion_done(&wbec_one_port->tx_complete))
+		return TIOCSER_TEMT;
+
+	return 0;
 }
 
 static void wbec_uart_start_tx(struct uart_port *port)
