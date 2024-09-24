@@ -1,3 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * wbec-power.c - Wiren Board Embedded Controller PWM driver
+ *
+ * Copyright (c) 2024 Wiren Board LLC
+ *
+ * Author: Pavel Gasheev <pavel.gasheev@wirenboard.com>
+ */
+
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
@@ -16,7 +25,7 @@
 #include <linux/of_platform.h>
 #include <linux/device/bus.h>
 
-#define DRIVER_NAME 				"wbec-uart"
+#define DRIVER_NAME				"wbec-uart"
 #define WBEC_UART_PORT_COUNT			2
 #define WBEC_REGMAP_READ_BIT			BIT(15)
 #define WBEC_UART_REGMAP_BUFFER_SIZE		64
@@ -122,9 +131,9 @@ union uart_exchange_regs_rx {
 static void swap_bytes(u16 *buf, int len)
 {
 	int i;
-	for (i = 0; i < len; i++) {
+
+	for (i = 0; i < len; i++)
 		buf[i] = __fswab16(buf[i]);
-	}
 }
 
 static void wbec_collect_data_for_exchange(struct wbec_uart_one_port *wbec_one_port, struct uart_tx *tx)
@@ -139,6 +148,7 @@ static void wbec_collect_data_for_exchange(struct wbec_uart_one_port *wbec_one_p
 	} else {
 		int i;
 		unsigned int to_send = uart_circ_chars_pending(xmit);
+
 		to_send = min(to_send, WBEC_UART_REGMAP_BUFFER_SIZE);
 
 		tx->bytes_to_send_count = to_send;
@@ -146,6 +156,7 @@ static void wbec_collect_data_for_exchange(struct wbec_uart_one_port *wbec_one_p
 		// Convert to linear buffer
 		for (i = 0; i < to_send; ++i) {
 			u8 c = xmit->buf[(xmit->tail + i) & (UART_XMIT_SIZE - 1)];
+
 			tx->bytes_to_send[i] = c;
 		}
 
@@ -176,9 +187,11 @@ static void wbec_process_received_exchange(struct wbec_uart_one_port *wbec_one_p
 
 	if (rx->read_bytes_count > 0) {
 		int i;
+
 		for (i = 0; i < rx->read_bytes_count; i++) {
 			u8 c;
 			u8 flag = TTY_NORMAL;
+
 			if (rx->data_format == 1) {
 				c = rx->bytes_with_errors[i].byte;
 				if (rx->bytes_with_errors[i].err_flags & WBEC_UART_RX_BYTE_ERROR_PE) {
@@ -207,9 +220,8 @@ static void wbec_process_received_exchange(struct wbec_uart_one_port *wbec_one_p
 	if (rx->ready_for_tx) {
 		unsigned long flags;
 
-		if (bytes_sent_in_exchange > 0) {
+		if (bytes_sent_in_exchange > 0)
 			uart_xmit_advance(port, bytes_sent_in_exchange);
-		}
 
 		uart_port_lock_irqsave(port, &flags);
 		if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
@@ -218,9 +230,8 @@ static void wbec_process_received_exchange(struct wbec_uart_one_port *wbec_one_p
 	}
 
 	/* check if tx was completed */
-	if (rx->tx_completed && (bytes_sent_in_exchange == 0)) {
+	if (rx->tx_completed && (bytes_sent_in_exchange == 0))
 		complete(&wbec_one_port->tx_complete);
-	}
 
 	// uart_port_unlock_irqrestore(port, flags);
 }
@@ -240,9 +251,8 @@ static void wbec_spi_exchange_sync(struct wbec *wbec)
 		struct wbec_uart_one_port *wbec_one_port = wbec_uart_ports[port_i];
 		struct uart_tx *one_port_tx = &tx.tx[port_i];
 
-		if (!wbec_one_port) {
+		if (!wbec_one_port)
 			continue;
-		}
 
 		wbec_collect_data_for_exchange(wbec_one_port, one_port_tx);
 		bytes_sent_in_xfer[port_i] = one_port_tx->bytes_to_send_count;
@@ -274,9 +284,8 @@ static void wbec_spi_exchange_sync(struct wbec *wbec)
 		struct wbec_uart_one_port *wbec_one_port = wbec_uart_ports[port_i];
 		struct uart_rx *one_port_rx = &rx.rx[port_i];
 
-		if (!wbec_one_port) {
+		if (!wbec_one_port)
 			continue;
-		}
 
 		wbec_process_received_exchange(wbec_one_port, one_port_rx, bytes_sent_in_xfer[port_i]);
 	}
@@ -301,7 +310,7 @@ static unsigned int wbec_uart_tx_empty(struct uart_port *port)
 					      struct wbec_uart_one_port,
 					      port);
 
- 	if (completion_done(&wbec_one_port->tx_complete))
+	if (completion_done(&wbec_one_port->tx_complete))
 		return TIOCSER_TEMT;
 
 	return 0;
@@ -312,7 +321,7 @@ static void wbec_uart_start_tx(struct uart_port *port)
 	struct wbec_uart_one_port *wbec_one_port = container_of(port,
 					      struct wbec_uart_one_port,
 					      port);
-	struct circ_buf *xmit = &port->state->xmit;;
+	struct circ_buf *xmit = &port->state->xmit;
 
 	if (!uart_circ_empty(xmit) && !uart_tx_stopped(port)) {
 		reinit_completion(&wbec_one_port->tx_complete);
@@ -420,7 +429,6 @@ static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
 
 static void wbec_uart_config_port(struct uart_port *port, int flags)
 {
-	printk(KERN_INFO "%s called\n", __func__);
 	if (flags & UART_CONFIG_TYPE)
 		port->type = PORT_WBEC;
 }
@@ -463,7 +471,7 @@ static void wbec_uart_null_void(struct uart_port *port)
 	/* do nothing */
 }
 
-static const char * wbec_uart_type(struct uart_port *port)
+static const char *wbec_uart_type(struct uart_port *port)
 {
 	return (port->type == PORT_WBEC) ? "WBEC UART" : NULL;
 }
@@ -495,8 +503,6 @@ static int wbec_uart_config_rs485(struct uart_port *port,
 					      struct wbec_uart_one_port,
 					      port);
 
-	printk(KERN_INFO "%s called\n", __func__);
-
 	if (rs485->flags & SER_RS485_ENABLED) {
 		u16 gpio_af_mode = 0b010000 << (port->line * 6);
 		u16 gpio_af_mask = 0b110000 << (port->line * 6);
@@ -512,11 +518,10 @@ static int wbec_uart_config_rs485(struct uart_port *port,
 		ctrl_regs.ctrl.ctrl_applyed = 0;
 		ctrl_regs.ctrl.rs485_enabled = 1;
 
-		if (rs485->flags & SER_RS485_RX_DURING_TX) {
+		if (rs485->flags & SER_RS485_RX_DURING_TX)
 			ctrl_regs.ctrl.rs485_rx_during_tx = 1;
-		} else {
+		else
 			ctrl_regs.ctrl.rs485_rx_during_tx = 0;
-		}
 
 		regmap_bulk_write(p->regmap, ctrl_reg, ctrl_regs.buf, ARRAY_SIZE(ctrl_regs.buf));
 
@@ -617,10 +622,10 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	p->port.type = PORT_WBEC; //PORT_GENERIC;
 	p->port.irq = irq;
 	/*
-	* Use all ones as membase to make sure uart_configure_port() in
-	* serial_core.c does not abort for SPI/I2C devices where the
-	* membase address is not applicable.
-	*/
+	 * Use all ones as membase to make sure uart_configure_port() in
+	 * serial_core.c does not abort for SPI/I2C devices where the
+	 * membase address is not applicable.
+	 */
 	p->port.membase	= (void __iomem *)~0;
 	p->port.iobase = reg;
 	p->port.iotype = UPIO_PORT;
@@ -661,7 +666,7 @@ static void wbec_uart_remove(struct platform_device *pdev)
 	u16 gpio_af_mask = 0;
 	int line = p->port.line;
 
-	printk(KERN_INFO "%s called\n", __func__);
+	dev_dbg(&pdev->dev, "port %s unregistered\n", p->port.name);
 
 	gpio_af_mask = 0b111111 << (line * 6);
 	regmap_update_bits(p->regmap, WBEC_REG_GPIO_AF, gpio_af_mask, gpio_af_mode);
@@ -670,6 +675,7 @@ static void wbec_uart_remove(struct platform_device *pdev)
 	uart_remove_one_port(&wbec_uart_driver, &p->port);
 
 	regmap_update_bits(p->regmap, WBEC_REG_GPIO_AF, gpio_af_mask, gpio_af_mode);
+
 }
 
 static const struct of_device_id wbec_uart_of_match[] = {
@@ -691,8 +697,6 @@ static int __init wbec_uart_init(void)
 {
 	int ret, i;
 
-	printk(KERN_INFO "%s called\n", __func__);
-
 	ret = uart_register_driver(&wbec_uart_driver);
 	if (ret)
 		return ret;
@@ -709,8 +713,6 @@ static int __init wbec_uart_init(void)
 
 static void __exit wbec_uart_exit(void)
 {
-	printk(KERN_INFO "%s called\n", __func__);
-
 	platform_driver_unregister(&wbec_uart_platform_driver);
 	uart_unregister_driver(&wbec_uart_driver);
 }
