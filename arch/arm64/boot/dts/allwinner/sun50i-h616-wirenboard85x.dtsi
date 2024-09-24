@@ -627,7 +627,7 @@
 
 			linux,rs485-enabled-at-boot-time;
 
-			status = "okay";
+			status = "disabled";
 		};
 
 		wbec_uart_mod2: serial@1 {
@@ -636,7 +636,7 @@
 
 			linux,rs485-enabled-at-boot-time;
 
-			status = "okay";
+			status = "disabled";
 		};
 	};
 };
