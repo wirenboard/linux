@@ -35,6 +35,15 @@ static const char * const wbec_poweron_reason[] = {
 	"PMIC is unexpectedly off",
 };
 
+static const struct regmap_config wbec_regmap_config = {
+	.reg_bits = 16,
+	.read_flag_mask = BIT(7),
+	.val_bits = 16,
+	.pad_bits = 16 * WBEC_REGMAP_PAD_WORDS_COUNT,
+	.max_register = 0x130,
+	.can_sleep = true,
+};
+
 /* ----------------------------------------------------------------------- */
 /* SysFS interface */
 
@@ -287,20 +296,6 @@ static int wbec_restart(struct sys_off_data *data)
 	return NOTIFY_DONE;
 }
 
-static void wbec_spi_lock(void *context)
-{
-	struct mutex *lock = context;
-
-	mutex_lock(lock);
-}
-
-static void wbec_spi_unlock(void *context)
-{
-	struct mutex *lock = context;
-
-	mutex_unlock(lock);
-}
-
 static int wbec_probe(struct spi_device *spi)
 {
 	struct wbec *wbec;
@@ -319,20 +314,6 @@ static int wbec_probe(struct spi_device *spi)
 	spi_setup(spi);
 
 	spi_set_drvdata(spi, wbec);
-
-	mutex_init(&wbec->spi_lock);
-
-	struct regmap_config wbec_regmap_config = {
-		.reg_bits = 16,
-		.read_flag_mask = BIT(7),
-		.val_bits = 16,
-		.pad_bits = 16 * WBEC_REGMAP_PAD_WORDS_COUNT,
-		.max_register = 0x130,
-		.can_sleep = true,
-		.lock = wbec_spi_lock,
-		.unlock = wbec_spi_unlock,
-		.lock_arg = &wbec->spi_lock,
-	};
 
 	wbec->regmap = devm_regmap_init_spi(spi, &wbec_regmap_config);
 	if (IS_ERR(wbec->regmap)) {
