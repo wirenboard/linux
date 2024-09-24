@@ -646,7 +646,7 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	p->port.membase	= (void __iomem *)~0;
 	p->port.iobase = reg;
 	p->port.iotype = UPIO_PORT;
-	p->port.flags = UPF_FIXED_TYPE /*| UPF_LOW_LATENCY*/;
+	p->port.flags = UPF_FIXED_TYPE | UPF_AUTO_RTS /*| UPF_LOW_LATENCY*/;
 	p->port.rs485_config = wbec_uart_config_rs485;
 	p->port.rs485_supported = wbec_uart_rs485_supported;
 	p->port.uartclk = 64000000;
