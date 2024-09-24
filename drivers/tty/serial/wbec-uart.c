@@ -127,6 +127,104 @@ static void swap_bytes(u16 *buf, int len)
 	}
 }
 
+static void wbec_collect_data_for_exchange(struct wbec_uart_one_port *wbec_one_port, struct uart_tx *tx)
+{
+	struct uart_port *port = &wbec_one_port->port;
+	struct circ_buf *xmit = &port->state->xmit;
+
+	// uart_port_lock_irqsave(port, &flags);
+
+	if (uart_circ_empty(xmit) || uart_tx_stopped(port)) {
+		tx->bytes_to_send_count = 0;
+	} else {
+		int i;
+		unsigned int to_send = uart_circ_chars_pending(xmit);
+		to_send = min(to_send, WBEC_UART_REGMAP_BUFFER_SIZE);
+
+		tx->bytes_to_send_count = to_send;
+
+		// Convert to linear buffer
+		for (i = 0; i < to_send; ++i) {
+			u8 c = xmit->buf[(xmit->tail + i) & (UART_XMIT_SIZE - 1)];
+			tx->bytes_to_send[i] = c;
+		}
+
+		if (to_send)
+			reinit_completion(&wbec_one_port->tx_complete);
+	}
+
+	// uart_port_unlock_irqrestore(port, flags);
+}
+
+static void wbec_process_received_exchange(struct wbec_uart_one_port *wbec_one_port,
+				      struct uart_rx *rx,
+				      u8 bytes_sent_in_exchange)
+{
+	struct uart_port *port = &wbec_one_port->port;
+	struct circ_buf *xmit = &port->state->xmit;
+	u8 max_read_bytes = WBEC_UART_REGMAP_BUFFER_SIZE;
+
+	if (rx->data_format == 1)
+		max_read_bytes = WBEC_UART_REGMAP_BUFFER_SIZE_W_ERRORS;
+
+	if (rx->read_bytes_count > max_read_bytes) {
+		dev_err_ratelimited(port->dev, "received_bytes_count bigger than buffer size\n");
+		rx->read_bytes_count = max_read_bytes;
+	}
+
+	// uart_port_lock_irqsave(port, &flags);
+
+	if (rx->read_bytes_count > 0) {
+		int i;
+		for (i = 0; i < rx->read_bytes_count; i++) {
+			u8 c;
+			u8 flag = TTY_NORMAL;
+			if (rx->data_format == 1) {
+				c = rx->bytes_with_errors[i].byte;
+				if (rx->bytes_with_errors[i].err_flags & WBEC_UART_RX_BYTE_ERROR_PE) {
+					flag |= TTY_PARITY;
+					port->icount.parity++;
+				}
+				if (rx->bytes_with_errors[i].err_flags & WBEC_UART_RX_BYTE_ERROR_FE) {
+					flag |= TTY_FRAME;
+					port->icount.frame++;
+				}
+				if (rx->bytes_with_errors[i].err_flags & WBEC_UART_RX_BYTE_ERROR_ORE) {
+					flag |= TTY_OVERRUN;
+					port->icount.overrun++;
+				}
+			} else {
+				c = rx->read_bytes[i];
+			}
+
+			port->icount.rx++;
+			uart_insert_char(port, 0, 0, c, flag);
+		}
+		tty_flip_buffer_push(&port->state->port);
+	}
+
+	/* check if tx data was accepted by wbec */
+	if (rx->ready_for_tx) {
+		unsigned long flags;
+
+		if (bytes_sent_in_exchange > 0) {
+			uart_xmit_advance(port, bytes_sent_in_exchange);
+		}
+
+		uart_port_lock_irqsave(port, &flags);
+		if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
+			uart_write_wakeup(port);
+		uart_port_unlock_irqrestore(port, flags);
+	}
+
+	/* check if tx was completed */
+	if (rx->tx_completed && (bytes_sent_in_exchange == 0)) {
+		complete(&wbec_one_port->tx_complete);
+	}
+
+	// uart_port_unlock_irqrestore(port, flags);
+}
+
 static void wbec_spi_exchange_sync(struct wbec *wbec)
 {
 	struct spi_device *spi = wbec->spi;
@@ -136,51 +234,21 @@ static void wbec_spi_exchange_sync(struct wbec *wbec)
 	struct spi_transfer transfer = {};
 	int ret, port_i;
 	u8 bytes_sent_in_xfer[WBEC_UART_PORT_COUNT] = {};
-	unsigned long flags;
 
-
-	// prepare tx data
+	/* prepare tx data */
 	for (port_i = 0; port_i < WBEC_UART_PORT_COUNT; port_i++) {
 		struct wbec_uart_one_port *wbec_one_port = wbec_uart_ports[port_i];
-		struct uart_port *port;
-		struct circ_buf *xmit;
+		struct uart_tx *one_port_tx = &tx.tx[port_i];
 
 		if (!wbec_one_port) {
 			continue;
 		}
 
-		port = &wbec_one_port->port;
-		xmit = &port->state->xmit;
-
-		// printk(KERN_INFO "process port_i=%d\n", port_i);
-		uart_port_lock_irqsave(port, &flags);
-
-		if (uart_circ_empty(xmit) || uart_tx_stopped(port)) {
-			// printk(KERN_INFO "empty or stopped\n");
-			tx.tx[port_i].bytes_to_send_count = 0;
-		} else {
-			int i;
-			unsigned int to_send = uart_circ_chars_pending(xmit);
-			// printk(KERN_INFO "to_send linux: %d; head=%d, tail=%d\n", to_send, xmit->head, xmit->tail);
-			to_send = min(to_send, WBEC_UART_REGMAP_BUFFER_SIZE);
-			// printk(KERN_INFO "to_send spi: %d\n", to_send);
-
-			tx.tx[port_i].bytes_to_send_count = to_send;
-			bytes_sent_in_xfer[port_i] = to_send;
-
-			// Convert to linear buffer
-			for (i = 0; i < to_send; ++i) {
-				u8 c = xmit->buf[(xmit->tail + i) & (UART_XMIT_SIZE - 1)];
-				tx.tx[port_i].bytes_to_send[i] = c;
-			}
-
-			if (to_send)
-				reinit_completion(&wbec_one_port->tx_complete);
-		}
-
-		uart_port_unlock_irqrestore(port, flags);
+		wbec_collect_data_for_exchange(wbec_one_port, one_port_tx);
+		bytes_sent_in_xfer[port_i] = one_port_tx->bytes_to_send_count;
 	}
 
+	/* prepare spi transfer */
 	tx.header.address = wbec_uart_regmap_address[0].exchange;
 
 	transfer.tx_buf = tx.buf;
@@ -191,7 +259,7 @@ static void wbec_spi_exchange_sync(struct wbec *wbec)
 
 	swap_bytes(tx.buf, transfer.len / 2);
 
-	// transfer
+	/* transfer */
 	mutex_lock(&wbec->spi_lock);
 	ret = spi_sync(spi, &msg);
 	mutex_unlock(&wbec->spi_lock);
@@ -204,82 +272,13 @@ static void wbec_spi_exchange_sync(struct wbec *wbec)
 
 	for (port_i = 0; port_i < WBEC_UART_PORT_COUNT; port_i++) {
 		struct wbec_uart_one_port *wbec_one_port = wbec_uart_ports[port_i];
-		struct uart_port *port;
-		struct circ_buf *xmit;
-		u8 bytes_sent = bytes_sent_in_xfer[port_i];
-		u8 max_read_bytes = WBEC_UART_REGMAP_BUFFER_SIZE;
+		struct uart_rx *one_port_rx = &rx.rx[port_i];
 
 		if (!wbec_one_port) {
 			continue;
 		}
 
-		port = &wbec_one_port->port;
-		xmit = &port->state->xmit;
-
-
-		// snprintf(str, ARRAY_SIZE(str), "received_bytes: %d: ", rx.rx[port_i].read_bytes_count);
-
-		if (rx.rx[port_i].data_format == 1) {
-			max_read_bytes = WBEC_UART_REGMAP_BUFFER_SIZE_W_ERRORS;
-		}
-		if (rx.rx[port_i].read_bytes_count > max_read_bytes) {
-			dev_err(port->dev, "received_bytes_count bigger than buffer size\n");
-			rx.rx[port_i].read_bytes_count = max_read_bytes;
-		}
-
-		uart_port_lock_irqsave(port, &flags);
-
-		if (rx.rx[port_i].read_bytes_count > 0) {
-			int i;
-			for (i = 0; i < rx.rx[port_i].read_bytes_count; i++) {
-				u8 c;
-				u8 flag = TTY_NORMAL;
-				if (rx.rx[port_i].data_format == 1) {
-					c = rx.rx[port_i].bytes_with_errors[i].byte;
-					if (rx.rx[port_i].bytes_with_errors[i].err_flags & WBEC_UART_RX_BYTE_ERROR_PE) {
-						flag |= TTY_PARITY;
-						port->icount.parity++;
-					}
-					if (rx.rx[port_i].bytes_with_errors[i].err_flags & WBEC_UART_RX_BYTE_ERROR_FE) {
-						flag |= TTY_FRAME;
-						port->icount.frame++;
-					}
-					if (rx.rx[port_i].bytes_with_errors[i].err_flags & WBEC_UART_RX_BYTE_ERROR_ORE) {
-						flag |= TTY_OVERRUN;
-						port->icount.overrun++;
-					}
-				} else {
-					c = rx.rx[port_i].read_bytes[i];
-				}
-
-				// snprintf(str, ARRAY_SIZE(str), "%s[%.2X]", str, c);
-				port->icount.rx++;
-				uart_insert_char(port, 0, 0, c, flag);
-			}
-			tty_flip_buffer_push(&port->state->port);
-		}
-
-		if (rx.rx[port_i].ready_for_tx) {
-
-			// printk(KERN_INFO "bytes_sent=%d; tail_was=%d\n", bytes_sent, xmit->tail);
-
-			if (bytes_sent > 0) {
-				uart_xmit_advance(port, bytes_sent);
-			}
-
-			// printk(KERN_INFO "new_tail=%d\n", xmit->tail);
-
-			// uart_port_lock_irqsave(port, &flags);
-			if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-				uart_write_wakeup(port);
-			// uart_port_unlock_irqrestore(port, flags);
-		}
-
-		if (rx.rx[port_i].tx_completed && (bytes_sent == 0)) {
-			complete(&wbec_one_port->tx_complete);
-		}
-
-		uart_port_unlock_irqrestore(port, flags);
+		wbec_process_received_exchange(wbec_one_port, one_port_rx, bytes_sent_in_xfer[port_i]);
 	}
 }
 
@@ -313,46 +312,12 @@ static void wbec_uart_start_tx(struct uart_port *port)
 	struct wbec_uart_one_port *wbec_one_port = container_of(port,
 					      struct wbec_uart_one_port,
 					      port);
-	struct circ_buf *xmit = &port->state->xmit;
-
-	// printk(KERN_INFO "%s called\n", __func__);
+	struct circ_buf *xmit = &port->state->xmit;;
 
 	if (!uart_circ_empty(xmit) && !uart_tx_stopped(port)) {
 		reinit_completion(&wbec_one_port->tx_complete);
 		schedule_work(&wbec_one_port->start_tx_work);
 	}
-}
-
-static void wbec_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-	// printk(KERN_INFO "%s called\n", __func__);
-}
-
-static unsigned int wbec_uart_get_mctrl(struct uart_port *port)
-{
-	// printk(KERN_INFO "%s called\n", __func__);
-	return 0;
-}
-
-static void wbec_uart_stop_tx(struct uart_port *port)
-{
-	// struct wbec_uart *wbec_uart = container_of(port,
-	// 				      struct wbec_uart,
-	// 				      port);
-	// printk(KERN_INFO "%s called\n", __func__);
-}
-
-static void wbec_uart_stop_rx(struct uart_port *port)
-{
-	// struct wbec_uart *wbec_uart = container_of(port,
-	// 				      struct wbec_uart,
-	// 				      port);
-	// printk(KERN_INFO "%s called\n", __func__);
-}
-
-static void wbec_uart_break_ctl(struct uart_port *port, int break_state)
-{
-	// printk(KERN_INFO "%s called\n", __func__);
 }
 
 static int wbec_uart_startup(struct uart_port *port)
@@ -365,8 +330,6 @@ static int wbec_uart_startup(struct uart_port *port)
 	int ret, val;
 	u16 ctrl_reg = wbec_uart_regmap_address[port->line].ctrl;
 
-	// printk(KERN_INFO "%s called\n", __func__);
-
 	/* set enable=1; applyed=0 */
 	regmap_write(regmap, ctrl_reg, 0x1);
 
@@ -375,11 +338,10 @@ static int wbec_uart_startup(struct uart_port *port)
 				       (val & 0x0002),
 				       1000, 1000000);
 
-	if (ret == 0) {
-		printk(KERN_INFO "UART port %d is ready\n", port->line);
-	} else {
-		printk(KERN_INFO "UART port %d is not ready\n", port->line);
-	}
+	if (ret == 0)
+		dev_dbg(port->dev, "wbec-uart port %d is ready\n", port->line);
+	else
+		dev_err(port->dev, "wbec-uart port %d is not ready\n", port->line);
 
 	complete(&p->tx_complete);
 
@@ -396,8 +358,6 @@ static void wbec_uart_shutdown(struct uart_port *port)
 
 	int ret, val;
 	u16 ctrl_reg = wbec_uart_regmap_address[port->line].ctrl;
-
-	// printk(KERN_INFO "%s called\n", __func__);
 
 	wait_for_completion_timeout(&p->tx_complete, msecs_to_jiffies(10000));
 
@@ -421,8 +381,6 @@ static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
 	u16 ctrl_reg = wbec_uart_regmap_address[port->line].ctrl;
 	union uart_ctrl_regs ctrl_regs;
 	unsigned long flags;
-
-	// printk(KERN_INFO "%s called\n", __func__);
 
 	regmap_bulk_read(regmap, ctrl_reg, ctrl_regs.buf, ARRAY_SIZE(ctrl_regs.buf));
 
@@ -467,42 +425,56 @@ static void wbec_uart_config_port(struct uart_port *port, int flags)
 		port->type = PORT_WBEC;
 }
 
+static void wbec_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
+{
+	/* do nothing */
+}
+
+static unsigned int wbec_uart_get_mctrl(struct uart_port *port)
+{
+	/* do nothing */
+	return 0;
+}
+
+static void wbec_uart_break_ctl(struct uart_port *port, int break_state)
+{
+	/* do nothing */
+}
+
 static int wbec_uart_verify_port(struct uart_port *port, struct serial_struct *ser)
 {
-	// printk(KERN_INFO "%s called\n", __func__);
+	/* do nothing */
 	return 0;
 }
 
 static void wbec_uart_pm(struct uart_port *port, unsigned int state, unsigned int oldstate)
 {
-	// printk(KERN_INFO "%s called\n", __func__);
+	/* do nothing */
 }
 
 static int wbec_uart_request_port(struct uart_port *port)
 {
-	// printk(KERN_INFO "%s called\n", __func__);
+	/* do nothing */
 	return 0;
 }
 
 static void wbec_uart_null_void(struct uart_port *port)
 {
-	// printk(KERN_INFO "%s called\n", __func__);
+	/* do nothing */
 }
 
 static const char * wbec_uart_type(struct uart_port *port)
 {
-	printk(KERN_INFO "%s called\n", __func__);
-
-	return 0;
+	return (port->type == PORT_WBEC) ? "WBEC UART" : NULL;
 }
 
 static const struct uart_ops wbec_uart_ops = {
 	.tx_empty	= wbec_uart_tx_empty,
 	.set_mctrl	= wbec_uart_set_mctrl,
 	.get_mctrl	= wbec_uart_get_mctrl,
-	.stop_tx	= wbec_uart_stop_tx,
+	.stop_tx	= wbec_uart_null_void,
 	.start_tx	= wbec_uart_start_tx,
-	.stop_rx	= wbec_uart_stop_rx,
+	.stop_rx	= wbec_uart_null_void,
 	.break_ctl	= wbec_uart_break_ctl,
 	.startup	= wbec_uart_startup,
 	.shutdown	= wbec_uart_shutdown,
@@ -582,8 +554,6 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	union uart_ctrl_regs ctrl_regs;
 	u16 ctrl_reg;
 
-	dev_info(&pdev->dev, "%s called\n", __func__);
-
 	if (!of_device_is_available(pdev->dev.of_node))
 		return dev_err_probe(dev, -ENODEV, "Device is not available\n");
 
@@ -604,8 +574,6 @@ static int wbec_uart_probe(struct platform_device *pdev)
 
 	if (device_property_read_u32(dev, "reg", &reg))
 		return dev_err_probe(dev, -EINVAL, "Failed to read 'reg' property\n");
-
-	dev_info(dev, "reg=%u; id=%u\n", reg, pdev->id);
 
 	if (reg >= WBEC_UART_PORT_COUNT)
 		dev_err_probe(dev, -EINVAL, "Invalid reg value: %u\n", reg);
@@ -628,6 +596,7 @@ static int wbec_uart_probe(struct platform_device *pdev)
 
 	regmap_update_bits(p->regmap, WBEC_REG_GPIO_AF, gpio_af_mask, gpio_af_mode);
 
+	/* Disable UART */
 	ctrl_reg = wbec_uart_regmap_address[reg].ctrl;
 	regmap_bulk_read(p->regmap, ctrl_reg, ctrl_regs.buf, ARRAY_SIZE(ctrl_regs.buf));
 	ctrl_regs.ctrl.ctrl_applyed = 0;
@@ -642,7 +611,6 @@ static int wbec_uart_probe(struct platform_device *pdev)
 
 	init_completion(&p->tx_complete);
 
-	// Register the UART port
 	// Initialize the UART port
 	p->port.ops = &wbec_uart_ops;
 	p->port.dev = &pdev->dev;
@@ -659,7 +627,7 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	p->port.flags = UPF_FIXED_TYPE /*| UPF_LOW_LATENCY*/;
 	p->port.rs485_config = wbec_uart_config_rs485;
 	p->port.rs485_supported = wbec_uart_rs485_supported;
-	p->port.uartclk = 115200;
+	p->port.uartclk = 64000000;
 	p->port.fifosize = 64;
 	p->port.line = reg;
 
@@ -747,12 +715,8 @@ static void __exit wbec_uart_exit(void)
 	uart_unregister_driver(&wbec_uart_driver);
 }
 
-
-
-// device_initcall(wbec_uart_init);
 module_init(wbec_uart_init);
 module_exit(wbec_uart_exit);
-
 
 MODULE_ALIAS("platform:wbec-uart");
 MODULE_LICENSE("GPL");
