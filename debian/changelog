@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb107) stable; urgency=medium
+
+  * wb8: add pps-gpio to config
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Tue, 24 Sep 2024 17:02:29 +0300
+
 linux-wb (6.8.0-wb106) stable; urgency=medium
 
   * axp20x: port battery charging status fix from 5.10
