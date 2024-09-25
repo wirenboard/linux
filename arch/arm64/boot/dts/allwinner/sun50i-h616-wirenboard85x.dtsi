@@ -49,6 +49,11 @@
 		rtc_onboard_txco = &rtc_onboard_txco;
 	};
 
+	extcon_debug_console: usbc-det {
+		compatible = "linux,extcon-usb-gpio";
+		id-gpios = <&pio PD 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+	};
+
 	wirenboard {
 		adc-type = <3>;
 		pwm-buzzer = <0>;
@@ -654,7 +659,7 @@
 	"", "", "", "",  /* 24-27 */
 	"", "", "", "",  /* 28-31 */
 	/* PD */
-	"", "", "", "",  /* 0-3 */
+	"DEBUG CONSOLE DET", "", "", "",  /* 0-3 */
 	"", "", "", "",  /* 4-7 */
 	"", "", "MOD4 RTS", "",  /* 8-11 */
 	"W1", "BAT SDA", "", "RS-485-2 RTS",  /* 12-15 */
@@ -1208,6 +1213,7 @@
 
 &usbotg {
 	dr_mode = "peripheral";
+	extcon = <&extcon_debug_console>;
 	status = "okay";
 };
 
