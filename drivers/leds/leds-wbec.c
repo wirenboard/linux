@@ -45,22 +45,25 @@ static void wbec_led_set(struct led_classdev *led_cdev, enum led_brightness brig
 
 static int wbec_blink_set(struct led_classdev *led_cdev,
                           unsigned long *delay_on,
-                          unsigned long *delay_off)`
+                          unsigned long *delay_off)
 {
     struct wbec_led *wbec_led = container_of(led_cdev, struct wbec_led, cdev);
     int err;
 
     err = regmap_write(wbec_led->regmap, WBEC_REG_EC_SYSTEM_LED, WBEC_LED_BLINK);
-    if (err)
+    if (err) {
         return err;
+    }
 
     err = regmap_write(wbec_led->regmap, WBEC_REG_EC_SYSTEM_LED_ON_MS, *delay_on);
-    if (err)
+    if (err) {
         return err;
+    }
 
     err = regmap_write(wbec_led->regmap, WBEC_REG_EC_SYSTEM_LED_OFF_MS, *delay_off);
-    if (err)
+    if (err) {
         return err;
+    }
 
 	wbec_led->blink_delay_on = *delay_on;
 	wbec_led->blink_delay_off = *delay_off;
@@ -87,8 +90,9 @@ static ssize_t blink_on_store(struct device *dev,
     int ret;
 
     ret = kstrtoul(buf, 10, &value);
-    if (ret)
+    if (ret) {
         return ret;
+    }
 
     wbec_led->blink_delay_on = value;
     wbec_blink_set(led_cdev, &wbec_led->blink_delay_on, &wbec_led->blink_delay_off);
@@ -115,8 +119,9 @@ static ssize_t blink_off_store(struct device *dev,
     int ret;
 
     ret = kstrtoul(buf, 10, &value);
-    if (ret)
+    if (ret) {
         return ret;
+    }
 
     wbec_led->blink_delay_off = value;
     wbec_blink_set(led_cdev, &wbec_led->blink_delay_on, &wbec_led->blink_delay_off);
@@ -142,12 +147,14 @@ static int wbec_led_probe(struct platform_device *pdev)
 	struct wbec_led *wbec_led;
 	int err;
 
-	if (!pdev->dev.parent)
-		return -ENODEV;
+	if (!pdev->dev.parent) {
+        return -ENODEV;
+    }
 
 	wbec_led = devm_kzalloc(dev, sizeof(struct wbec_led), GFP_KERNEL);
-	if (!wbec_led)
-		return -ENOMEM;
+	if (!wbec_led) {
+        return -ENOMEM;
+    }
 
 	wbec_led->regmap = wbec->regmap;
     if (!wbec_led->regmap) {
