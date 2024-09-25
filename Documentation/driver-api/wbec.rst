@@ -23,6 +23,7 @@ sub-drivers for each device connected to WBEC:
   * rtc-wbec - RTC driver
   * pwrkey-wbec - Power key driver
   * wbec-power - Power driver
+  * wbec-led - System LED driver
 
 The wbec driver also provides a set of sysfs attributes for WBEC:
 

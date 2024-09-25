@@ -612,6 +612,11 @@
 			reg = <0>;
 			#pwm-cells = <3>;
 		};
+
+		wbec_led: wbec-led@0 {
+			compatible = "wirenboard,wbec-led";
+			reg = <0>;
+		};
 	};
 };
 
