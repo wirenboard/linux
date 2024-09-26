@@ -113,6 +113,7 @@ struct wbec {
 	struct regmap *regmap;
 	struct dentry *wbec_dir;
 	void (*irq_handler)(struct wbec *wbec);
+	bool support_v2_protocol;
 };
 
 #endif
