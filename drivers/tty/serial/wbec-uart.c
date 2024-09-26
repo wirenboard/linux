@@ -589,8 +589,8 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	if (!wbec)
 		return dev_err_probe(dev, -EINVAL, "Failed to get parent device data\n");
 
-	if (!wbec->spi->irq)
-		dev_err_probe(dev, -EINVAL, "No IRQ defined\n");
+	if (!wbec->spi->irq || !wbec->support_v2_protocol)
+		dev_err_probe(dev, -EINVAL, "WBEC firmware does not support UART\n");
 
 	if (device_property_read_u32(dev, "reg", &reg))
 		return dev_err_probe(dev, -EINVAL, "Failed to read 'reg' property\n");
