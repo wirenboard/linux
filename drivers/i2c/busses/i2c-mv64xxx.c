@@ -947,9 +947,8 @@ static int mv64xxx_i2c_init_recovery_info(struct mv64xxx_i2c_data *drv_data,
 	if (IS_ERR(rinfo->pinctrl)) {
 		if (PTR_ERR(rinfo->pinctrl) == -EPROBE_DEFER)
 			return -EPROBE_DEFER;
-		dev_info(dev, "can't get pinctrl, bus recovery not supported\n");
-		//return PTR_ERR(rinfo->pinctrl);
-		return -EPROBE_DEFER;
+		dev_info(dev, "can't get pinctrl, bus recovery not supported\n err number: %d", PTR_ERR(rinfo->pinctrl));
+		return PTR_ERR(rinfo->pinctrl);
 	} else if (!rinfo->pinctrl) {
 		return -ENODEV;
 	}
