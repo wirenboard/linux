@@ -617,7 +617,7 @@
 
 /* WBIO I2C */
 &i2c3 {
-	pinctrl-names = "default";
+	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&i2c3_pa_pins>;
 	pinctrl-1 = <&i2c3_gpio>;
 
