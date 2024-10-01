@@ -1114,6 +1114,8 @@
 		drive-strength = <40>;
 	};
 
+	/delete-node/ i2c3-ph-pins;
+
 	i2c3_pa_pins: i2c3-pa-pins {
 		pins = "PA10", "PA11";
 		function = "i2c3";
