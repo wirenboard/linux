@@ -949,10 +949,10 @@ static int mv64xxx_i2c_init_recovery_info(struct mv64xxx_i2c_data *drv_data,
 		switch (PTR_ERR(rinfo->pinctrl)) {
 			case -EPROBE_DEFER:
 				return -EPROBE_DEFER;
-			case -ENODEV:
-				// return -EPROBE_DEFER;
-				printk("BANG");
-				break;
+			// case -ENODEV:
+			// 	// return -EPROBE_DEFER;
+			// 	printk("BANG");
+			// 	break;
 			default:
 				return PTR_ERR(rinfo->pinctrl);
 		}
