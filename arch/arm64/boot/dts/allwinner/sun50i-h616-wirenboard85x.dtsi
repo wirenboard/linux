@@ -619,7 +619,7 @@
 &i2c3 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c3_pa_pins>;
-	pinctrl-1 = <&i2c3_recovery_pins>;
+	pinctrl-1 = <&i2c3_gpio>;
 
 	sda-gpios = <&pio 0 11 GPIO_ACTIVE_HIGH>; /* PA11 */
 	scl-gpios = <&pio 0 10 GPIO_ACTIVE_HIGH>; /* PA10 */
@@ -1122,7 +1122,7 @@
 		drive-strength = <40>;
 	};
 
-	i2c3_recovery_pins: i2c3-recovery-pins {
+	i2c3_gpio: i2c3-gpio-pins {
 		pins = "PA11", "PA10";
 		function = "gpio_out";
 	};
