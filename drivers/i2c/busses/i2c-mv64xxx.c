@@ -945,11 +945,19 @@ static int mv64xxx_i2c_init_recovery_info(struct mv64xxx_i2c_data *drv_data,
 
 	rinfo->pinctrl = devm_pinctrl_get(dev);
 	if (IS_ERR(rinfo->pinctrl)) {
-		if (PTR_ERR(rinfo->pinctrl) == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
-		dev_info(dev, "can't get pinctrl, bus recovery not supported\n err number: %d", PTR_ERR(rinfo->pinctrl));
-		return PTR_ERR(rinfo->pinctrl);
+		dev_info(dev, "failed to acquire bus recovery pinctrl (errno: %d)\n", PTR_ERR(rinfo->pinctrl));
+		switch (PTR_ERR(rinfo->pinctrl)) {
+			case -EPROBE_DEFER:
+				return -EPROBE_DEFER;
+			case -ENODEV:
+				// return -EPROBE_DEFER;
+				printk("BANG");
+				break;
+			default:
+				return PTR_ERR(rinfo->pinctrl);
+		}
 	} else if (!rinfo->pinctrl) {
+		dev_info(dev, "can't get pinctrl, bus recovery not supported\n");
 		return -ENODEV;
 	}
 
