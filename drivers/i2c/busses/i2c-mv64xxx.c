@@ -584,8 +584,11 @@ mv64xxx_i2c_wait_for_completion(struct mv64xxx_i2c_data *drv_data)
 				"mv64xxx: I2C bus locked, block: %d, "
 				"time_left: %d\n", drv_data->block,
 				(int)time_left);
+			printk("Before hw init");
 			mv64xxx_i2c_hw_init(drv_data);
+			printk("Before recover bus");
 			i2c_recover_bus(&drv_data->adapter);
+			printk("After recover bus");
 		}
 	} else
 		spin_unlock_irqrestore(&drv_data->lock, flags);

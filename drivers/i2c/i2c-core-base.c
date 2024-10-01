@@ -225,6 +225,8 @@ int i2c_generic_scl_recovery(struct i2c_adapter *adap)
 	struct i2c_bus_recovery_info *bri = adap->bus_recovery_info;
 	int i = 0, scl = 1, ret = 0;
 
+	printk("into i2c_generic_scl_recovery");
+
 	if (bri->prepare_recovery)
 		bri->prepare_recovery(adap);
 	if (bri->pinctrl)
@@ -287,22 +289,26 @@ int i2c_generic_scl_recovery(struct i2c_adapter *adap)
 	if (bri->pinctrl)
 		pinctrl_select_state(bri->pinctrl, bri->pins_default);
 
+	printk("into i2c_generic_scl_recovery done");
 	return ret;
 }
 EXPORT_SYMBOL_GPL(i2c_generic_scl_recovery);
 
 int i2c_recover_bus(struct i2c_adapter *adap)
 {
+	printk("Into i2c_recover_bus begin");
 	if (!adap->bus_recovery_info)
 		return -EBUSY;
 
 	dev_dbg(&adap->dev, "Trying i2c bus recovery\n");
+	printk("Into i2c_recover_bus end");
 	return adap->bus_recovery_info->recover_bus(adap);
 }
 EXPORT_SYMBOL_GPL(i2c_recover_bus);
 
 static void i2c_gpio_init_pinctrl_recovery(struct i2c_adapter *adap)
 {
+	printk("Into i2c_gpio_init_pinctrl_recovery");
 	struct i2c_bus_recovery_info *bri = adap->bus_recovery_info;
 	struct device *dev = &adap->dev;
 	struct pinctrl *p = bri->pinctrl ?: dev_pinctrl(dev->parent);
@@ -418,6 +424,7 @@ cleanup_pinctrl_state:
 
 static int i2c_gpio_init_recovery(struct i2c_adapter *adap)
 {
+	printk("Into i2c_gpio_init_recovery");
 	i2c_gpio_init_pinctrl_recovery(adap);
 	return i2c_gpio_init_generic_recovery(adap);
 }

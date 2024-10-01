@@ -622,7 +622,7 @@
 	pinctrl-1 = <&i2c3_recovery_pins>;
 
 	sda-gpios = <&pio 0 11 GPIO_ACTIVE_HIGH>; /* PA11 */
-	sda-gpios = <&pio 0 10 GPIO_ACTIVE_HIGH>; /* PA10 */
+	scl-gpios = <&pio 0 10 GPIO_ACTIVE_HIGH>; /* PA10 */
 
 	status = "okay";
 };
