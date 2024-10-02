@@ -941,6 +941,7 @@ mv64xxx_of_config(struct mv64xxx_i2c_data *drv_data,
 static int mv64xxx_i2c_init_recovery_info(struct mv64xxx_i2c_data *drv_data,
 					  struct device *dev)
 {
+	printk("Into mv64xxx_i2c_init_recovery_info");
 	struct i2c_bus_recovery_info *rinfo = &drv_data->rinfo;
 
 	rinfo->pinctrl = devm_pinctrl_get(dev);
@@ -961,16 +962,16 @@ static int mv64xxx_i2c_init_recovery_info(struct mv64xxx_i2c_data *drv_data,
 		return -ENODEV;
 	}
 
-	if (IS_ERR(pinctrl_lookup_state(rinfo->pinctrl, "gpio")) &&
-		IS_ERR(pinctrl_lookup_state(rinfo->pinctrl, "recovery"))) {
-		/* No recovery state is vailable in pinctrl. */
-		devm_pinctrl_put(rinfo->pinctrl);
-		rinfo->pinctrl = NULL;
-		return 0;
-	}
+	// if (IS_ERR(pinctrl_lookup_state(rinfo->pinctrl, "gpio")) &&
+	// 	IS_ERR(pinctrl_lookup_state(rinfo->pinctrl, "recovery"))) {
+	// 	/* No recovery state is vailable in pinctrl. */
+	// 	devm_pinctrl_put(rinfo->pinctrl);
+	// 	rinfo->pinctrl = NULL;
+	// 	return 0;
+	// }
 
 	drv_data->adapter.bus_recovery_info = rinfo;
-	printk("Set bus_recovery_info");
+	printk("Successfully set bus_recovery_info");
 	return 0;
 }
 

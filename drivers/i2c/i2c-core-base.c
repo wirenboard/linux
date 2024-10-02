@@ -297,10 +297,12 @@ EXPORT_SYMBOL_GPL(i2c_generic_scl_recovery);
 int i2c_recover_bus(struct i2c_adapter *adap)
 {
 	printk("Into i2c_recover_bus begin");
-	if (!adap->bus_recovery_info)
+	if (!adap->bus_recovery_info) {
+		printk("ebusy");
 		return -EBUSY;
+	}
 
-	dev_dbg(&adap->dev, "Trying i2c bus recovery\n");
+	dev_info(&adap->dev, "Trying i2c bus recovery\n");
 	printk("Into i2c_recover_bus end");
 	return adap->bus_recovery_info->recover_bus(adap);
 }
@@ -361,6 +363,7 @@ static int i2c_gpio_init_generic_recovery(struct i2c_adapter *adap)
 	struct gpio_desc *gpiod;
 	int ret = 0;
 
+	printk("Begin i2c_gpio_init_generic_recovery");
 	/*
 	 * don't touch the recovery information if the driver is not using
 	 * generic SCL recovery
