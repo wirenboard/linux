@@ -261,6 +261,7 @@ int i2c_generic_scl_recovery(struct i2c_adapter *adap)
 
 		scl = !scl;
 		bri->set_scl(adap, scl);
+		printk("i2c generic recovery: set scl");
 		/* Creating STOP again, see above */
 		if (scl)  {
 			/* Honour minimum tsu:sto */
