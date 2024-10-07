@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb109) stable; urgency=medium
+
+  * wb8: usb printer support
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Mon, 07 Oct 2024 11:00:00 +0400
+
 linux-wb (6.8.0-wb108) stable; urgency=medium
 
   * wb8: compile CAN module into the kernel
