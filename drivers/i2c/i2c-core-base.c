@@ -447,11 +447,13 @@ static int i2c_init_recovery(struct i2c_adapter *adap)
 
 	if (!bri->recover_bus) {
 		err_str = "no suitable method provided";
+		printk("i2c_init_recovery: %s", err_str);
 		is_error_level = false;
 		goto err;
 	}
 
 	if (bri->scl_gpiod && bri->recover_bus == i2c_generic_scl_recovery) {
+		printk("i2c_init_recovery: not generic scl recovery");
 		bri->get_scl = get_scl_gpio_value;
 		bri->set_scl = set_scl_gpio_value;
 		if (bri->sda_gpiod) {
@@ -461,13 +463,16 @@ static int i2c_init_recovery(struct i2c_adapter *adap)
 				bri->set_sda = set_sda_gpio_value;
 		}
 	} else if (bri->recover_bus == i2c_generic_scl_recovery) {
+		printk("i2c_init_recovery: yes generic scl recovery");
 		/* Generic SCL recovery */
 		if (!bri->set_scl || !bri->get_scl) {
 			err_str = "no {get|set}_scl() found";
+			printk("i2c_init_recovery: %s", err_str);
 			goto err;
 		}
 		if (!bri->set_sda && !bri->get_sda) {
 			err_str = "either get_sda() or set_sda() needed";
+			printk("i2c_init_recovery: %s", err_str);
 			goto err;
 		}
 	}
