@@ -622,7 +622,7 @@
 	pinctrl-1 = <&i2c3_gpio>;
 
 	scl-gpios = <&pio PA 10 GPIO_ACTIVE_HIGH>; /* PA10 */
-	//sda-gpios = <&pio PA 11 GPIO_ACTIVE_HIGH>; /* PA11 */
+	sda-gpios = <&pio PA 11 GPIO_ACTIVE_HIGH>; /* PA11 */
 
 	status = "okay";
 };
@@ -1124,7 +1124,7 @@
 
 	i2c3_gpio: i2c3-gpio-pins {
 		pins = "PA10", "PA11";
-		function = "gpio_out";
+		function = "gpio";
 	};
 };
 

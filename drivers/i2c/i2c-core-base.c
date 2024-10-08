@@ -198,6 +198,7 @@ static void set_sda_gpio_value(struct i2c_adapter *adap, int val)
 
 static int i2c_generic_bus_free(struct i2c_adapter *adap)
 {
+	printk("begin i2c_generic_bus_free");
 	struct i2c_bus_recovery_info *bri = adap->bus_recovery_info;
 	int ret = -EOPNOTSUPP;
 
@@ -207,8 +208,12 @@ static int i2c_generic_bus_free(struct i2c_adapter *adap)
 		ret = bri->get_sda(adap);
 
 	if (ret < 0)
+	{
+		printk("i2c_generic_bus_free ret: %d", ret);
 		return ret;
+	}
 
+	printk("i2c_generic_bus_free ret: EBUSY");
 	return ret ? 0 : -EBUSY;
 }
 

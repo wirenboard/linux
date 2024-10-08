@@ -208,6 +208,7 @@ mv64xxx_i2c_prepare_for_io(struct mv64xxx_i2c_data *drv_data,
 static void
 mv64xxx_i2c_hw_init(struct mv64xxx_i2c_data *drv_data)
 {
+	printk("Begin mv64xxx_i2c_hw_init");
 	if (drv_data->offload_enabled) {
 		writel(0, drv_data->reg_base + MV64XXX_I2C_REG_BRIDGE_CONTROL);
 		writel(0, drv_data->reg_base + MV64XXX_I2C_REG_BRIDGE_TIMING);
@@ -241,6 +242,7 @@ mv64xxx_i2c_fsm(struct mv64xxx_i2c_data *drv_data, u32 status)
 	 * If so, issue the stop condition and go to idle.
 	 */
 	if (drv_data->state == MV64XXX_I2C_STATE_IDLE) {
+		printk("mv64xxx_i2c_fsm: set MV64XXX_I2C_ACTION_SEND_STOP action");
 		drv_data->action = MV64XXX_I2C_ACTION_SEND_STOP;
 		return;
 	}
@@ -433,14 +435,18 @@ mv64xxx_i2c_do_action(struct mv64xxx_i2c_data *drv_data)
 		drv_data->rc = -EIO;
 		fallthrough;
 	case MV64XXX_I2C_ACTION_SEND_STOP:
-		// printk("mv64xxx_i2c_do_action: MV64XXX_I2C_ACTION_SEND_STOP");
+		if (drv_data->aborting) {
+			printk("mv64xxx_i2c_do_action (while aborting): MV64XXX_I2C_ACTION_SEND_STOP");
+		}
 		if (!drv_data->atomic)
 			drv_data->cntl_bits &= ~MV64XXX_I2C_REG_CONTROL_INTEN;
 		writel(drv_data->cntl_bits | MV64XXX_I2C_REG_CONTROL_STOP,
 			drv_data->reg_base + drv_data->reg_offsets.control);
 		drv_data->block = 0;
 		wake_up(&drv_data->waitq);
-		// printk("mv64xxx_i2c_do_action: MV64XXX_I2C_ACTION_SEND_STOP done (wake up, Neo!)");
+		if (drv_data->aborting) {
+			printk("mv64xxx_i2c_do_action (aborting): MV64XXX_I2C_ACTION_SEND_STOP done (wake up, Neo!)");
+		}
 		break;
 	}
 }
