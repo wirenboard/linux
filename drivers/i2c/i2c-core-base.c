@@ -228,9 +228,15 @@ int i2c_generic_scl_recovery(struct i2c_adapter *adap)
 	printk("into i2c_generic_scl_recovery");
 
 	if (bri->prepare_recovery)
+	{
 		bri->prepare_recovery(adap);
+		printk("i2c_generic_scl_recovery: prepare_recovery done");
+	}
 	if (bri->pinctrl)
+	{
 		pinctrl_select_state(bri->pinctrl, bri->pins_gpio);
+		printk("i2c_generic_scl_recovery: select pins_gpio pinctrl");
+	}
 
 	/*
 	 * If we can set SDA, we will always create a STOP to ensure additional
@@ -261,7 +267,7 @@ int i2c_generic_scl_recovery(struct i2c_adapter *adap)
 
 		scl = !scl;
 		bri->set_scl(adap, scl);
-		printk("i2c generic recovery: set scl");
+		printk("i2c generic recovery: set scl: %d", scl);
 		/* Creating STOP again, see above */
 		if (scl)  {
 			/* Honour minimum tsu:sto */
@@ -287,8 +293,10 @@ int i2c_generic_scl_recovery(struct i2c_adapter *adap)
 
 	if (bri->unprepare_recovery)
 		bri->unprepare_recovery(adap);
-	if (bri->pinctrl)
+	if (bri->pinctrl) {
 		pinctrl_select_state(bri->pinctrl, bri->pins_default);
+		printk("i2c_generic_scl_recovery: restore pins to default");
+	}
 
 	printk("into i2c_generic_scl_recovery done");
 	return ret;
@@ -393,7 +401,7 @@ static int i2c_gpio_init_generic_recovery(struct i2c_adapter *adap)
 		if (!IS_ERR(gpiod)) {
 			bri->scl_gpiod = gpiod;
 			bri->recover_bus = i2c_generic_scl_recovery;
-			dev_info(dev, "using generic GPIOs for recovery\n");
+			dev_info(dev, "using generic GPIOs for recovery (SCL)\n");
 		}
 	}
 
@@ -416,7 +424,11 @@ static int i2c_gpio_init_generic_recovery(struct i2c_adapter *adap)
 			goto cleanup_pinctrl_state;
 		}
 		if (!IS_ERR(gpiod))
+		{
+
 			bri->sda_gpiod = gpiod;
+			dev_info(dev, "using generic GPIOs for recovery (SDA)\n");
+		}
 	}
 
 	printk("Done i2c_gpio_init_generic_recovery");

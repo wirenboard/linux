@@ -229,6 +229,7 @@ mv64xxx_i2c_hw_init(struct mv64xxx_i2c_data *drv_data)
 		udelay(5);
 
 	drv_data->state = MV64XXX_I2C_STATE_IDLE;
+	printk("Done mv64xxx_i2c_hw_init");
 }
 
 static void
