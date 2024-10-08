@@ -336,6 +336,7 @@ mv64xxx_i2c_fsm(struct mv64xxx_i2c_data *drv_data, u32 status)
 		drv_data->action = MV64XXX_I2C_ACTION_SEND_STOP;
 		mv64xxx_i2c_hw_init(drv_data);
 		i2c_recover_bus(&drv_data->adapter);
+		printk("i2c_generic_scl_recovery: recovered bus");
 		drv_data->rc = -EAGAIN;
 	}
 }
@@ -431,12 +432,14 @@ mv64xxx_i2c_do_action(struct mv64xxx_i2c_data *drv_data)
 		drv_data->rc = -EIO;
 		fallthrough;
 	case MV64XXX_I2C_ACTION_SEND_STOP:
+		// printk("mv64xxx_i2c_do_action: MV64XXX_I2C_ACTION_SEND_STOP");
 		if (!drv_data->atomic)
 			drv_data->cntl_bits &= ~MV64XXX_I2C_REG_CONTROL_INTEN;
 		writel(drv_data->cntl_bits | MV64XXX_I2C_REG_CONTROL_STOP,
 			drv_data->reg_base + drv_data->reg_offsets.control);
 		drv_data->block = 0;
 		wake_up(&drv_data->waitq);
+		// printk("mv64xxx_i2c_do_action: MV64XXX_I2C_ACTION_SEND_STOP done (wake up, Neo!)");
 		break;
 	}
 }

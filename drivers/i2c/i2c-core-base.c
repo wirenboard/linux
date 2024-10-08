@@ -355,6 +355,7 @@ static void i2c_gpio_init_pinctrl_recovery(struct i2c_adapter *adap)
 		bri->pins_default = NULL;
 		bri->pins_gpio = NULL;
 	}
+	printk("Into i2c_gpio_init_pinctrl_recovery DONE");
 }
 
 static int i2c_gpio_init_generic_recovery(struct i2c_adapter *adap)
@@ -418,10 +419,13 @@ static int i2c_gpio_init_generic_recovery(struct i2c_adapter *adap)
 			bri->sda_gpiod = gpiod;
 	}
 
+	printk("Done i2c_gpio_init_generic_recovery");
+
 cleanup_pinctrl_state:
 	/* change the state of the pins back to their default state */
 	if (bri->pinctrl)
 		pinctrl_select_state(bri->pinctrl, bri->pins_default);
+		printk("i2c_gpio_init_generic_recovery: restore default gpio state");
 
 	return ret;
 }
@@ -430,11 +434,13 @@ static int i2c_gpio_init_recovery(struct i2c_adapter *adap)
 {
 	printk("Into i2c_gpio_init_recovery");
 	i2c_gpio_init_pinctrl_recovery(adap);
+	printk("i2c_gpio_init_recovery done");
 	return i2c_gpio_init_generic_recovery(adap);
 }
 
 static int i2c_init_recovery(struct i2c_adapter *adap)
 {
+	printk("Begin i2c_init_recovery");
 	struct i2c_bus_recovery_info *bri = adap->bus_recovery_info;
 	bool is_error_level = true;
 	char *err_str;
@@ -477,12 +483,14 @@ static int i2c_init_recovery(struct i2c_adapter *adap)
 		}
 	}
 
+	printk("End i2c_init_recovery");
 	return 0;
  err:
 	if (is_error_level)
 		dev_err(&adap->dev, "Not using recovery: %s\n", err_str);
 	else
-		dev_dbg(&adap->dev, "Not using recovery: %s\n", err_str);
+		// dev_dbg(&adap->dev, "Not using recovery: %s\n", err_str);
+		dev_err(&adap->dev, "Not using recovery: %s\n", err_str);
 	adap->bus_recovery_info = NULL;
 
 	return -EINVAL;
@@ -2257,6 +2265,7 @@ int __i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
 
 		if (ret != -EAGAIN)
 			break;
+		printk("Retry on arbitration loss: %d", try);
 		if (time_after(jiffies, orig_jiffies + adap->timeout))
 			break;
 	}
