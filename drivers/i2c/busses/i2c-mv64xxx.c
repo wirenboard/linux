@@ -243,6 +243,7 @@ mv64xxx_i2c_fsm(struct mv64xxx_i2c_data *drv_data, u32 status)
 	 */
 	if (drv_data->state == MV64XXX_I2C_STATE_IDLE) {
 		drv_data->action = MV64XXX_I2C_ACTION_SEND_STOP;
+		drv_data->block = 1;
 		printk("mv64xxx_i2c_fsm: set MV64XXX_I2C_ACTION_SEND_STOP action");
 		return;
 	}
