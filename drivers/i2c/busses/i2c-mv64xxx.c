@@ -208,7 +208,7 @@ mv64xxx_i2c_prepare_for_io(struct mv64xxx_i2c_data *drv_data,
 static void
 mv64xxx_i2c_hw_init(struct mv64xxx_i2c_data *drv_data)
 {
-	printk("Begin mv64xxx_i2c_hw_init");
+	// printk("Begin mv64xxx_i2c_hw_init");
 	if (drv_data->offload_enabled) {
 		writel(0, drv_data->reg_base + MV64XXX_I2C_REG_BRIDGE_CONTROL);
 		writel(0, drv_data->reg_base + MV64XXX_I2C_REG_BRIDGE_TIMING);
@@ -230,7 +230,7 @@ mv64xxx_i2c_hw_init(struct mv64xxx_i2c_data *drv_data)
 		udelay(5);
 
 	drv_data->state = MV64XXX_I2C_STATE_IDLE;
-	printk("Done mv64xxx_i2c_hw_init");
+	// printk("Done mv64xxx_i2c_hw_init");
 }
 
 static void
