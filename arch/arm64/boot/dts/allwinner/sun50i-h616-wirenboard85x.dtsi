@@ -1119,12 +1119,12 @@
 	i2c3_pa_pins: i2c3-pa-pins {
 		pins = "PA10", "PA11";
 		function = "i2c3";
-		drive-strength = <40>;
+		//drive-strength = <40>;
 	};
 
 	i2c3_gpio: i2c3-gpio-pins {
 		pins = "PA10", "PA11";
-		function = "gpio";
+		function = "gpio_out";
 	};
 };
 
