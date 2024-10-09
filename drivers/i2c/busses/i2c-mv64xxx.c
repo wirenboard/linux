@@ -436,7 +436,7 @@ mv64xxx_i2c_do_action(struct mv64xxx_i2c_data *drv_data)
 		drv_data->rc = -EIO;
 		fallthrough;
 	case MV64XXX_I2C_ACTION_SEND_STOP:
-		printk("mv64xxx_i2c_do_action: case MV64XXX_I2C_ACTION_SEND_STOP begin (block: %d)", drv_data->block);
+		// printk("mv64xxx_i2c_do_action: case MV64XXX_I2C_ACTION_SEND_STOP begin (block: %d)", drv_data->block);
 		// if (drv_data->aborting) {
 		// 	printk("mv64xxx_i2c_do_action (while aborting): MV64XXX_I2C_ACTION_SEND_STOP");
 		// }
@@ -449,7 +449,7 @@ mv64xxx_i2c_do_action(struct mv64xxx_i2c_data *drv_data)
 		// if (drv_data->aborting) {
 		// 	printk("mv64xxx_i2c_do_action (aborting): MV64XXX_I2C_ACTION_SEND_STOP done (wake up, Neo!)");
 		// }
-		printk("mv64xxx_i2c_do_action: case MV64XXX_I2C_ACTION_SEND_STOP end (block: %d)", drv_data->block);
+		// printk("mv64xxx_i2c_do_action: case MV64XXX_I2C_ACTION_SEND_STOP end (block: %d)", drv_data->block);
 		break;
 	}
 }
@@ -545,14 +545,14 @@ mv64xxx_i2c_intr(int irq, void *dev_id)
 
 		status = readl(drv_data->reg_base + drv_data->reg_offsets.status);
 		mv64xxx_i2c_fsm(drv_data, status);
-		if (drv_data->action == MV64XXX_I2C_ACTION_SEND_STOP) {
-			printk("mv64xxx_i2c_intr: action stop (atomic: %d; block: %d)", drv_data->atomic, drv_data->block);
-		}
+		// if (drv_data->action == MV64XXX_I2C_ACTION_SEND_STOP) {
+		// 	printk("mv64xxx_i2c_intr: action stop (atomic: %d; block: %d)", drv_data->atomic, drv_data->block);
+		// }
 		mv64xxx_i2c_do_action(drv_data);
 
-		if (drv_data->action == MV64XXX_I2C_ACTION_SEND_STOP) {
-			printk("mv64xxx_i2c_intr: after do action (atomic: %d; block: %d)", drv_data->atomic, drv_data->block);
-		}
+		// if (drv_data->action == MV64XXX_I2C_ACTION_SEND_STOP) {
+		// 	printk("mv64xxx_i2c_intr: after do action (atomic: %d; block: %d)", drv_data->atomic, drv_data->block);
+		// }
 
 		if (drv_data->irq_clear_inverted)
 			writel(drv_data->cntl_bits | MV64XXX_I2C_REG_CONTROL_IFLG,
