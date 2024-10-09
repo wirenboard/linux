@@ -242,8 +242,8 @@ mv64xxx_i2c_fsm(struct mv64xxx_i2c_data *drv_data, u32 status)
 	 * If so, issue the stop condition and go to idle.
 	 */
 	if (drv_data->state == MV64XXX_I2C_STATE_IDLE) {
-		printk("mv64xxx_i2c_fsm: set MV64XXX_I2C_ACTION_SEND_STOP action");
 		drv_data->action = MV64XXX_I2C_ACTION_SEND_STOP;
+		printk("mv64xxx_i2c_fsm: set MV64XXX_I2C_ACTION_SEND_STOP action");
 		return;
 	}
 
@@ -435,6 +435,7 @@ mv64xxx_i2c_do_action(struct mv64xxx_i2c_data *drv_data)
 		drv_data->rc = -EIO;
 		fallthrough;
 	case MV64XXX_I2C_ACTION_SEND_STOP:
+		printk("mv64xxx_i2c_do_action: MV64XXX_I2C_ACTION_SEND_STOP");
 		if (drv_data->aborting) {
 			printk("mv64xxx_i2c_do_action (while aborting): MV64XXX_I2C_ACTION_SEND_STOP");
 		}
@@ -542,7 +543,14 @@ mv64xxx_i2c_intr(int irq, void *dev_id)
 
 		status = readl(drv_data->reg_base + drv_data->reg_offsets.status);
 		mv64xxx_i2c_fsm(drv_data, status);
+		if (drv_data->action == MV64XXX_I2C_ACTION_SEND_STOP) {
+			printk("mv64xxx_i2c_intr: action stop");
+		}
 		mv64xxx_i2c_do_action(drv_data);
+
+		if (drv_data->action == MV64XXX_I2C_ACTION_SEND_STOP) {
+			printk("mv64xxx_i2c_intr: after do action");
+		}
 
 		if (drv_data->irq_clear_inverted)
 			writel(drv_data->cntl_bits | MV64XXX_I2C_REG_CONTROL_IFLG,
