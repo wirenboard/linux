@@ -621,6 +621,7 @@ static void mv64xxx_i2c_wait_polling(struct mv64xxx_i2c_data *drv_data)
 	while (READ_ONCE(drv_data->block) &&
 	       ktime_compare(ktime_get(), timeout) < 0) {
 		udelay(5);
+		printk("mv64xxx_i2c_wait_polling: block: %d", drv_data->block);
 		mv64xxx_i2c_intr(0, drv_data);
 	}
 }
