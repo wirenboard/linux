@@ -241,8 +241,10 @@ mv64xxx_i2c_fsm(struct mv64xxx_i2c_data *drv_data, u32 status)
 	 * operation that driver has given up on or the user has killed.
 	 * If so, issue the stop condition and go to idle.
 	 */
+	// printk("mv64xxx_i2c_fsm: status: %d", status);
 	if (drv_data->state == MV64XXX_I2C_STATE_IDLE) {
 		drv_data->action = MV64XXX_I2C_ACTION_SEND_STOP;
+		printk("mv64xxx_i2c_fsm: done idle");
 		// drv_data->block = 1;
 		// printk("mv64xxx_i2c_fsm: set MV64XXX_I2C_ACTION_SEND_STOP action");
 		return;
@@ -343,6 +345,7 @@ mv64xxx_i2c_fsm(struct mv64xxx_i2c_data *drv_data, u32 status)
 		printk("i2c_generic_scl_recovery: recovered bus");
 		drv_data->rc = -EAGAIN;
 	}
+	// printk("mv64xxx_i2c_fsm: done all");
 }
 
 static void mv64xxx_i2c_send_start(struct mv64xxx_i2c_data *drv_data)
@@ -532,6 +535,7 @@ mv64xxx_i2c_intr(int irq, void *dev_id)
 
 	while (readl(drv_data->reg_base + drv_data->reg_offsets.control) &
 						MV64XXX_I2C_REG_CONTROL_IFLG) {
+
 		/*
 		 * It seems that sometime the controller updates the status
 		 * register only after it asserts IFLG in control register.
@@ -544,6 +548,7 @@ mv64xxx_i2c_intr(int irq, void *dev_id)
 			ndelay(100);
 
 		status = readl(drv_data->reg_base + drv_data->reg_offsets.status);
+		printk("mv64xxx_i2c_intr: inside while; status: %d", status);
 		mv64xxx_i2c_fsm(drv_data, status);
 		// if (drv_data->action == MV64XXX_I2C_ACTION_SEND_STOP) {
 		// 	printk("mv64xxx_i2c_intr: action stop (atomic: %d; block: %d)", drv_data->atomic, drv_data->block);
@@ -966,17 +971,15 @@ mv64xxx_of_config(struct mv64xxx_i2c_data *drv_data,
  */
 static void mv64xxx_i2c_prepare_recovery(struct i2c_adapter *adap)
 {
-	struct mv64xxx_i2c_data *drv_data = i2c_get_adapdata(adap);
-	drv_data->action = MV64XXX_I2C_ACTION_INVALID;
-	writel(drv_data->cntl_bits | MV64XXX_I2C_REG_CONTROL_IFLG,
-			       drv_data->reg_base + drv_data->reg_offsets.control);
+	// struct mv64xxx_i2c_data *drv_data = i2c_get_adapdata(adap);
+	// drv_data->action = MV64XXX_I2C_ACTION_INVALID;
 	printk("mv64xxx_i2c_prepare_recovery: drv_data->action = MV64XXX_I2C_ACTION_INVALID");
 }
 
 static void mv64xxx_i2c_unprepare_recovery(struct i2c_adapter *adap)
 {
-	struct mv64xxx_i2c_data *drv_data = i2c_get_adapdata(adap);
-	drv_data->action = MV64XXX_I2C_ACTION_CONTINUE;
+	// struct mv64xxx_i2c_data *drv_data = i2c_get_adapdata(adap);
+	// drv_data->action = MV64XXX_I2C_ACTION_CONTINUE;
 	printk("mv64xxx_i2c_unprepare_recovery: drv_data->action = MV64XXX_I2C_ACTION_CONTINUE");
 }
 
