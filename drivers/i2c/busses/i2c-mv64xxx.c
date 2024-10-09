@@ -968,6 +968,8 @@ static void mv64xxx_i2c_prepare_recovery(struct i2c_adapter *adap)
 {
 	struct mv64xxx_i2c_data *drv_data = i2c_get_adapdata(adap);
 	drv_data->action = MV64XXX_I2C_ACTION_INVALID;
+	writel(drv_data->cntl_bits | MV64XXX_I2C_REG_CONTROL_IFLG,
+			       drv_data->reg_base + drv_data->reg_offsets.control);
 	printk("mv64xxx_i2c_prepare_recovery: drv_data->action = MV64XXX_I2C_ACTION_INVALID");
 }
 
