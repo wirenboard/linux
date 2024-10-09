@@ -60,9 +60,8 @@
 
 /* Region GPIO: RW */
 #define WBEC_REG_GPIO_CTRL                                  0x80
-#define WBEC_REG_GPIO_STATE                                 0x82
-#define WBEC_REG_GPIO_DIR                                   0x84
-#define WBEC_REG_GPIO_AF                                    0x86
+#define WBEC_REG_GPIO_DIR                                   0x82
+#define WBEC_REG_GPIO_AF                                    0x84
 
 /* Region WDT: RW */
 #define WBEC_REG_WDT_TIMEOUT                                0x90
