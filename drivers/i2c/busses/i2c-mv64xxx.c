@@ -958,11 +958,32 @@ mv64xxx_of_config(struct mv64xxx_i2c_data *drv_data,
 }
 #endif /* CONFIG_OF */
 
+
+/*
+ * This routine does i2c bus recovery by using i2c_generic_scl_recovery
+ * which is provided by I2C Bus recovery infrastructure.
+ */
+static void mv64xxx_i2c_prepare_recovery(struct i2c_adapter *adap)
+{
+	struct mv64xxx_i2c_data *drv_data = i2c_get_adapdata(adap);
+	drv_data->action = MV64XXX_I2C_ACTION_INVALID;
+	printk("mv64xxx_i2c_prepare_recovery: drv_data->action = MV64XXX_I2C_ACTION_INVALID");
+}
+
+static void mv64xxx_i2c_unprepare_recovery(struct i2c_adapter *adap)
+{
+	struct mv64xxx_i2c_data *drv_data = i2c_get_adapdata(adap);
+	drv_data->action = MV64XXX_I2C_ACTION_CONTINUE;
+	printk("mv64xxx_i2c_unprepare_recovery: drv_data->action = MV64XXX_I2C_ACTION_CONTINUE");
+}
+
 static int mv64xxx_i2c_init_recovery_info(struct mv64xxx_i2c_data *drv_data,
 					  struct device *dev)
 {
 	printk("Into mv64xxx_i2c_init_recovery_info");
 	struct i2c_bus_recovery_info *rinfo = &drv_data->rinfo;
+	rinfo->prepare_recovery = mv64xxx_i2c_prepare_recovery;
+	rinfo->unprepare_recovery = mv64xxx_i2c_unprepare_recovery;
 
 	rinfo->pinctrl = devm_pinctrl_get(dev);
 	if (IS_ERR(rinfo->pinctrl)) {
