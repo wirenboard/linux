@@ -548,7 +548,7 @@ mv64xxx_i2c_intr(int irq, void *dev_id)
 			ndelay(100);
 
 		status = readl(drv_data->reg_base + drv_data->reg_offsets.status);
-		printk("mv64xxx_i2c_intr: inside while; status: %d", status);
+		// printk("mv64xxx_i2c_intr: inside while; status: %d", status);
 		mv64xxx_i2c_fsm(drv_data, status);
 		// if (drv_data->action == MV64XXX_I2C_ACTION_SEND_STOP) {
 		// 	printk("mv64xxx_i2c_intr: action stop (atomic: %d; block: %d)", drv_data->atomic, drv_data->block);
