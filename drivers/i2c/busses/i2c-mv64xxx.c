@@ -971,8 +971,9 @@ mv64xxx_of_config(struct mv64xxx_i2c_data *drv_data,
  */
 static void mv64xxx_i2c_prepare_recovery(struct i2c_adapter *adap)
 {
-	// struct mv64xxx_i2c_data *drv_data = i2c_get_adapdata(adap);
+	struct mv64xxx_i2c_data *drv_data = i2c_get_adapdata(adap);
 	// drv_data->action = MV64XXX_I2C_ACTION_INVALID;
+	drv_data->state = MV64XXX_I2C_STATE_INVALID;
 	printk("mv64xxx_i2c_prepare_recovery: drv_data->action = MV64XXX_I2C_ACTION_INVALID");
 }
 
