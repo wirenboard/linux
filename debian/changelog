@@ -4,6 +4,18 @@ linux-wb (6.8.0-wb108) stable; urgency=medium
 
  -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Tue, 24 Sep 2024 17:09:59 +0300
 
+linux-wb (6.8.0-wb109) stable; urgency=medium
+
+  * wb8: usb printer support
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Mon, 07 Oct 2024 11:00:00 +0400
+
+linux-wb (6.8.0-wb108) stable; urgency=medium
+
+  * wb8: compile CAN module into the kernel
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Tue, 01 Oct 2024 17:05:00 +0400
+
 linux-wb (6.8.0-wb107) stable; urgency=medium
 
   * wb8: add pps-gpio to config
