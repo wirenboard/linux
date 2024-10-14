@@ -4,6 +4,14 @@ linux-wb (6.8.0-wb110) stable; urgency=medium
 
  -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Tue, 24 Sep 2024 17:09:59 +0300
 
+linux-wb (6.8.0-wb110) stable; urgency=medium
+
+  * sun50i-h616 pinctrl: disable strict mode
+  * wb84, wb85 dtsi: add wbio i2c-recovery pins
+  * i2c-mv64xxx: fix hard lockup on external polling, when performing i2c bus recovery
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Thu, 10 Oct 2024 15:43:21 +0300
+
 linux-wb (6.8.0-wb109) stable; urgency=medium
 
   * wb8: usb printer support
