@@ -1,8 +1,8 @@
-linux-wb (6.8.0-wb110) stable; urgency=medium
+linux-wb (6.8.0-wb111) stable; urgency=medium
 
   * add wbec-uart driver
 
- -- Pavel Gasheev <pavel.gasheev@wirenboard.ru>  Tue, 24 Sep 2024 17:09:59 +0300
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.com>  Mon, 14 Oct 2024 21:41:14 +0300
 
 linux-wb (6.8.0-wb110) stable; urgency=medium
 
