@@ -63,7 +63,7 @@ struct wbec_uart_one_port {
 	struct regmap *regmap;
 };
 
-static struct wbec_uart_one_port *wbec_uart_ports[WBEC_UART_PORT_COUNT];
+static struct wbec_uart_one_port *wbec_uart_ports[WBEC_UART_PORT_COUNT] = {};
 static struct mutex wbec_uart_mutex;
 
 struct wbec_regmap_header {
@@ -726,9 +726,6 @@ static int __init wbec_uart_init(void)
 	ret = uart_register_driver(&wbec_uart_driver);
 	if (ret)
 		return ret;
-
-	for (i = 0; i < WBEC_UART_PORT_COUNT; i++)
-		wbec_uart_ports[i] = NULL;
 
 	ret = platform_driver_register(&wbec_uart_platform_driver);
 	if (ret)
