@@ -590,13 +590,13 @@ static int wbec_uart_probe(struct platform_device *pdev)
 		return dev_err_probe(dev, -EINVAL, "Failed to get parent device data\n");
 
 	if (!wbec->spi->irq || !wbec->support_v2_protocol)
-		dev_err_probe(dev, -EINVAL, "WBEC firmware does not support UART\n");
+		return dev_err_probe(dev, -EINVAL, "WBEC firmware does not support UART\n");
 
 	if (device_property_read_u32(dev, "reg", &reg))
 		return dev_err_probe(dev, -EINVAL, "Failed to read 'reg' property\n");
 
 	if (reg >= WBEC_UART_PORT_COUNT)
-		dev_err_probe(dev, -EINVAL, "Invalid reg value: %u\n", reg);
+		return dev_err_probe(dev, -EINVAL, "Invalid reg value: %u\n", reg);
 
 	p = devm_kzalloc(&pdev->dev, sizeof(struct wbec_uart_one_port),
 				GFP_KERNEL);
