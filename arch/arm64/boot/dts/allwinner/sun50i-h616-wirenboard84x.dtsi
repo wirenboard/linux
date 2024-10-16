@@ -651,6 +651,11 @@
 			compatible = "wirenboard,wbec-power";
 			reg = <0>;
 		};
+
+		wbec_led: wbec-led@0 {
+			compatible = "wirenboard,wbec-led";
+			reg = <0>;
+		};
 	};
 };
 

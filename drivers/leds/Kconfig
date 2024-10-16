@@ -917,6 +917,13 @@ config LEDS_ACER_A500
 	  This option enables support for the Power Button LED of
 	  Acer Iconia Tab A500.
 
+config LEDS_WBEC
+	tristate "Wiren Board Embedded Controller System LED Driver"
+	depends on MFD_WBEC
+	help
+	  This option enables support for the System LED of
+	  the Wiren Board Embedded Controller.
+
 source "drivers/leds/blink/Kconfig"
 
 comment "Flash and Torch LED drivers"

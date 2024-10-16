@@ -57,6 +57,11 @@
 #define WBEC_REG_ADC_DATA_ADC5                              0x4A
 #define WBEC_REG_ADC_DATA_ADC6                              0x4B
 
+/* Region EC_SYSTEM_LED: RW */
+#define WBEC_REG_EC_SYSTEM_LED                              0x60
+#define WBEC_REG_EC_SYSTEM_LED_ON_MS                        0x61
+#define WBEC_REG_EC_SYSTEM_LED_OFF_MS                       0x62
+
 /* Region GPIO: RW */
 #define WBEC_REG_GPIO                                       0x80
    #define WBEC_REG_GPIO_A1_MSK                             BIT(0)
