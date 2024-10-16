@@ -1,3 +1,9 @@
+linux-wb (5.10.35-wb172) stable; urgency=medium
+
+  * wb6, wb7 defconfig: add CONFIG_CAN_GS_USB=m
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Mon, 14 Oct 2024 12:432:21 +0300
+
 linux-wb (5.10.35-wb171) stable; urgency=medium
 
   * wb7 dts: add i2c-wbio-recovery pins
