@@ -380,7 +380,7 @@ static int wbec_probe(struct spi_device *spi)
 							IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 							dev_name(wbec->dev), wbec);
 			if (ret)
-				dev_err_probe(wbec->dev, ret, "failed to request IRQ\n");
+				return dev_err_probe(wbec->dev, ret, "failed to request IRQ\n");
 		} else {
 			dev_warn(wbec->dev, "no IRQ defined, wbec-uart not supported\n");
 		}
