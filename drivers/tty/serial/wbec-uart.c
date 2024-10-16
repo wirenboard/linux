@@ -268,7 +268,7 @@ static void wbec_spi_exchange_sync(struct wbec *wbec)
 	ret = spi_sync(spi, &msg);
 	if (ret) {
 		dev_err(&spi->dev, "spi_sync failed: %d\n", ret);
-		return;
+		goto mutex_release;
 	}
 
 	swap_bytes(rx.buf, transfer.len / 2);
@@ -283,6 +283,7 @@ static void wbec_spi_exchange_sync(struct wbec *wbec)
 		wbec_process_received_exchange(wbec_one_port, one_port_rx, bytes_sent_in_xfer[port_i]);
 	}
 
+mutex_release:
 	mutex_unlock(&wbec_uart_mutex);
 }
 
@@ -513,7 +514,7 @@ static int wbec_uart_config_rs485(struct uart_port *port,
 	struct wbec_uart_one_port *p = container_of(port,
 					      struct wbec_uart_one_port,
 					      port);
-	int ret;
+	int ret = 0;
 
 	if (rs485->flags & SER_RS485_ENABLED) {
 		u16 gpio_af_mode = 0b010000 << (port->line * 6);
@@ -545,7 +546,7 @@ static int wbec_uart_config_rs485(struct uart_port *port,
 			dev_err(port->dev, "Failed to set rs485 config: ctrl applyed timeout\n");
 	}
 
-	return 0;
+	return ret;
 }
 
 static const struct serial_rs485 wbec_uart_rs485_supported = {
@@ -698,8 +699,6 @@ static void wbec_uart_remove(struct platform_device *pdev)
 
 	wbec_uart_ports[line] = NULL;
 	uart_remove_one_port(&wbec_uart_driver, &p->port);
-
-	regmap_update_bits(p->regmap, WBEC_REG_GPIO_AF, gpio_af_mask, gpio_af_mode);
 
 	mutex_unlock(&wbec_uart_mutex);
 }
