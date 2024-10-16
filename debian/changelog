@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb111) stable; urgency=medium
+
+  * add wbec-uart driver
+
+ -- Pavel Gasheev <pavel.gasheev@wirenboard.com>  Wed, 16 Oct 2024 16:47:17 +0300
+
 linux-wb (6.8.0-wb110) stable; urgency=medium
 
   * sun50i-h616 pinctrl: disable strict mode
