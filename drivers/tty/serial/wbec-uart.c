@@ -386,6 +386,8 @@ static void wbec_uart_shutdown(struct uart_port *port)
 	ret = regmap_read_poll_timeout(regmap, ctrl_reg, val,
 				       (val & 0x0002),
 				       1000, 1000000);
+	if (ret)
+		dev_err(port->dev, "Failed to set termios: ctrl applyed timeout\n");
 
 	mutex_unlock(&wbec_uart_mutex);
 }
@@ -434,6 +436,8 @@ static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *new,
 	ret = regmap_read_poll_timeout(regmap, ctrl_reg, val,
 				       (val & 0x0002),
 				       100, 1000000);
+	if (ret)
+		dev_err(port->dev, "Failed to set termios: ctrl applyed timeout\n");
 
 	uart_port_lock_irqsave(port, &flags);
 	uart_update_timeout(port, new->c_cflag, baud);
@@ -517,6 +521,7 @@ static int wbec_uart_config_rs485(struct uart_port *port,
 	struct wbec_uart_one_port *p = container_of(port,
 					      struct wbec_uart_one_port,
 					      port);
+	int ret;
 
 	if (rs485->flags & SER_RS485_ENABLED) {
 		u16 gpio_af_mode = 0b010000 << (port->line * 6);
@@ -541,9 +546,11 @@ static int wbec_uart_config_rs485(struct uart_port *port,
 		regmap_bulk_write(p->regmap, ctrl_reg, ctrl_regs.buf, ARRAY_SIZE(ctrl_regs.buf));
 
 		/* wait for applyed==1 */
-		regmap_read_poll_timeout(p->regmap, ctrl_reg, val,
+		ret = regmap_read_poll_timeout(p->regmap, ctrl_reg, val,
 				       (val & 0x0002),
 				       1000, 1000000);
+		if (ret)
+			dev_err(port->dev, "Failed to set termios: ctrl applyed timeout\n");
 	}
 
 	return 0;
@@ -626,9 +633,11 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	ctrl_regs.ctrl.rs485_enabled = 0;
 	regmap_bulk_write(p->regmap, ctrl_reg, ctrl_regs.buf, ARRAY_SIZE(ctrl_regs.buf));
 	/* wait for applyed==1 */
-	regmap_read_poll_timeout(p->regmap, ctrl_reg, val,
+	ret = regmap_read_poll_timeout(p->regmap, ctrl_reg, val,
 			       (val & 0x0002),
 			       1000, 1000000);
+	if (ret)
+		return dev_err_probe(dev, -ENODEV, "Failed to set termios: ctrl applyed timeout\n");
 
 
 	init_completion(&p->tx_complete);
@@ -719,7 +728,7 @@ static struct platform_driver wbec_uart_platform_driver = {
 
 static int __init wbec_uart_init(void)
 {
-	int ret, i;
+	int ret;
 
 	mutex_init(&wbec_uart_mutex);
 
