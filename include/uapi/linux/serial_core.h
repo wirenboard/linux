@@ -231,6 +231,9 @@
 /* Sunplus UART */
 #define PORT_SUNPLUS	123
 
+/* WBEC UART */
+#define PORT_WBEC	124
+
 /* Allwinner sun4i UART */
 #define PORT_SUN4I	125
 
