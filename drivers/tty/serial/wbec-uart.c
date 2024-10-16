@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * wbec-power.c - Wiren Board Embedded Controller PWM driver
+ * wbec-uart.c - Wiren Board Embedded Controller SPI-UART driver
  *
  * Copyright (c) 2024 Wiren Board LLC
  *
@@ -142,8 +142,6 @@ static void wbec_collect_data_for_exchange(struct wbec_uart_one_port *wbec_one_p
 	struct uart_port *port = &wbec_one_port->port;
 	struct circ_buf *xmit = &port->state->xmit;
 
-	// uart_port_lock_irqsave(port, &flags);
-
 	if (uart_circ_empty(xmit) || uart_tx_stopped(port)) {
 		tx->bytes_to_send_count = 0;
 	} else {
@@ -164,8 +162,6 @@ static void wbec_collect_data_for_exchange(struct wbec_uart_one_port *wbec_one_p
 		if (to_send)
 			reinit_completion(&wbec_one_port->tx_complete);
 	}
-
-	// uart_port_unlock_irqrestore(port, flags);
 }
 
 static void wbec_process_received_exchange(struct wbec_uart_one_port *wbec_one_port,
@@ -183,8 +179,6 @@ static void wbec_process_received_exchange(struct wbec_uart_one_port *wbec_one_p
 		dev_err_ratelimited(port->dev, "received_bytes_count bigger than buffer size\n");
 		rx->read_bytes_count = max_read_bytes;
 	}
-
-	// uart_port_lock_irqsave(port, &flags);
 
 	if (rx->read_bytes_count > 0) {
 		int i;
@@ -233,8 +227,6 @@ static void wbec_process_received_exchange(struct wbec_uart_one_port *wbec_one_p
 	/* check if tx was completed */
 	if (rx->tx_completed && (bytes_sent_in_exchange == 0))
 		complete(&wbec_one_port->tx_complete);
-
-	// uart_port_unlock_irqrestore(port, flags);
 }
 
 static void wbec_spi_exchange_sync(struct wbec *wbec)
@@ -387,7 +379,7 @@ static void wbec_uart_shutdown(struct uart_port *port)
 				       (val & 0x0002),
 				       1000, 1000000);
 	if (ret)
-		dev_err(port->dev, "Failed to set termios: ctrl applyed timeout\n");
+		dev_err(port->dev, "Failed to disable port: ctrl applyed timeout\n");
 
 	mutex_unlock(&wbec_uart_mutex);
 }
@@ -550,7 +542,7 @@ static int wbec_uart_config_rs485(struct uart_port *port,
 				       (val & 0x0002),
 				       1000, 1000000);
 		if (ret)
-			dev_err(port->dev, "Failed to set termios: ctrl applyed timeout\n");
+			dev_err(port->dev, "Failed to set rs485 config: ctrl applyed timeout\n");
 	}
 
 	return 0;
@@ -574,7 +566,7 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	struct wbec_uart_one_port *p;
 	struct device_node *parent_node;
 	struct device *parent_dev;
-	int ret, irq, val;
+	int ret, val;
 	u32 reg;
 	u16 gpio_af_mode = 0;
 	u16 gpio_af_mask = 0;
@@ -636,17 +628,18 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	ret = regmap_read_poll_timeout(p->regmap, ctrl_reg, val,
 			       (val & 0x0002),
 			       1000, 1000000);
-	if (ret)
-		return dev_err_probe(dev, -ENODEV, "Failed to set termios: ctrl applyed timeout\n");
-
+	if (ret) {
+		dev_err(dev, "Failed to init port: ctrl applyed timeout\n");
+		goto mutex_release;
+	}
 
 	init_completion(&p->tx_complete);
 
 	// Initialize the UART port
 	p->port.ops = &wbec_uart_ops;
 	p->port.dev = &pdev->dev;
-	p->port.type = PORT_WBEC; //PORT_GENERIC;
-	p->port.irq = irq;
+	p->port.type = PORT_WBEC;
+	p->port.irq = wbec->spi->irq;
 	/*
 	 * Use all ones as membase to make sure uart_configure_port() in
 	 * serial_core.c does not abort for SPI/I2C devices where the
@@ -752,7 +745,7 @@ static void __exit wbec_uart_exit(void)
 module_init(wbec_uart_init);
 module_exit(wbec_uart_exit);
 
-MODULE_ALIAS("platform:wbec-uart");
+MODULE_AUTHOR("Pavel Gasheev <pavel.gasheev@wirenboard.com>");
+MODULE_DESCRIPTION("Wiren Board Embedded Controller SPI-UART driver");
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Your Name");
-MODULE_DESCRIPTION("WBE UART Driver");
+MODULE_ALIAS("platform:wbec-uart");
