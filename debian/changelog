@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb113) stable; urgency=medium
+
+  * add wirenboard-851m dts
+
+ -- Vladimir Romanov <v.romanov@wirenboard.com>  Thu, 17 Oct 2024 16:58:11 +0300
+
 linux-wb (6.8.0-wb112) stable; urgency=medium
 
   * wb8 bootlet defconfig: enable ethernet
