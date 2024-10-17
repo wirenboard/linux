@@ -140,7 +140,14 @@ static void swap_bytes(u16 *buf, int len)
 static void wbec_collect_data_for_exchange(struct wbec_uart_one_port *wbec_one_port, struct uart_tx *tx)
 {
 	struct uart_port *port = &wbec_one_port->port;
-	struct circ_buf *xmit = &port->state->xmit;
+	struct circ_buf *xmit;
+
+	if (port == NULL) {
+		tx->bytes_to_send_count = 0;
+		return;
+	}
+
+	xmit = &port->state->xmit;
 
 	if (uart_circ_empty(xmit) || uart_tx_stopped(port)) {
 		tx->bytes_to_send_count = 0;
