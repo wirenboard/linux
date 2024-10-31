@@ -263,7 +263,7 @@
 			linux,default-trigger = "default-off";
 		};
 
-		red {
+		led_red: red {
 			label = "red";
 			color = <LED_COLOR_ID_RED>;
 			gpios = <&pio PA 12 GPIO_ACTIVE_HIGH>;
@@ -1181,6 +1181,7 @@
 
 			ext_rmii_phy0: ethernet-phy {
 				compatible = "ethernet-phy-ieee802.3-c22";
+				reg = <0>;
 			};
 		};
 
@@ -1198,6 +1199,7 @@
 
 			ext_rmii_phy1: ethernet-phy {
 				compatible = "ethernet-phy-ieee802.3-c22";
+				reg = <0>;
 			};
 		};
 	};
