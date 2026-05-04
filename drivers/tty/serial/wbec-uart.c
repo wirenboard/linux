@@ -278,14 +278,16 @@ static void wbec_process_received_exchange(struct wbec_uart_one_port *wbec_one_p
 static void wbec_spi_exchange_sync(struct wbec *wbec)
 {
 	struct spi_device *spi = wbec->spi;
-	union uart_exchange_regs_rx rx;
-	union uart_exchange_regs_tx tx = {};
+	static union uart_exchange_regs_rx rx;
+	static union uart_exchange_regs_tx tx;
 	struct spi_message msg;
 	struct spi_transfer transfer = {};
 	int ret, port_i;
 	u8 bytes_sent_in_xfer[WBEC_UART_PORT_COUNT] = {};
 
 	mutex_lock(&wbec_uart_mutex);
+
+	memset(&tx, 0, sizeof(tx));
 
 	/* prepare tx data */
 	for (port_i = 0; port_i < WBEC_UART_PORT_COUNT; port_i++) {
@@ -725,8 +727,6 @@ static int wbec_uart_probe(struct platform_device *pdev)
 		goto put_parent_dev;
 	}
 
-	mutex_lock(&wbec_uart_mutex);
-
 	/* set RX and TX pins mode to AF */
 	gpio_af_mode |= 1 << (reg * 6 + 0);	// TX
 	gpio_af_mode |= 1 << (reg * 6 + 2);	// RX
@@ -748,10 +748,11 @@ static int wbec_uart_probe(struct platform_device *pdev)
 			       1000, 1000000);
 	if (ret) {
 		dev_err(dev, "Failed to init port: ctrl applyed timeout\n");
-		goto mutex_release;
+		goto cancel_rs485_work;
 	}
 
 	init_completion(&p->tx_complete);
+	INIT_WORK(&p->start_tx_work, wbec_start_tx_work_handler);
 
 	// Initialize the UART port
 	p->port.ops = &wbec_uart_ops;
@@ -776,29 +777,32 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	ret = uart_get_rs485_mode(&p->port);
 	if (ret) {
 		dev_err(dev, "Failed to get RS485 mode\n");
-		goto mutex_release;
+		goto cancel_start_tx_work;
 	}
 
 	ret = uart_add_one_port(&wbec_uart_driver, &p->port);
 	if (ret) {
 		dev_err(dev, "Failed to register UART port\n");
-		goto mutex_release;
+		goto cancel_start_tx_work;
 	}
 
-	INIT_WORK(&p->start_tx_work, wbec_start_tx_work_handler);
-
 	platform_set_drvdata(pdev, p);
+
+	mutex_lock(&wbec_uart_mutex);
 	wbec_uart_ports[reg] = p;
 
 	WRITE_ONCE(wbec->irq_handler, wbec_spi_exchange_sync);
+	mutex_unlock(&wbec_uart_mutex);
 
 	dev_dbg(&pdev->dev, "port %s registered\n", p->port.name);
 
-mutex_release:
-	mutex_unlock(&wbec_uart_mutex);
+	goto put_parent_dev;
 
-	if (ret)
-		cancel_work_sync(&p->rs485_work);
+cancel_start_tx_work:
+	cancel_work_sync(&p->start_tx_work);
+
+cancel_rs485_work:
+	cancel_work_sync(&p->rs485_work);
 
 put_parent_dev:
 	put_device(parent_dev);
@@ -816,32 +820,27 @@ static void wbec_uart_remove(struct platform_device *pdev)
 	dev_dbg(&pdev->dev, "port %s unregistered\n", p->port.name);
 
 	mutex_lock(&wbec_uart_mutex);
-
 	gpio_af_mask = 0b111111 << (line * 6);
 	regmap_update_bits(p->regmap, WBEC_REG_GPIO_AF, gpio_af_mask, gpio_af_mode);
+	mutex_unlock(&wbec_uart_mutex);
 
+	/*
+	 * uart_remove_one_port() calls into ->shutdown(), which waits for
+	 * tx_complete (up to 10 s). tx_complete is signaled by the IRQ handler
+	 * via wbec_process_received_exchange(). We must therefore keep
+	 * wbec_uart_ports[line] and irq_handler live until shutdown returns.
+	 *
+	 * Also keep the mutex unlocked here: ->shutdown() takes wbec_uart_mutex
+	 * internally, so holding it would self-deadlock.
+	 */
+	uart_remove_one_port(&wbec_uart_driver, &p->port);
+
+	mutex_lock(&wbec_uart_mutex);
 	wbec_uart_ports[line] = NULL;
 	if (!wbec_uart_has_active_ports())
 		WRITE_ONCE(p->wbec->irq_handler, NULL);
 	mutex_unlock(&wbec_uart_mutex);
 
-	/*
-	 * uart_remove_one_port() must be called with wbec_uart_mutex released:
-	 * if the tty is still open in userspace (e.g. wb-mqtt-serial holds
-	 * /dev/ttyMOD*), uart core will hang up the tty, which calls
-	 * wbec_uart_shutdown() -> mutex_lock(&wbec_uart_mutex). Linux mutexes
-	 * are non-recursive, so doing this under the mutex self-deadlocks.
-	 *
-	 * Symptom of the deadlock: an unkillable D-state in
-	 *   rmdir /sys/kernel/config/device-tree/overlays/wb85-modN
-	 * triggered by wb-hwconf-helper when a slot module type is changed
-	 * without first disabling /dev/ttyMODn. Recovery requires hard reboot.
-	 *
-	 * The IRQ handler (wbec_spi_exchange_sync) takes the same mutex and
-	 * checks wbec_uart_ports[i] for NULL, so once we have cleared the slot
-	 * above and dropped the mutex it will skip this port safely.
-	 */
-	uart_remove_one_port(&wbec_uart_driver, &p->port);
 	cancel_work_sync(&p->start_tx_work);
 	cancel_work_sync(&p->rs485_work);
 }
