@@ -1,0 +1,7 @@
+linux-wb (6.18.56-wb100) stable; urgency=medium
+
+  * Rebase Wiren Board kernel patches onto Linux 6.18.56: wb6, wb7 and wb8
+    from dev/v5.10.y and dev/v6.8 in one tree
+  * Drop Wiren Board 5 (i.MX23/i.MX28) support
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Mon, 12 Oct 2026 11:01:41 +0400
