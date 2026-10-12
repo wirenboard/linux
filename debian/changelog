@@ -1,0 +1,23 @@
+linux-wb (6.18.64-wb100) stable; urgency=medium
+
+  * wb8: fix random hangs under cpufreq: re-lock CPU PLL before
+    switching CPU back to it
+  * wb8: fix hang on RS-485 port reconfiguration: don't gate UART clock
+    in set_termios if the rate doesn't change
+  * wb8: gate PLLs with the output enable bit instead of powering them
+    down (upstream backport)
+  * wb8: re-lock GPU PLL after rate changes before switching GPU back
+    to it (upstream backport)
+
+  [ Nikolay Korotkiy ]
+  * Rebase Wiren Board kernel patches onto Linux 6.18.64: wb6, wb7 and wb8
+    from dev/v5.10.y and dev/v6.8 in one tree
+  * Drop Wiren Board 5 (i.MX23/i.MX28) support
+  * pinctrl: mcp23s08: drop support for deprecated linux,gpio-base property
+
+  [ Ekaterina Volkova ]
+  * wb8: fix GPU power domain registration on Linux 6.18: the PRCM PPU
+    driver failed to probe (-22) because U-Boot leaves the GPU rail off,
+    so panfrost never bound and the HDMI screen was rendered in software
+
+ -- Ilya Titov <ilya.titov@wirenboard.com>  Wed, 18 Nov 2026 14:51:53 +0300
