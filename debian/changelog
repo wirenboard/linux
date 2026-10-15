@@ -1,3 +1,11 @@
+linux-wb (6.8.0-wb163) stable; urgency=medium
+
+  * wb8: fix GPU hangs, frozen HDMI screen and watchdog resets caused by GPU
+    frequency changes: switch the GPU to a fixed 400 MHz clock while its PLL
+    is reprogrammed, as the 6.18 kernel already does (SOFT-7116)
+
+ -- Ekaterina Volkova <ekaterina.volkova@wirenboard.com>  Thu, 15 Oct 2026 20:42:11 +0300
+
 linux-wb (6.8.0-wb161) stable; urgency=medium
 
   * pinctrl-sunxi: fix output latch corruption on GPIO writes: a write to
