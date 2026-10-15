@@ -1,3 +1,10 @@
+linux-wb (6.18.56-wb101) stable; urgency=medium
+
+  * wb8: do not show the Linux boot logo (Tux penguins) on the HDMI screen
+    during startup
+
+ -- Ekaterina Volkova <ekaterina.volkova@wirenboard.com>  Thu, 15 Oct 2026 20:15:50 +0300
+
 linux-wb (6.18.56-wb100) stable; urgency=medium
 
   * Rebase Wiren Board kernel patches onto Linux 6.18.56: wb6, wb7 and wb8
