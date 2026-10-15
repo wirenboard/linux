@@ -160,11 +160,18 @@ static int sun50i_h6_ppu_probe(struct platform_device *pdev)
 		pd->genpd.name		= desc->name;
 		pd->genpd.power_off	= sun50i_h6_ppu_pd_power_off;
 		pd->genpd.power_on	= sun50i_h6_ppu_pd_power_on;
-		if (desc->flags & FLAG_PPU_ALWAYS_ON)
-			pd->genpd.flags = GENPD_FLAG_ALWAYS_ON;
 		pd->negated		= !!(desc->flags & FLAG_PPU_NEGATED);
 		pd->reg			= base + desc->offset - PD_H6_PPU_OFFSET;
 		pd->gate_mask		= desc->mask;
+		if (desc->flags & FLAG_PPU_ALWAYS_ON) {
+			pd->genpd.flags = GENPD_FLAG_ALWAYS_ON;
+			/*
+			 * genpd refuses an always-on domain that is off at
+			 * init time; the GPU rail is left gated by U-Boot, so
+			 * power it up here before registering the domain.
+			 */
+			sun50i_h6_ppu_pd_power_on(&pd->genpd);
+		}
 
 		ret = pm_genpd_init(&pd->genpd, NULL,
 				    !sun50i_h6_ppu_power_status(pd));
