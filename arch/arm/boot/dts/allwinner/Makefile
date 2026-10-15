@@ -281,3 +281,29 @@ dtb-$(CONFIG_MACH_SUNIV) += \
 	suniv-f1c100s-licheepi-nano.dtb \
 	suniv-f1c200s-lctech-pi.dtb \
 	suniv-f1c200s-popstick-v1.1.dtb
+
+# Wiren Board
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard720.dtb
+DTC_FLAGS_sun8i-r40-wirenboard720 := -@
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard-som-test.dtb
+DTC_FLAGS_sun8i-r40-wirenboard-som-test := -@
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard730.dtb
+DTC_FLAGS_sun8i-r40-wirenboard730 := -@
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard731.dtb
+DTC_FLAGS_sun8i-r40-wirenboard731 := -@
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard732.dtb
+DTC_FLAGS_sun8i-r40-wirenboard732 := -@
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard733.dtb
+DTC_FLAGS_sun8i-r40-wirenboard733 := -@
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard72x-initram.dtb
+DTC_FLAGS_sun8i-r40-wirenboard72x-initram := -@
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard734-38071cb.dtb
+DTC_FLAGS_sun8i-r40-wirenboard734-38071cb := -@
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard741.dtb
+DTC_FLAGS_sun8i-r40-wirenboard741 := -@
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard72x-factory.dtb
+DTC_FLAGS_sun8i-r40-wirenboard72x-factory := -@
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard742.dtb
+DTC_FLAGS_sun8i-r40-wirenboard742 := -@
+dtb-$(CONFIG_MACH_SUN8I) += sun8i-r40-wirenboard742-38071cb.dtb
+DTC_FLAGS_sun8i-r40-wirenboard742-38071cb := -@

@@ -65,6 +65,7 @@
 #define DW_UART_QUIRK_APMC0D08		BIT(4)
 #define DW_UART_QUIRK_CPR_VALUE		BIT(5)
 #define DW_UART_QUIRK_IER_KICK		BIT(6)
+#define DW_UART_QUIRK_SUN4I		BIT(7)
 
 /*
  * Number of consecutive IIR_NO_INT interrupts required to trigger interrupt
@@ -644,6 +645,7 @@ static void dw8250_prepare_rx_dma(struct uart_8250_port *p)
 
 static void dw8250_quirks(struct uart_port *p, struct dw8250_data *data)
 {
+	struct uart_8250_port *up = up_to_u8250p(p);
 	unsigned int quirks = data->pdata->quirks;
 	u32 cpr_value = data->pdata->cpr_value;
 
@@ -659,6 +661,11 @@ static void dw8250_quirks(struct uart_port *p, struct dw8250_data *data)
 		data->skip_autocfg = true;
 	}
 #endif
+	if (quirks & DW_UART_QUIRK_SUN4I) {
+		p->flags = UPF_SHARE_IRQ | UPF_FIXED_TYPE | UPF_FIXED_PORT;
+		up->capabilities = UART_CAP_FIFO;
+		p->type = PORT_SUN4I;
+	}
 
 	if (quirks & DW_UART_QUIRK_ARMADA_38X)
 		p->serial_out = dw8250_serial_out38x;
@@ -828,6 +835,9 @@ static int dw8250_probe(struct platform_device *pdev)
 	if (!data->skip_autocfg)
 		dw8250_setup_port(p);
 
+	if (device_property_read_bool(p->dev, "uart-has-rtscts"))
+		up->capabilities |= UART_CAP_AFE;
+
 	/* If we have a valid fifosize, try hooking up DMA */
 	if (p->fifosize) {
 		data->data.dma.rxconf.src_maxburst = p->fifosize / 4;
@@ -962,6 +972,11 @@ static const struct dw8250_platform_data dw8250_intc10ee = {
 	.quirks = DW_UART_QUIRK_IER_KICK,
 };
 
+static const struct dw8250_platform_data dw8250_sun4i_data = {
+	.usr_reg = DW_UART_USR,
+	.quirks = DW_UART_QUIRK_SUN4I,
+};
+
 static const struct of_device_id dw8250_of_match[] = {
 	{ .compatible = "snps,dw-apb-uart", .data = &dw8250_dw_apb },
 	{ .compatible = "cavium,octeon-3860-uart", .data = &dw8250_octeon_3860_data },
@@ -969,6 +984,7 @@ static const struct of_device_id dw8250_of_match[] = {
 	{ .compatible = "renesas,rzn1-uart", .data = &dw8250_renesas_rzn1_data },
 	{ .compatible = "sophgo,sg2044-uart", .data = &dw8250_skip_set_rate_data },
 	{ .compatible = "starfive,jh7100-uart", .data = &dw8250_skip_set_rate_data },
+	{ .compatible = "allwinner,sun4i-a10-uart", .data = &dw8250_sun4i_data },
 	{ /* Sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, dw8250_of_match);

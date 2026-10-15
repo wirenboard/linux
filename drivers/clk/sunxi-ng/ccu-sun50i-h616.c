@@ -1154,14 +1154,13 @@ static struct ccu_pll_nb sun50i_h616_pll_cpu_nb = {
 static struct ccu_mux_nb sun50i_h616_gpu_nb = {
 	.common		= &gpu0_clk.common,
 	.cm		= &gpu0_clk.mux,
-	.delay_us	= 1, /* manual doesn't really say */
+	/*
+	 * The GPU PLL lock bit never becomes set on T507 (H616 industrial
+	 * variant), so rely on a fixed settling delay instead of re-locking it
+	 * on every OPP transition.
+	 */
+	.delay_us	= 50,
 	.bypass_index	= 1, /* GPU_CLK1@400MHz */
-};
-
-static struct ccu_pll_nb sun50i_h616_pll_gpu_nb = {
-	.common		= &pll_gpu_clk.common,
-	.enable		= BIT(29),	/* LOCK_ENABLE */
-	.lock		= BIT(28),
 };
 
 static int sun50i_h616_ccu_probe(struct platform_device *pdev)
@@ -1246,8 +1245,11 @@ static int sun50i_h616_ccu_probe(struct platform_device *pdev)
 	ccu_mux_notifier_register(pll_gpu_clk.common.hw.clk,
 				  &sun50i_h616_gpu_nb);
 
-	/* Re-lock the GPU PLL after any rate changes */
-	ccu_pll_notifier_register(&sun50i_h616_pll_gpu_nb);
+	/*
+	 * Do not re-lock the GPU PLL here: on T507/WB8 the documented lock bit
+	 * never becomes set after GPU OPP transitions, which makes every rate
+	 * change wait for a timeout and can destabilize the graphics stack.
+	 */
 
 	return 0;
 }

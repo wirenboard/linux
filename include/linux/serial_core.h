@@ -533,6 +533,7 @@ struct uart_port {
 #define UPF_HARD_FLOW		((__force upf_t) (UPF_AUTO_CTS | UPF_AUTO_RTS))
 /* Port has hardware-assisted s/w flow control */
 #define UPF_SOFT_FLOW		((__force upf_t) BIT_ULL(22))
+/* Deprecated: use uart_set_cons_flow_enabled()/uart_cons_flow_enabled() instead. */
 #define UPF_CONS_FLOW		((__force upf_t) BIT_ULL(23))
 #define UPF_SHARE_IRQ		((__force upf_t) BIT_ULL(24))
 #define UPF_EXAR_EFR		((__force upf_t) BIT_ULL(25))
@@ -567,6 +568,7 @@ struct uart_port {
 #define UPSTAT_SYNC_FIFO	((__force upstat_t) (1 << 5))
 
 	bool			hw_stopped;		/* sw-assisted CTS flow state */
+	bool			cons_flow;		/* user specified console flow control */
 	unsigned int		mctrl;			/* current modem ctrl settings */
 	unsigned int		frame_time;		/* frame timing in ns */
 	unsigned int		type;			/* port type */
@@ -594,6 +596,7 @@ struct uart_port {
 	struct serial_rs485	rs485_supported;	/* Supported mask for serial_rs485 */
 	struct gpio_desc	*rs485_term_gpio;	/* enable RS485 bus termination */
 	struct gpio_desc	*rs485_rx_during_tx_gpio; /* Output GPIO that sets the state of RS485 RX during TX */
+	struct gpio_desc	*rs485_re_gpio;		/* gpio RS485 receive enable */
 	struct serial_iso7816   iso7816;
 	void			*private_data;		/* generic platform data pointer */
 };
@@ -1161,6 +1164,24 @@ static inline bool uart_softcts_mode(struct uart_port *uport)
 	upstat_t mask = UPSTAT_CTS_ENABLE | UPSTAT_AUTOCTS;
 
 	return ((uport->status & mask) == UPSTAT_CTS_ENABLE);
+}
+
+static inline void uart_set_cons_flow_enabled(struct uart_port *uport, bool enabled)
+{
+	uport->cons_flow = enabled;
+}
+
+static inline bool uart_cons_flow_enabled(const struct uart_port *uport)
+{
+	return uport->cons_flow;
+}
+
+static inline bool uart_console_hwflow_active(struct uart_port *uport)
+{
+	return uart_console(uport) &&
+	       !(uport->rs485.flags & SER_RS485_ENABLED) &&
+	       uart_cons_flow_enabled(uport) &&
+	       uart_cts_enabled(uport);
 }
 
 /*

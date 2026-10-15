@@ -23,6 +23,7 @@
 
 #define SUN50I_MIXER_GLOBAL_SIZE		0x8
 #define SUN50I_MIXER_GLOBAL_CLK			0xc
+#define SUN50I_MIXER_GLOBAL_DBUFF		0x10
 
 #define SUN8I_MIXER_GLOBAL_CTL_RT_EN		BIT(0)
 
@@ -172,6 +173,7 @@ enum sun8i_mixer_type {
  * @mod_rate: module clock rate that needs to be set in order to have
  *	a functional block.
  * @de_type: sun8i_mixer_type enum representing the display engine generation.
+ * @has_formatter: true, if mixer has formatter core, for 10-bit and YUV handling
  * @scaline_yuv: size of a scanline for VI scaler for YUV formats.
  * @map: channel map for DE variants processing YUV separately (DE33)
  */
@@ -182,6 +184,7 @@ struct sun8i_mixer_cfg {
 	int		ccsc;
 	unsigned long	mod_rate;
 	unsigned int	de_type;
+	unsigned int	has_formatter : 1;
 	unsigned int	scanline_yuv;
 	unsigned int	map[6];
 };
