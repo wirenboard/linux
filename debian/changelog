@@ -1,3 +1,10 @@
+linux-wb (6.8.0-wb162) stable; urgency=medium
+
+  * wb8: do not show the Linux boot logo (Tux penguins) on the HDMI screen
+    during startup
+
+ -- Ekaterina Volkova <ekaterina.volkova@wirenboard.com>  Thu, 15 Oct 2026 20:15:50 +0300
+
 linux-wb (6.8.0-wb161) stable; urgency=medium
 
   * pinctrl-sunxi: fix output latch corruption on GPIO writes: a write to
