@@ -60,11 +60,13 @@ static const struct sun50i_h6_ppu_desc sun50i_h616_ppus[] = {
 	{ "PLL", PD_H6_VDD_SYS_REG, PD_H6_AVCC_VDD_GATE,
 		FLAG_PPU_ALWAYS_ON | FLAG_PPU_NEGATED },
 	{ "ANA", PD_H6_VDD_SYS_REG, PD_H616_ANA_VDD_GATE, FLAG_PPU_ALWAYS_ON },
-	/* FLAG_PPU_ALWAYS_ON: genpd powers the GPU on at probe and never cuts
-	 * power at runtime. Without this, genpd calls power_off() on every
-	 * runtime suspend, which can strand in-flight MBUS transactions and
-	 * cause an unrecoverable AXI deadlock on H616. Clock/reset gating via
-	 * GPU_PM_RT in panfrost is sufficient for idle power management. */
+	/* FLAG_PPU_ALWAYS_ON: the driver powers the GPU on at probe, as U-Boot
+	 * leaves the rail gated and genpd rejects an always-on domain that is
+	 * off, and genpd never cuts power at runtime. Without this, genpd calls
+	 * power_off() on every runtime suspend, which can strand in-flight MBUS
+	 * transactions and cause an unrecoverable AXI deadlock on H616.
+	 * Clock/reset gating via GPU_PM_RT in panfrost is sufficient for idle
+	 * power management. */
 	{ "GPU", PD_H6_GPU_REG, PD_H6_GPU_GATE, FLAG_PPU_NEGATED | FLAG_PPU_ALWAYS_ON },
 };
 
@@ -160,11 +162,13 @@ static int sun50i_h6_ppu_probe(struct platform_device *pdev)
 		pd->genpd.name		= desc->name;
 		pd->genpd.power_off	= sun50i_h6_ppu_pd_power_off;
 		pd->genpd.power_on	= sun50i_h6_ppu_pd_power_on;
-		if (desc->flags & FLAG_PPU_ALWAYS_ON)
-			pd->genpd.flags = GENPD_FLAG_ALWAYS_ON;
 		pd->negated		= !!(desc->flags & FLAG_PPU_NEGATED);
 		pd->reg			= base + desc->offset - PD_H6_PPU_OFFSET;
 		pd->gate_mask		= desc->mask;
+		if (desc->flags & FLAG_PPU_ALWAYS_ON) {
+			pd->genpd.flags = GENPD_FLAG_ALWAYS_ON;
+			sun50i_h6_ppu_pd_power_on(&pd->genpd);
+		}
 
 		ret = pm_genpd_init(&pd->genpd, NULL,
 				    !sun50i_h6_ppu_power_status(pd));
