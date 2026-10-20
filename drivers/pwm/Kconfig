@@ -717,7 +717,7 @@ config PWM_STMPE
 	  expanders.
 
 config PWM_SUN4I
-	tristate "Allwinner PWM support"
+	tristate "Allwinner SUN4I PWM support"
 	depends on ARCH_SUNXI || COMPILE_TEST
 	depends on HAS_IOMEM && COMMON_CLK
 	help
@@ -725,6 +725,26 @@ config PWM_SUN4I
 
 	  To compile this driver as a module, choose M here: the module
 	  will be called pwm-sun4i.
+
+config PWM_SUN8I
+	tristate "Allwinner SUN8I (R40/V40/T3) PWM support"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	depends on HAS_IOMEM && COMMON_CLK
+	help
+	  Generic PWM framework driver for Allwinner R40/V40/T3 SoCs.
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called pwm-sun8i.
+
+config PWM_SUN20I
+	tristate "Allwinner D1/T113s/R329 PWM support"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	depends on COMMON_CLK
+	help
+	  Generic PWM framework driver for Allwinner D1/T113s/R329 SoCs.
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called pwm-sun20i.
 
 config PWM_SUNPLUS
 	tristate "Sunplus PWM support"
@@ -804,6 +824,13 @@ config PWM_VT8500
 
 	  To compile this driver as a module, choose M here: the module
 	  will be called pwm-vt8500.
+
+config PWM_WBEC
+	tristate "Wiren Board Embedded Controller PWM (buzzer) support"
+	depends on MFD_WBEC
+	help
+	  This option enables support for PWM (buzzer) on the
+	  Wiren Board Embedded Controller.
 
 config PWM_XILINX
 	tristate "Xilinx AXI Timer PWM support"

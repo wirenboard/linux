@@ -18,6 +18,7 @@
  */
 
 #include <linux/gpio/consumer.h>
+#include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/mdio-bitbang.h>
 #include <linux/mdio-gpio.h>
@@ -29,6 +30,7 @@
 
 struct mdio_gpio_info {
 	struct mdiobb_ctrl ctrl;
+	struct clk* clk;
 	struct gpio_desc *mdc, *mdio, *mdo;
 };
 
@@ -156,6 +158,8 @@ static void mdio_gpio_bus_destroy(struct device *dev)
 
 	mdiobus_unregister(bus);
 	mdio_gpio_bus_deinit(dev);
+	/* clk_disable_unprepare() is handled by the devm action registered
+	 * via devm_clk_get_optional_enabled() in probe. */
 }
 
 static int mdio_gpio_probe(struct platform_device *pdev)
@@ -177,6 +181,15 @@ static int mdio_gpio_probe(struct platform_device *pdev)
 		if (bus_id < 0) {
 			dev_warn(&pdev->dev, "failed to get alias id\n");
 			bus_id = 0;
+		}
+
+		/* devm_clk_get_optional_enabled() prepares, enables and registers
+		 * clk_disable_unprepare() as a devm action — all error paths
+		 * including a failed of_mdiobus_register() are covered. */
+		bitbang->clk = devm_clk_get_optional_enabled(&pdev->dev, "ephy");
+		if (IS_ERR(bitbang->clk)) {
+			dev_err(&pdev->dev, "failed to enable clock\n");
+			return PTR_ERR(bitbang->clk);
 		}
 	} else {
 		bus_id = pdev->id;

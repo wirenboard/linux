@@ -1,0 +1,15 @@
+linux-wb (6.18.56-wb101) stable; urgency=medium
+
+  * wb8: fix GPU power domain registration on Linux 6.18: the PRCM PPU
+    driver failed to probe (-22) because U-Boot leaves the GPU rail off,
+    so panfrost never bound and the HDMI screen was rendered in software
+
+ -- Ekaterina Volkova <ekaterina.volkova@wirenboard.com>  Thu, 15 Oct 2026 20:56:06 +0300
+
+linux-wb (6.18.56-wb100) stable; urgency=medium
+
+  * Rebase Wiren Board kernel patches onto Linux 6.18.56: wb6, wb7 and wb8
+    from dev/v5.10.y and dev/v6.8 in one tree
+  * Drop Wiren Board 5 (i.MX23/i.MX28) support
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Mon, 12 Oct 2026 11:01:41 +0400

@@ -32,13 +32,14 @@
 #include <linux/iio/consumer.h>
 #include <linux/mfd/axp20x.h>
 
-#define AXP20X_PWR_STATUS_BAT_CHARGING	BIT(2)
+#define AXP20X_PWR_STATUS_BAT_CURR_DIRECTION	BIT(2)
 #define AXP717_PWR_STATUS_MASK		GENMASK(6, 5)
 #define AXP717_PWR_STATUS_BAT_STANDBY	0
 #define AXP717_PWR_STATUS_BAT_CHRG	1
 #define AXP717_PWR_STATUS_BAT_DISCHRG	2
 
 #define AXP20X_PWR_OP_BATT_PRESENT	BIT(5)
+#define AXP20X_PWR_OP_CHARGING		BIT(6)
 #define AXP20X_PWR_OP_BATT_ACTIVATED	BIT(3)
 #define AXP717_PWR_OP_BATT_PRESENT	BIT(3)
 
@@ -91,6 +92,8 @@
 
 #define AXP717_TS_PIN_DISABLE		BIT(4)
 
+#define AXP20X_OFF_CTRL_BAT_DET		BIT(6)
+
 struct axp20x_batt_ps;
 
 struct axp_data {
@@ -99,6 +102,7 @@ struct axp_data {
 	unsigned int	ccc_reg;
 	unsigned int	ccc_mask;
 	bool		has_fg_valid;
+	bool		bat_det_ctrl;	/* AXP20X_OFF_CTRL battery detection */
 	const struct	power_supply_desc *bat_ps_desc;
 	int	(*get_max_voltage)(struct axp20x_batt_ps *batt, int *val);
 	int	(*set_max_voltage)(struct axp20x_batt_ps *batt, int val);
@@ -273,6 +277,28 @@ static int axp717_get_constant_charge_current(struct axp20x_batt_ps *axp,
 	return 0;
 }
 
+static int axp20x_get_batt_current_ua(struct axp20x_batt_ps *axp, int *val)
+{
+	int ret = 0, reg, val1;
+
+	ret = regmap_read(axp->regmap, AXP20X_PWR_INPUT_STATUS,
+				&reg);
+	if (ret)
+		return ret;
+
+	/* IIO framework gives mA but Power Supply framework gives uA */
+	if (reg & AXP20X_PWR_STATUS_BAT_CURR_DIRECTION) {
+		ret = iio_read_channel_processed_scale(axp->batt_chrg_i, val,
+						       1000);
+	} else {
+		ret = iio_read_channel_processed_scale(axp->batt_dischrg_i,
+						       &val1, 1000);
+		*val = -val1;
+	}
+
+	return ret;
+}
+
 static int axp20x_battery_get_prop(struct power_supply *psy,
 				   enum power_supply_property psp,
 				   union power_supply_propval *val)
@@ -289,41 +315,42 @@ static int axp20x_battery_get_prop(struct power_supply *psy,
 			return ret;
 
 		val->intval = !!(reg & AXP20X_PWR_OP_BATT_PRESENT);
+
+		// Some PMICs fail to detect disconnected battery. Check volatge to be sure.
+		if (val->intval) {
+			ret = iio_read_channel_processed(axp20x_batt->batt_v,
+							&val1);
+
+			// 500 mV is hopefuly higher than noise and lower than any Li battery
+			if (!ret && val1 < 500)
+				val->intval = 0;
+		}
 		break;
 
 	case POWER_SUPPLY_PROP_STATUS:
-		ret = regmap_read(axp20x_batt->regmap, AXP20X_PWR_INPUT_STATUS,
-				  &reg);
+
+		ret = axp20x_get_batt_current_ua(axp20x_batt, &val1);
+
 		if (ret)
 			return ret;
 
-		if (reg & AXP20X_PWR_STATUS_BAT_CHARGING) {
-			val->intval = POWER_SUPPLY_STATUS_CHARGING;
-			return 0;
-		}
-
-		ret = iio_read_channel_processed(axp20x_batt->batt_dischrg_i,
-						 &val1);
-		if (ret)
-			return ret;
-
-		if (val1) {
+		// 3 mA threshold to ignore noise on current shunt
+		if (val1 < -3000) {
 			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
-			return 0;
+		} else {
+			// current is positive, it is either charging or full
+			ret = regmap_read(axp20x_batt->regmap, AXP20X_PWR_OP_MODE,
+					  &reg);
+			if (ret)
+				return ret;
+
+			if (reg & AXP20X_PWR_OP_CHARGING) {
+				val->intval = POWER_SUPPLY_STATUS_CHARGING;
+			} else {
+				val->intval = POWER_SUPPLY_STATUS_FULL;
+			}
 		}
 
-		ret = regmap_read(axp20x_batt->regmap, AXP20X_FG_RES, &val1);
-		if (ret)
-			return ret;
-
-		/*
-		 * Fuel Gauge data takes 7 bits but the stored value seems to be
-		 * directly the raw percentage without any scaling to 7 bits.
-		 */
-		if ((val1 & AXP209_FG_PERCENT) == 100)
-			val->intval = POWER_SUPPLY_STATUS_FULL;
-		else
-			val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
 		break;
 
 	case POWER_SUPPLY_PROP_HEALTH:
@@ -352,20 +379,8 @@ static int axp20x_battery_get_prop(struct power_supply *psy,
 		break;
 
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
-		ret = regmap_read(axp20x_batt->regmap, AXP20X_PWR_INPUT_STATUS,
-				  &reg);
-		if (ret)
-			return ret;
+		ret = axp20x_get_batt_current_ua(axp20x_batt, &val->intval);
 
-		/* IIO framework gives mA but Power Supply framework gives uA */
-		if (reg & AXP20X_PWR_STATUS_BAT_CHARGING) {
-			ret = iio_read_channel_processed_scale(axp20x_batt->batt_chrg_i,
-							       &val->intval, 1000);
-		} else {
-			ret = iio_read_channel_processed_scale(axp20x_batt->batt_dischrg_i,
-							       &val1, 1000);
-			val->intval = -val1;
-		}
 		if (ret)
 			return ret;
 
@@ -388,7 +403,7 @@ static int axp20x_battery_get_prop(struct power_supply *psy,
 			return ret;
 
 		if (axp20x_batt->data->has_fg_valid && !(reg & AXP22X_FG_VALID))
-			return -EINVAL;
+			return -ENODATA;
 
 		/*
 		 * Fuel Gauge data takes 7 bits but the stored value seems to be
@@ -766,6 +781,29 @@ static int axp717_set_voltage_min_design(struct axp20x_batt_ps *axp_batt,
 				  AXP717_V_OFF_MASK, val1);
 }
 
+static int axp20x_set_charge_high_temp_thresh(struct axp20x_batt_ps *axp_batt,
+					unsigned ts_uv)
+{
+	unsigned val1 = ts_uv / 12800; // 12.8mV per LSB
+
+	if (val1 > 0xFF)
+		return -EINVAL;
+
+	return regmap_write(axp_batt->regmap, AXP20X_V_HTF_CHRG, val1);
+}
+
+static int axp20x_set_charge_low_temp_thresh(struct axp20x_batt_ps *axp_batt,
+					unsigned ts_uv)
+{
+	unsigned val1 = ts_uv / 12800; // 12.8mV per LSB
+
+	if (val1 > 0xFF)
+		return -EINVAL;
+
+	return regmap_write(axp_batt->regmap, AXP20X_V_LTF_CHRG, val1);
+}
+
+
 static int axp20x_battery_set_prop(struct power_supply *psy,
 				   enum power_supply_property psp,
 				   const union power_supply_propval *val)
@@ -961,6 +999,11 @@ static void axp209_set_battery_info(struct platform_device *pdev,
 {
 	int vmin = info->voltage_min_design_uv;
 	int ccc = info->constant_charge_current_max_ua;
+	int vcv = info->constant_charge_voltage_max_uv;
+
+	if (vcv > 0 && axp_batt->data->set_max_voltage(axp_batt, vcv))
+		dev_err(&pdev->dev,
+			"couldn't set charge constant voltage from DT");
 
 	if (vmin > 0 && axp20x_set_voltage_min_design(axp_batt, vmin))
 		dev_err(&pdev->dev,
@@ -1023,6 +1066,7 @@ static void axp717_set_battery_info(struct platform_device *pdev,
 }
 
 static const struct axp_data axp209_data = {
+	.bat_det_ctrl = true,
 	.ccc_scale = 100000,
 	.ccc_offset = 300000,
 	.ccc_reg = AXP20X_CHRG_CTRL1,
@@ -1035,6 +1079,7 @@ static const struct axp_data axp209_data = {
 };
 
 static const struct axp_data axp221_data = {
+	.bat_det_ctrl = true,
 	.ccc_scale = 150000,
 	.ccc_offset = 300000,
 	.ccc_reg = AXP20X_CHRG_CTRL1,
@@ -1060,6 +1105,7 @@ static const struct axp_data axp717_data = {
 };
 
 static const struct axp_data axp813_data = {
+	.bat_det_ctrl = true,
 	.ccc_scale = 200000,
 	.ccc_offset = 200000,
 	.ccc_reg = AXP20X_CHRG_CTRL1,
@@ -1096,6 +1142,7 @@ static int axp20x_power_probe(struct platform_device *pdev)
 	struct power_supply_battery_info *info;
 	struct device *dev = &pdev->dev;
 	int ret;
+	u32 tmp;
 
 	if (!of_device_is_available(pdev->dev.of_node))
 		return -ENODEV;
@@ -1114,6 +1161,16 @@ static int axp20x_power_probe(struct platform_device *pdev)
 	psy_cfg.fwnode = dev_fwnode(&pdev->dev);
 
 	axp20x_batt->data = (struct axp_data *)of_device_get_match_data(dev);
+
+	if (axp20x_batt->data->bat_det_ctrl) {
+		ret = regmap_update_bits(axp20x_batt->regmap, AXP20X_OFF_CTRL,
+					 AXP20X_OFF_CTRL_BAT_DET, 0xFF);
+		if (ret) {
+			dev_err(dev,
+				"Failed to enable battery detection function");
+			return ret;
+		}
+	}
 
 	ret = axp20x_batt->data->cfg_iio_chan(pdev, axp20x_batt);
 	if (ret)
@@ -1139,11 +1196,28 @@ static int axp20x_power_probe(struct platform_device *pdev)
 	 */
 	axp20x_get_constant_charge_current(axp20x_batt, &axp20x_batt->max_ccc);
 
+	if (!of_property_read_u32(pdev->dev.of_node, "x-powers,charge-high-temp-microvolt", &tmp)) {
+		axp20x_set_charge_high_temp_thresh(axp20x_batt, tmp);
+	}
+	if (!of_property_read_u32(pdev->dev.of_node, "x-powers,charge-low-temp-microvolt", &tmp)) {
+		axp20x_set_charge_low_temp_thresh(axp20x_batt, tmp);
+	}
+
 	return 0;
+}
+
+static void axp20x_power_remove(struct platform_device *pdev)
+{
+	struct axp20x_batt_ps *axp20x_batt = platform_get_drvdata(pdev);
+
+	if (axp20x_batt->data->bat_det_ctrl)
+		regmap_update_bits(axp20x_batt->regmap, AXP20X_OFF_CTRL,
+				   AXP20X_OFF_CTRL_BAT_DET, 0);
 }
 
 static struct platform_driver axp20x_batt_driver = {
 	.probe    = axp20x_power_probe,
+	.remove   = axp20x_power_remove,
 	.driver   = {
 		.name  = "axp20x-battery-power-supply",
 		.of_match_table = axp20x_battery_ps_id,

@@ -699,6 +699,7 @@ static int sunxi_pinctrl_set_io_bias_cfg(struct sunxi_pinctrl *pctl,
 {
 	unsigned short bank;
 	unsigned long flags;
+	bool inverted = false;
 	u32 val, reg;
 	int uV;
 
@@ -737,6 +738,9 @@ static int sunxi_pinctrl_set_io_bias_cfg(struct sunxi_pinctrl *pctl,
 		reg &= ~IO_BIAS_MASK;
 		writel(reg | val, pctl->membase + sunxi_grp_config_reg(pin));
 		return 0;
+	case BIAS_VOLTAGE_PIO_POW_MODE_CTL_INV:
+		inverted = true;
+		fallthrough;
 	case BIAS_VOLTAGE_PIO_POW_MODE_CTL:
 		val = uV > 1800000 && uV <= 2500000 ? BIT(bank) : 0;
 
@@ -751,6 +755,8 @@ static int sunxi_pinctrl_set_io_bias_cfg(struct sunxi_pinctrl *pctl,
 		fallthrough;
 	case BIAS_VOLTAGE_PIO_POW_MODE_SEL:
 		val = uV <= 1800000 ? 1 : 0;
+		if (inverted)
+			val = !val;
 
 		raw_spin_lock_irqsave(&pctl->lock, flags);
 		reg = readl(pctl->membase + pctl->pow_mod_sel_offset);
@@ -808,7 +814,37 @@ static void sunxi_pmx_set(struct pinctrl_dev *pctldev,
 	writel((readl(pctl->membase + reg) & ~mask) | config << shift,
 	       pctl->membase + reg);
 
+	/*
+	 * A pin muxed to gpio_out directly through a pinmux node bypasses
+	 * sunxi_pinctrl_gpio_set() and drives whatever its output latch
+	 * holds.  Now that the pin is in output mode the data register
+	 * reads back the latch, so refresh the shadow to keep such pins
+	 * driving their pre-existing level.
+	 */
+	if (config == SUN4I_FUNC_OUTPUT) {
+		u32 *shadow = &pctl->dat_shadow[pin / PINS_PER_BANK];
+
+		sunxi_data_reg(pctl, pin, &reg, &shift, &mask);
+		*shadow = (*shadow & ~mask) |
+			  (readl(pctl->membase + reg) & mask);
+	}
+
 	raw_spin_unlock_irqrestore(&pctl->lock, flags);
+}
+
+static u8 sunxi_pmx_get(struct pinctrl_dev *pctldev,
+				 unsigned pin)
+{
+	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	u32 reg, shift, mask, val;
+
+	pin -= pctl->desc->pin_base;
+
+	/* get register/bitfield for this pin */
+	sunxi_mux_reg(pctl, pin, &reg, &shift, &mask);
+
+	val = readl(pctl->membase + reg);
+	return (val & mask) >> shift; /* 0-based mux value */
 }
 
 static int sunxi_pmx_set_mux(struct pinctrl_dev *pctldev,
@@ -901,6 +937,25 @@ out:
 	return ret;
 }
 
+static int sunxi_pmx_request_gpio(struct pinctrl_dev *pctldev,
+				    struct pinctrl_gpio_range *range,
+				    unsigned int offset)
+{
+	u8 mux = sunxi_pmx_get(pctldev, offset);
+
+	switch (mux) {
+		case SUN4I_FUNC_INPUT:
+		case SUN4I_FUNC_IRQ:
+		case SUN4I_FUNC_OUTPUT:
+			break;
+		default:
+			sunxi_pmx_set(pctldev, offset, SUN4I_FUNC_INPUT);
+			break;
+	}
+
+	return sunxi_pmx_request(pctldev, offset);
+}
+
 static int sunxi_pmx_free(struct pinctrl_dev *pctldev, unsigned offset)
 {
 	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
@@ -926,6 +981,7 @@ static const struct pinmux_ops sunxi_pmx_ops = {
 	.set_mux		= sunxi_pmx_set_mux,
 	.gpio_set_direction	= sunxi_pmx_gpio_set_direction,
 	.request		= sunxi_pmx_request,
+	.gpio_request_enable = sunxi_pmx_request_gpio,
 	.free			= sunxi_pmx_free,
 	.strict			= true,
 };
@@ -937,6 +993,27 @@ static int sunxi_pinctrl_gpio_direction_input(struct gpio_chip *chip,
 
 	return sunxi_pmx_gpio_set_direction(pctl->pctl_dev, NULL,
 					    chip->base + offset, true);
+}
+
+static int sunxi_pinctrl_gpio_get_direction(struct gpio_chip *gc,
+						unsigned int offset)
+{
+	struct sunxi_pinctrl *pctl = gpiochip_get_data(gc);
+	u32 pin = offset + gc->base;
+	u8 mux = sunxi_pmx_get(pctl->pctl_dev, pin);
+
+	switch (mux) {
+		case SUN4I_FUNC_INPUT:
+		case SUN4I_FUNC_IRQ:
+			return GPIO_LINE_DIRECTION_IN;
+		case SUN4I_FUNC_OUTPUT:
+			return GPIO_LINE_DIRECTION_OUT;
+		default:
+			dev_dbg(gc->parent, "%s: get direction GPIO %d, unexpected mux %x. Maybe request the pin first?\n",
+				gc->label, offset + gc->base, mux);
+			/* Other code don't really expect errors routinely happening here, so return direction in instead */
+			return GPIO_LINE_DIRECTION_IN;
+	}
 }
 
 static int sunxi_pinctrl_gpio_get(struct gpio_chip *chip, unsigned offset)
@@ -964,21 +1041,29 @@ static int sunxi_pinctrl_gpio_set(struct gpio_chip *chip, unsigned int offset,
 				  int value)
 {
 	struct sunxi_pinctrl *pctl = gpiochip_get_data(chip);
-	u32 reg, shift, mask, val;
+	u32 *shadow = &pctl->dat_shadow[offset / PINS_PER_BANK];
+	u32 reg, shift, mask;
 	unsigned long flags;
 
 	sunxi_data_reg(pctl, offset, &reg, &shift, &mask);
 
 	raw_spin_lock_irqsave(&pctl->lock, flags);
 
-	val = readl(pctl->membase + reg);
-
+	/*
+	 * Reading the data register returns the pin level, not the output
+	 * latch, for pins muxed as inputs.  A read-modify-write based on
+	 * the register would therefore corrupt the latches of input-muxed
+	 * pins in the same bank (e.g. an emulated open-drain I2C line
+	 * released high), making them drive the wrong level once switched
+	 * to output.  Base the read-modify-write on a shadow copy of the
+	 * latches instead.
+	 */
 	if (value)
-		val |= mask;
+		*shadow |= mask;
 	else
-		val &= ~mask;
+		*shadow &= ~mask;
 
-	writel(val, pctl->membase + reg);
+	writel(*shadow, pctl->membase + reg);
 
 	raw_spin_unlock_irqrestore(&pctl->lock, flags);
 
@@ -1504,7 +1589,7 @@ int sunxi_pinctrl_init_with_flags(struct platform_device *pdev,
 	struct pinctrl_pin_desc *pins;
 	struct sunxi_pinctrl *pctl;
 	struct pinmux_ops *pmxops;
-	int i, ret, last_pin, pin_idx;
+	int i, ret, last_pin, pin_idx, nbanks;
 	struct clk *clk;
 
 	pctl = devm_kzalloc(&pdev->dev, sizeof(*pctl), GFP_KERNEL);
@@ -1541,6 +1626,37 @@ int sunxi_pinctrl_init_with_flags(struct platform_device *pdev,
 				       GFP_KERNEL);
 	if (!pctl->irq_array)
 		return -ENOMEM;
+
+	/*
+	 * The bus clock has to be enabled before the pinctrl device
+	 * registers, as the pin hogs claimed from there access registers.
+	 */
+	ret = of_clk_get_parent_count(node);
+	clk = devm_clk_get_enabled(&pdev->dev, ret == 1 ? NULL : "apb");
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
+
+	/*
+	 * Seed the output latch shadow from the hardware so pins the
+	 * bootloader left in output mode keep their state; see
+	 * sunxi_pinctrl_gpio_set() for why a shadow is needed.  This must
+	 * happen before the pinctrl device registers, as pin hogs can mux
+	 * pins to gpio_out and thereby update the shadow.
+	 */
+	last_pin = pctl->desc->pins[pctl->desc->npins - 1].pin.number;
+	nbanks = DIV_ROUND_UP(last_pin + 1 - pctl->desc->pin_base,
+			      PINS_PER_BANK);
+	pctl->dat_shadow = devm_kcalloc(&pdev->dev, nbanks,
+					sizeof(*pctl->dat_shadow), GFP_KERNEL);
+	if (!pctl->dat_shadow)
+		return -ENOMEM;
+
+	for (i = 0; i < nbanks; i++) {
+		u32 reg, shift, mask;
+
+		sunxi_data_reg(pctl, i * PINS_PER_BANK, &reg, &shift, &mask);
+		pctl->dat_shadow[i] = readl(pctl->membase + reg);
+	}
 
 	ret = sunxi_pinctrl_build_state(pdev);
 	if (ret) {
@@ -1596,7 +1712,6 @@ int sunxi_pinctrl_init_with_flags(struct platform_device *pdev,
 	if (!pctl->chip)
 		return -ENOMEM;
 
-	last_pin = pctl->desc->pins[pctl->desc->npins - 1].pin.number;
 	pctl->chip->owner = THIS_MODULE;
 	pctl->chip->request = gpiochip_generic_request;
 	pctl->chip->free = gpiochip_generic_free;
@@ -1605,6 +1720,7 @@ int sunxi_pinctrl_init_with_flags(struct platform_device *pdev,
 	pctl->chip->direction_output = sunxi_pinctrl_gpio_direction_output;
 	pctl->chip->get = sunxi_pinctrl_gpio_get;
 	pctl->chip->set = sunxi_pinctrl_gpio_set;
+	pctl->chip->get_direction = sunxi_pinctrl_gpio_get_direction;
 	pctl->chip->of_xlate = sunxi_pinctrl_gpio_of_xlate;
 	pctl->chip->to_irq = sunxi_pinctrl_gpio_to_irq;
 	pctl->chip->of_gpio_n_cells = 3;
@@ -1627,13 +1743,6 @@ int sunxi_pinctrl_init_with_flags(struct platform_device *pdev,
 					     pin->pin.number, 1);
 		if (ret)
 			goto gpiochip_error;
-	}
-
-	ret = of_clk_get_parent_count(node);
-	clk = devm_clk_get_enabled(&pdev->dev, ret == 1 ? NULL : "apb");
-	if (IS_ERR(clk)) {
-		ret = PTR_ERR(clk);
-		goto gpiochip_error;
 	}
 
 	pctl->irq = devm_kcalloc(&pdev->dev,

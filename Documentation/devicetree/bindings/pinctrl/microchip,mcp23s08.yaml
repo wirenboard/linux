@@ -80,6 +80,16 @@ properties:
       Sets the ODR flag in the IOCON register. This configures the IRQ output as
       open drain active low.
 
+  microchip,irq-open-drain:
+    type: boolean
+    description:
+      Same as drive-open-drain.
+
+  linux,gpio-base:
+    $ref: /schemas/types.yaml#/definitions/uint32
+    description:
+      If set, used as the base GPIO number of the chip (gpio_chip::base).
+
   pinmux:
     type: object
     properties:

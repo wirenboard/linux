@@ -304,7 +304,7 @@ static int mcp23s08_get(struct gpio_chip *chip, unsigned offset)
 	/* REVISIT reading this clears any IRQ ... */
 	ret = mcp_read(mcp, MCP_GPIO, &status);
 	if (ret < 0)
-		status = 0;
+		status = ret;
 	else {
 		mcp->cached_gpio = status;
 		status = !!(status & (1 << offset));
@@ -577,9 +577,9 @@ static int mcp23s08_irq_setup(struct mcp23s08 *mcp)
 	unsigned long irqflags = IRQF_ONESHOT | IRQF_SHARED;
 
 	if (mcp->irq_active_high)
-		irqflags |= IRQF_TRIGGER_HIGH;
+		irqflags |= IRQF_TRIGGER_RISING;
 	else
-		irqflags |= IRQF_TRIGGER_LOW;
+		irqflags |= IRQF_TRIGGER_FALLING;
 
 	err = devm_request_threaded_irq(chip->parent, mcp->irq, NULL,
 					mcp23s08_irq,
@@ -620,6 +620,13 @@ int mcp23s08_probe_one(struct mcp23s08 *mcp, struct device *dev,
 	int status, ret;
 	bool mirror = false;
 	bool open_drain = false;
+	int val;
+	
+	/* Use base if defined in DTS */
+	status = device_property_read_u32(dev, "linux,gpio-base", &val);
+	if (!status) {
+		base = val;
+	}
 
 	mutex_init(&mcp->lock);
 
@@ -666,7 +673,8 @@ int mcp23s08_probe_one(struct mcp23s08 *mcp, struct device *dev,
 					      "microchip,irq-active-high");
 
 		mirror = device_property_read_bool(dev, "microchip,irq-mirror");
-		open_drain = device_property_read_bool(dev, "drive-open-drain");
+		open_drain = device_property_read_bool(dev, "drive-open-drain") |
+			     device_property_read_bool(dev, "microchip,irq-open-drain");
 	}
 
 	if ((status & IOCON_SEQOP) || !(status & IOCON_HAEN) || mirror ||

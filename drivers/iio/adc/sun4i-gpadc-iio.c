@@ -52,6 +52,7 @@ struct gpadc_data {
 	unsigned int	tp_adc_select;
 	unsigned int	(*adc_chan_select)(unsigned int chan);
 	unsigned int	adc_chan_mask;
+	bool            has_temp_sensor;
 };
 
 static const struct gpadc_data sun4i_gpadc_data = {
@@ -61,6 +62,7 @@ static const struct gpadc_data sun4i_gpadc_data = {
 	.tp_adc_select = SUN4I_GPADC_CTRL1_TP_ADC_SELECT,
 	.adc_chan_select = &sun4i_gpadc_chan_select,
 	.adc_chan_mask = SUN4I_GPADC_CTRL1_ADC_CHAN_MASK,
+	.has_temp_sensor = true,
 };
 
 static const struct gpadc_data sun5i_gpadc_data = {
@@ -70,6 +72,7 @@ static const struct gpadc_data sun5i_gpadc_data = {
 	.tp_adc_select = SUN4I_GPADC_CTRL1_TP_ADC_SELECT,
 	.adc_chan_select = &sun4i_gpadc_chan_select,
 	.adc_chan_mask = SUN4I_GPADC_CTRL1_ADC_CHAN_MASK,
+	.has_temp_sensor = true,
 };
 
 static const struct gpadc_data sun6i_gpadc_data = {
@@ -79,12 +82,24 @@ static const struct gpadc_data sun6i_gpadc_data = {
 	.tp_adc_select = SUN6I_GPADC_CTRL1_TP_ADC_SELECT,
 	.adc_chan_select = &sun6i_gpadc_chan_select,
 	.adc_chan_mask = SUN6I_GPADC_CTRL1_ADC_CHAN_MASK,
+	.has_temp_sensor = true,
+};
+
+static const struct gpadc_data sun8i_r40_gpadc_data = {
+	.temp_offset = -1623,
+	.temp_scale = 167,
+	.tp_mode_en = SUN6I_GPADC_CTRL1_TP_MODE_EN,
+	.tp_adc_select = SUN6I_GPADC_CTRL1_TP_ADC_SELECT,
+	.adc_chan_select = &sun6i_gpadc_chan_select,
+	.adc_chan_mask = SUN6I_GPADC_CTRL1_ADC_CHAN_MASK,
+	.has_temp_sensor = false,
 };
 
 static const struct gpadc_data sun8i_a33_gpadc_data = {
 	.temp_offset = -1662,
 	.temp_scale = 162,
 	.tp_mode_en = SUN8I_GPADC_CTRL1_CHOP_TEMP_EN,
+	.has_temp_sensor = true,
 };
 
 struct sun4i_gpadc_iio {
@@ -181,15 +196,14 @@ static int sun4i_prepare_for_irq(struct iio_dev *indio_dev, int channel,
 		ret = regmap_write(info->regmap, SUN4I_GPADC_CTRL1,
 				   info->data->tp_mode_en |
 				   info->data->tp_adc_select |
-				   info->data->adc_chan_select(channel));
-		/*
-		 * When the IP changes channel, it needs a bit of time to get
-		 * correct values.
-		 */
-		if ((reg & info->data->adc_chan_mask) !=
-			 info->data->adc_chan_select(channel))
-			mdelay(10);
-
+				   info->data->adc_chan_select(channel)) ||
+			/*
+			 * We need to clear adc's fifo just after setting the channel
+			 * (to clean previous channel's measurements)
+			 */
+			regmap_write(info->regmap, SUN4I_GPADC_INT_FIFOC,
+			   SUN4I_GPADC_INT_FIFOC_TP_FIFO_TRIG_LEVEL(1) |
+			   SUN4I_GPADC_INT_FIFOC_TP_FIFO_FLUSH);
 	} else {
 		/*
 		 * The temperature sensor returns valid data only when the ADC
@@ -207,7 +221,7 @@ static int sun4i_prepare_for_irq(struct iio_dev *indio_dev, int channel,
 	 * needs a bit of time to get correct values.
 	 */
 	if ((reg & info->data->tp_adc_select) != info->data->tp_adc_select)
-		mdelay(100);
+		msleep(100);
 
 	return 0;
 }
@@ -492,7 +506,7 @@ static int sun4i_gpadc_probe_dt(struct platform_device *pdev,
 	void __iomem *base;
 	int ret;
 
-	info->data = of_device_get_match_data(&pdev->dev);
+	info->data = (struct gpadc_data *)of_device_get_match_data(&pdev->dev);
 	if (!info->data)
 		return -ENODEV;
 
@@ -512,7 +526,7 @@ static int sun4i_gpadc_probe_dt(struct platform_device *pdev,
 		return ret;
 	}
 
-	if (IS_ENABLED(CONFIG_THERMAL_OF))
+	if (IS_ENABLED(CONFIG_THERMAL_OF) && info->data->has_temp_sensor)
 		info->sensor_device = &pdev->dev;
 
 	return 0;
@@ -545,7 +559,7 @@ static int sun4i_gpadc_probe_mfd(struct platform_device *pdev,
 	 * that choice to the user.
 	 */
 
-	if (IS_ENABLED(CONFIG_THERMAL_OF)) {
+	if (IS_ENABLED(CONFIG_THERMAL_OF) && info->data->has_temp_sensor) {
 		/*
 		 * This driver is a child of an MFD which has a node in the DT
 		 * but not its children, because of DT backward compatibility
@@ -568,7 +582,7 @@ static int sun4i_gpadc_probe_mfd(struct platform_device *pdev,
 		indio_dev->channels = sun4i_gpadc_channels_no_temp;
 	}
 
-	if (IS_ENABLED(CONFIG_THERMAL_OF)) {
+	if (IS_ENABLED(CONFIG_THERMAL_OF) && info->data->has_temp_sensor) {
 		ret = sun4i_irq_init(pdev, "TEMP_DATA_PENDING",
 				     sun4i_gpadc_temp_data_irq_handler,
 				     "temp_data", &info->temp_data_irq,
@@ -583,7 +597,7 @@ static int sun4i_gpadc_probe_mfd(struct platform_device *pdev,
 	if (ret < 0)
 		return ret;
 
-	if (IS_ENABLED(CONFIG_THERMAL_OF)) {
+	if (IS_ENABLED(CONFIG_THERMAL_OF) && info->data->has_temp_sensor) {
 		ret = iio_map_array_register(indio_dev, sun4i_gpadc_hwmon_maps);
 		if (ret < 0) {
 			dev_err(&pdev->dev,
@@ -615,7 +629,7 @@ static int sun4i_gpadc_probe(struct platform_device *pdev)
 	indio_dev->info = &sun4i_gpadc_iio_info;
 	indio_dev->modes = INDIO_DIRECT_MODE;
 
-	if (pdev->dev.of_node)
+	if (pdev->dev.of_node && of_device_get_match_data(&pdev->dev))
 		ret = sun4i_gpadc_probe_dt(pdev, indio_dev);
 	else
 		ret = sun4i_gpadc_probe_mfd(pdev, indio_dev);
@@ -629,7 +643,7 @@ static int sun4i_gpadc_probe(struct platform_device *pdev)
 	pm_runtime_set_suspended(&pdev->dev);
 	pm_runtime_enable(&pdev->dev);
 
-	if (IS_ENABLED(CONFIG_THERMAL_OF)) {
+	if (IS_ENABLED(CONFIG_THERMAL_OF) && info->data->has_temp_sensor) {
 		info->tzd = devm_thermal_of_zone_register(info->sensor_device,
 							  0, info,
 							  &sun4i_ts_tz_ops);
@@ -638,10 +652,10 @@ static int sun4i_gpadc_probe(struct platform_device *pdev)
 		 * thermal because no thermal DT node is found.
 		 */
 		if (IS_ERR(info->tzd) && PTR_ERR(info->tzd) != -ENODEV) {
-			dev_err(&pdev->dev,
-				"could not register thermal sensor: %ld\n",
-				PTR_ERR(info->tzd));
-			return PTR_ERR(info->tzd);
+			ret = dev_err_probe(&pdev->dev,
+					    PTR_ERR(info->tzd),
+					    "could not register thermal sensor\n");
+			goto err_map;
 		}
 	}
 
@@ -654,10 +668,9 @@ static int sun4i_gpadc_probe(struct platform_device *pdev)
 	return 0;
 
 err_map:
-	if (!info->no_irq && IS_ENABLED(CONFIG_THERMAL_OF))
+	if (!info->no_irq && IS_ENABLED(CONFIG_THERMAL_OF) && info->data->has_temp_sensor)
 		iio_map_array_unregister(indio_dev);
 
-	pm_runtime_put(&pdev->dev);
 	pm_runtime_disable(&pdev->dev);
 
 	return ret;
@@ -668,10 +681,9 @@ static void sun4i_gpadc_remove(struct platform_device *pdev)
 	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
 	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
 
-	pm_runtime_put(&pdev->dev);
 	pm_runtime_disable(&pdev->dev);
 
-	if (!IS_ENABLED(CONFIG_THERMAL_OF))
+	if (!IS_ENABLED(CONFIG_THERMAL_OF) || !info->data->has_temp_sensor)
 		return;
 
 	if (!info->no_irq)
@@ -682,6 +694,7 @@ static const struct platform_device_id sun4i_gpadc_id[] = {
 	{ "sun4i-a10-gpadc-iio", (kernel_ulong_t)&sun4i_gpadc_data },
 	{ "sun5i-a13-gpadc-iio", (kernel_ulong_t)&sun5i_gpadc_data },
 	{ "sun6i-a31-gpadc-iio", (kernel_ulong_t)&sun6i_gpadc_data },
+	{ "sun8i-r40-gpadc-iio", (kernel_ulong_t)&sun8i_r40_gpadc_data },
 	{ }
 };
 MODULE_DEVICE_TABLE(platform, sun4i_gpadc_id);
