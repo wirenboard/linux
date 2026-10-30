@@ -416,6 +416,7 @@
 			reg = <0x0 0x43800000 0x0 0x100000>;
 			record-size = <0x20000>;
 			console-size = <0x40000>;
+			ftrace-size = <0x40000>; /* DEBUG SOFT-4884 */
 			ecc-size = <32>;
 			no-map;
 		};
