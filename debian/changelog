@@ -1,10 +1,25 @@
-linux-wb (6.8.0-wb162) stable; urgency=medium
+linux-wb (6.8.0-wb164) stable; urgency=medium
 
   * usb: gadget: composite: report bcdUSB 0x0210 when WebUSB is enabled,
     so that Chromium reads the WebUSB landing page and shows the
     plug-in notification for the Debug Network gadget
 
- -- Evgeny Boger <boger@wirenboard.com>  Mon, 31 Aug 2026 17:04:48 +0300
+ -- Ilya Titov <ilya.titov@wirenboard.com>  Mon, 02 Nov 2026 10:39:20 +0300
+
+linux-wb (6.8.0-wb163) stable; urgency=medium
+
+  * wb8: fix GPU hangs, frozen HDMI screen and watchdog resets caused by GPU
+    frequency changes: switch the GPU to a fixed 400 MHz clock while its PLL
+    is reprogrammed, as the 6.18 kernel already does (SOFT-7116)
+
+ -- Ekaterina Volkova <ekaterina.volkova@wirenboard.com>  Fri, 16 Oct 2026 09:19:07 +0300
+
+linux-wb (6.8.0-wb162) stable; urgency=medium
+
+  * wb8: do not show the Linux boot logo (Tux penguins) on the HDMI screen
+    during startup
+
+ -- Ekaterina Volkova <ekaterina.volkova@wirenboard.com>  Thu, 15 Oct 2026 20:15:50 +0300
 
 linux-wb (6.8.0-wb161) stable; urgency=medium
 
