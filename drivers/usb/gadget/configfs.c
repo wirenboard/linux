@@ -57,12 +57,12 @@ struct gadget_info {
 	bool use_webusb;
 	u16 bcd_webusb_version;
 	u8 b_webusb_vendor_code;
+	char landing_page[WEBUSB_URL_RAW_MAX_LENGTH];
 
 	bool use_msos20;
 	u8 b_msos20_vendor_code;
 	u8 *msos20_desc_set;
 	u16 msos20_desc_set_len;
-	char landing_page[WEBUSB_URL_RAW_MAX_LENGTH];
 
 	spinlock_t spinlock;
 	bool unbind;
@@ -410,6 +410,7 @@ static void gadget_info_attr_release(struct config_item *item)
 	WARN_ON(!list_empty(&gi->available_func));
 	kfree(gi->composite.gadget_driver.function);
 	kfree(gi->composite.gadget_driver.driver.name);
+	kfree(gi->msos20_desc_set);
 	kfree(gi);
 }
 
@@ -1198,6 +1199,12 @@ static ssize_t msos20_descriptor_set_write(struct config_item *item,
 		return -ENOMEM;
 
 	mutex_lock(&gi->lock);
+	/* the bound gadget serves the set to the host from this buffer */
+	if (gi->composite.gadget_driver.udc_name) {
+		mutex_unlock(&gi->lock);
+		kfree(desc_set);
+		return -EBUSY;
+	}
 	kfree(gi->msos20_desc_set);
 	gi->msos20_desc_set = desc_set;
 	gi->msos20_desc_set_len = count;
@@ -1865,12 +1872,11 @@ static int configfs_composite_bind(struct usb_gadget *gadget,
 		gi->cdev.usb_strings = s;
 	}
 
-	if (gi->use_msos20 && gi->msos20_desc_set_len) {
-		cdev->use_msos20 = true;
-		cdev->b_msos20_vendor_code = gi->b_msos20_vendor_code;
-		cdev->msos20_desc_set = gi->msos20_desc_set;
-		cdev->msos20_desc_set_len = gi->msos20_desc_set_len;
-	}
+	/* cdev outlives unbind, so refresh it on every bind */
+	cdev->use_msos20 = gi->use_msos20 && gi->msos20_desc_set_len;
+	cdev->b_msos20_vendor_code = gi->b_msos20_vendor_code;
+	cdev->msos20_desc_set = gi->msos20_desc_set;
+	cdev->msos20_desc_set_len = gi->msos20_desc_set_len;
 
 	if (gi->use_webusb) {
 		cdev->use_webusb = true;

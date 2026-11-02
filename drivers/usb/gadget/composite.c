@@ -2183,10 +2183,6 @@ unknown:
 		}
 
 		/*
-		 * WebUSB URL descriptor handling, following:
-		 * https://wicg.github.io/webusb/#device-requests
-		 */
-		/*
 		 * MS OS 2.0 descriptor set, requested with the vendor code
 		 * announced in the BOS platform capability descriptor. See the
 		 * "Microsoft OS 2.0 Descriptors Specification".
@@ -2200,6 +2196,10 @@ unknown:
 			goto check_value;
 		}
 
+		/*
+		 * WebUSB URL descriptor handling, following:
+		 * https://wicg.github.io/webusb/#device-requests
+		 */
 		if (cdev->use_webusb &&
 		    ctrl->bRequestType == (USB_DIR_IN | USB_TYPE_VENDOR) &&
 		    w_index == WEBUSB_GET_URL &&
