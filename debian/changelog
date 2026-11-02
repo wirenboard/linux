@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb164) stable; urgency=medium
+
+  * wb8: fix rare CRC errors on RS-485 caused by long interrupt latency
+
+ -- Ilya Titov <ilya.titov@wirenboard.com>  Mon, 02 Nov 2026 13:31:44 +0300
+
 linux-wb (6.8.0-wb163) stable; urgency=medium
 
   * wb8: fix GPU hangs, frozen HDMI screen and watchdog resets caused by GPU
