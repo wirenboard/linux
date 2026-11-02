@@ -4,7 +4,7 @@ linux-wb (6.8.0-wb164) stable; urgency=medium
     so that Chromium reads the WebUSB landing page and shows the
     plug-in notification for the Debug Network gadget
 
- -- Ilya Titov <ilya.titov@wirenboard.com>  Mon, 02 Nov 2026 10:39:20 +0300
+ -- Evgeny Boger <boger@wirenboard.com>  Mon, 31 Aug 2026 17:04:48 +0300
 
 linux-wb (6.8.0-wb163) stable; urgency=medium
 
