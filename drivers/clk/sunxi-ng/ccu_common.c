@@ -16,6 +16,9 @@
 #include "ccu_gate.h"
 #include "ccu_reset.h"
 
+static unsigned int pll_relock_repeat = 8;
+module_param(pll_relock_repeat, uint, 0644);
+
 struct sunxi_ccu {
 	const struct sunxi_ccu_desc	*desc;
 	spinlock_t			lock;
@@ -83,18 +86,22 @@ static int ccu_pll_notifier_cb(struct notifier_block *nb,
 			       unsigned long event, void *data)
 {
 	struct ccu_pll_nb *pll = to_ccu_pll_nb(nb);
+	unsigned int i;
 	int ret = 0;
 
 	if (event != POST_RATE_CHANGE)
 		goto out;
 
-	ccu_gate_helper_disable(pll->common, pll->enable);
+	/* DEBUG SOFT-4884: repeat re-lock to widen the window */
+	for (i = 0; i <= pll_relock_repeat; i++) {
+		ccu_gate_helper_disable(pll->common, pll->enable);
 
-	ret = ccu_gate_helper_enable(pll->common, pll->enable);
-	if (ret)
-		goto out;
+		ret = ccu_gate_helper_enable(pll->common, pll->enable);
+		if (ret)
+			goto out;
 
-	ccu_helper_wait_for_lock(pll->common, pll->lock);
+		ccu_helper_wait_for_lock(pll->common, pll->lock);
+	}
 
 out:
 	return notifier_from_errno(ret);
