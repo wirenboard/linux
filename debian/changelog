@@ -1,3 +1,9 @@
+linux-wb (6.18.56-wb102) stable; urgency=medium
+
+  * pinctrl: mcp23s08: drop support for deprecated linux,gpio-base property
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Tue, 10 Nov 2026 17:01:41 +0400
+
 linux-wb (6.18.56-wb101) stable; urgency=medium
 
   * wb8: fix GPU power domain registration on Linux 6.18: the PRCM PPU
