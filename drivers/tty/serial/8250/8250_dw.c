@@ -545,8 +545,18 @@ static void dw8250_set_termios(struct uart_port *p, struct ktermios *termios,
 	long rate;
 	int ret;
 
-	clk_disable_unprepare(d->clk);
+	/*
+	 * Don't gate the clock if the rate doesn't change: on sunxi it is
+	 * the bus clock, and an interrupt taken while it is gated reads
+	 * garbage from LSR and never ends.
+	 */
 	rate = clk_round_rate(d->clk, newrate);
+	if (rate > 0 && rate == clk_get_rate(d->clk)) {
+		p->uartclk = rate;
+		goto out;
+	}
+
+	clk_disable_unprepare(d->clk);
 	if (rate > 0) {
 		/*
 		 * Note that any clock-notifier worker will block in
@@ -557,7 +567,7 @@ static void dw8250_set_termios(struct uart_port *p, struct ktermios *termios,
 			p->uartclk = rate;
 	}
 	clk_prepare_enable(d->clk);
-
+out:
 	dw8250_do_set_termios(p, termios, old);
 }
 
