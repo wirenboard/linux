@@ -1,3 +1,12 @@
+linux-wb (6.18.56-wb103) stable; urgency=medium
+
+  * wb8: fix random hangs under cpufreq: re-lock CPU PLL before
+    switching CPU back to it
+  * wb8: fix hang on RS-485 port reconfiguration: don't gate UART clock
+    in set_termios if the rate doesn't change
+
+ -- Ilya Titov <ilya.titov@wirenboard.com>  Wed, 11 Nov 2026 12:17:26 +0300
+
 linux-wb (6.18.56-wb102) stable; urgency=medium
 
   * pinctrl: mcp23s08: drop support for deprecated linux,gpio-base property
