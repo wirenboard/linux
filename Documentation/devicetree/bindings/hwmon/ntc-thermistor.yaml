@@ -106,6 +106,12 @@ properties:
     description: Pull-down resistance in ohms. Must always be specified, even
       if zero.
 
+  series-ohm:
+    $ref: /schemas/types.yaml#/definitions/uint32
+    description: Resistance in ohms of an optional fixed resistor connected
+      in series with the thermistor. It is subtracted from the measured
+      resistance. Defaults to zero.
+
   connected-positive:
     $ref: /schemas/types.yaml#/definitions/flag
     description: Indicates how the thermistor is connected in series with

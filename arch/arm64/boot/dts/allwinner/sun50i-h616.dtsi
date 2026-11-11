@@ -7,8 +7,11 @@
 #include <dt-bindings/clock/sun50i-h616-ccu.h>
 #include <dt-bindings/clock/sun50i-h6-r-ccu.h>
 #include <dt-bindings/clock/sun6i-rtc.h>
+#include <dt-bindings/clock/sun8i-de2.h>
+#include <dt-bindings/clock/sun8i-tcon-top.h>
 #include <dt-bindings/reset/sun50i-h616-ccu.h>
 #include <dt-bindings/reset/sun50i-h6-r-ccu.h>
+#include <dt-bindings/reset/sun8i-de2.h>
 #include <dt-bindings/thermal/thermal.h>
 
 / {
@@ -108,6 +111,7 @@
 			reg = <0x0 0x40000000 0x0 0x40000>;
 			no-map;
 		};
+
 	};
 
 	osc24M: osc24M-clk {
@@ -182,12 +186,44 @@
 			#size-cells = <1>;
 			ranges;
 
+			sram_a2: sram@100000 {
+				compatible = "mmio-sram";
+				reg = <0x00100000 0x18000>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				ranges = <0 0x00100000 0x18000>;
+
+				scpi_sram: scpi-sram@17c00 {
+					compatible = "arm,scp-shmem";
+					reg = <0x17c00 0x200>;
+				};
+			};
+
 			sram_c: sram@28000 {
 				compatible = "mmio-sram";
 				reg = <0x00028000 0x30000>;
 				#address-cells = <1>;
 				#size-cells = <1>;
 				ranges = <0 0x00028000 0x30000>;
+
+				de3_sram: sram-section@0 {
+					compatible = "allwinner,sun50i-h616-sram-c",
+						     "allwinner,sun50i-a64-sram-c";
+					reg = <0x0000 0x1e000>;
+				};
+			};
+
+			sram_c1: sram@1a00000 {
+				compatible = "mmio-sram";
+				reg = <0x01a00000 0x200000>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				ranges = <0 0x01a00000 0x200000>;
+
+				ve_sram: sram-section@0 {
+					compatible = "allwinner,sun50i-h616-sram-c1";
+					reg = <0x000000 0x200000>;
+				};
 			};
 		};
 
@@ -369,7 +405,8 @@
 		};
 
 		iommu: iommu@30f0000 {
-			compatible = "allwinner,sun50i-h616-iommu";
+			compatible = "allwinner,sun50i-h616-iommu",
+			             "allwinner,sun50i-h6-iommu";
 			reg = <0x030f0000 0x10000>;
 			interrupts = <GIC_SPI 61 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_BUS_IOMMU>;
@@ -643,6 +680,19 @@
 				#address-cells = <1>;
 				#size-cells = <0>;
 			};
+		};
+
+		emac1: ethernet@5030000 {
+			compatible = "allwinner,sun50i-t507-emac1";
+			reg = <0x05030000 0x10000>;
+			interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "macirq";
+			clocks = <&ccu CLK_BUS_EMAC1>;
+			clock-names = "stmmaceth";
+			resets = <&ccu RST_BUS_EMAC1>;
+			reset-names = "stmmaceth";
+			syscon = <&syscon>;
+			status = "disabled";
 		};
 
 		gpadc: adc@5070000 {
@@ -991,21 +1041,6 @@
 					hysteresis = <0>;
 				};
 				cpu_critical: cpu-trip-2 {
-					temperature = <110000>;
-					type = "critical";
-					hysteresis = <0>;
-				};
-			};
-		};
-
-		gpu-thermal {
-			polling-delay-passive = <500>;
-			polling-delay = <1000>;
-			thermal-sensors = <&ths 0>;
-			sustainable-power = <1100>;
-
-			trips {
-				gpu_temp_critical: gpu-trip-0 {
 					temperature = <110000>;
 					type = "critical";
 					hysteresis = <0>;
