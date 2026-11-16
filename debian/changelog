@@ -1,10 +1,16 @@
-linux-wb (6.8.0-wb164) stable; urgency=medium
+linux-wb (6.8.0-wb165) stable; urgency=medium
 
   * usb: gadget: composite: report bcdUSB 0x0210 when WebUSB is enabled,
     so that Chromium reads the WebUSB landing page and shows the
     plug-in notification for the Debug Network gadget
 
  -- Evgeny Boger <boger@wirenboard.com>  Mon, 31 Aug 2026 17:04:48 +0300
+
+linux-wb (6.8.0-wb164) stable; urgency=medium
+
+  * wb8: fix rare CRC errors on RS-485 caused by long interrupt latency
+
+ -- Ilya Titov <ilya.titov@wirenboard.com>  Mon, 02 Nov 2026 13:31:44 +0300
 
 linux-wb (6.8.0-wb163) stable; urgency=medium
 
