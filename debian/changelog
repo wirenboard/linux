@@ -1,3 +1,12 @@
+linux-wb (6.18.56-wb104) stable; urgency=medium
+
+  * wb8: gate PLLs with the output enable bit instead of powering them
+    down (upstream backport)
+  * wb8: re-lock GPU PLL after rate changes before switching GPU back
+    to it (upstream backport)
+
+ -- Ilya Titov <ilya.titov@wirenboard.com>  Tue, 17 Nov 2026 12:01:24 +0300
+
 linux-wb (6.18.56-wb103) stable; urgency=medium
 
   * wb8: fix random hangs under cpufreq: re-lock CPU PLL before
