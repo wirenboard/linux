@@ -1,3 +1,9 @@
+linux-wb (6.8.0-wb164-d6b52a3f-1) stable; urgency=medium
+
+  * Update config
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Fri, 20 Nov 2026 14:11:00 +0400
+
 linux-wb (6.8.0-wb164) stable; urgency=medium
 
   * wb8: fix rare CRC errors on RS-485 caused by long interrupt latency
