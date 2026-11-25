@@ -360,7 +360,7 @@
 /* RTC + Temp sensor + ATECC */
 &i2c3 {
 	status = "okay";
-	clock-frequency = <10000>;
+	clock-frequency = <100000>;
 
 	rtc_onboard: rtc@51 {
 		compatible = "nxp,pcf85063tp";

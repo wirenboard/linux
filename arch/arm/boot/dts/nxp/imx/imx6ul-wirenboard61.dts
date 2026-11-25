@@ -205,7 +205,7 @@
 			&gpio2 17 0 /* scl */
 		>;
 
-		i2c-gpio,delay-us = <50>;        /* ~20 kHz */
+		i2c-gpio,delay-us = <5>;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_i2c_gpio_rtc>;
