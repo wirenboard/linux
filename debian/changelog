@@ -1,3 +1,11 @@
+linux-wb (6.18.64-wb101) stable; urgency=medium
+
+  * wb6, wb7: fix ATECC key access failures (nginx with Alice not starting,
+    cloud agent errors): speed up the ATECC I2C bus, the chip ignored
+    sleep/idle flags on a ~10 kHz bus and its watchdog broke sessions
+
+ -- Ilya Titov <ilya.titov@wirenboard.com>  Wed, 25 Nov 2026 17:39:09 +0300
+
 linux-wb (6.18.64-wb100) stable; urgency=medium
 
   * wb8: fix random hangs under cpufreq: re-lock CPU PLL before
