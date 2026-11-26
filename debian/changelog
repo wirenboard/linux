@@ -1,3 +1,11 @@
+linux-wb (6.18.64-wb102) stable; urgency=medium
+
+  * i2c-gpio: don't yield the CPU in the middle of a transfer when the GPIOs
+    can't sleep: under CPU load ATECC on WB6 still failed (CRC errors, nginx
+    with Alice not starting at boot)
+
+ -- Ilya Titov <ilya.titov@wirenboard.com>  Thu, 26 Nov 2026 10:58:03 +0300
+
 linux-wb (6.18.64-wb101) stable; urgency=medium
 
   * wb6, wb7: fix ATECC key access failures (nginx with Alice not starting,
