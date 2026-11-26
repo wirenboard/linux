@@ -70,6 +70,39 @@ static int i2c_gpio_getscl(void *data)
 	return gpiod_get_value_cansleep(priv->scl);
 }
 
+/*
+ * Non-sleeping variants for GPIOs that can't sleep: the _cansleep ones are
+ * a voluntary preemption point on every edge, so a busy CPU can stall the
+ * bus in the middle of a byte for a whole scheduler slice.
+ */
+static void i2c_gpio_setsda_val_atomic(void *data, int state)
+{
+	struct i2c_gpio_private_data *priv = data;
+
+	gpiod_set_value(priv->sda, state);
+}
+
+static void i2c_gpio_setscl_val_atomic(void *data, int state)
+{
+	struct i2c_gpio_private_data *priv = data;
+
+	gpiod_set_value(priv->scl, state);
+}
+
+static int i2c_gpio_getsda_atomic(void *data)
+{
+	struct i2c_gpio_private_data *priv = data;
+
+	return gpiod_get_value(priv->sda);
+}
+
+static int i2c_gpio_getscl_atomic(void *data)
+{
+	struct i2c_gpio_private_data *priv = data;
+
+	return gpiod_get_value(priv->scl);
+}
+
 #ifdef CONFIG_I2C_GPIO_FAULT_INJECTOR
 
 #define setsda(bd, val)	((bd)->setsda((bd)->data, val))
@@ -395,13 +428,17 @@ static int i2c_gpio_probe(struct platform_device *pdev)
 	else
 		bit_data->can_do_atomic = true;
 
-	bit_data->setsda = i2c_gpio_setsda_val;
-	bit_data->setscl = i2c_gpio_setscl_val;
+	bit_data->setsda = bit_data->can_do_atomic ?
+		i2c_gpio_setsda_val_atomic : i2c_gpio_setsda_val;
+	bit_data->setscl = bit_data->can_do_atomic ?
+		i2c_gpio_setscl_val_atomic : i2c_gpio_setscl_val;
 
 	if (!pdata->scl_is_output_only)
-		bit_data->getscl = i2c_gpio_getscl;
+		bit_data->getscl = bit_data->can_do_atomic ?
+			i2c_gpio_getscl_atomic : i2c_gpio_getscl;
 	if (!pdata->sda_is_output_only)
-		bit_data->getsda = i2c_gpio_getsda;
+		bit_data->getsda = bit_data->can_do_atomic ?
+			i2c_gpio_getsda_atomic : i2c_gpio_getsda;
 
 	if (pdata->udelay)
 		bit_data->udelay = pdata->udelay;
